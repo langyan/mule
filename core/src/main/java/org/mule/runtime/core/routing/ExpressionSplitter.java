@@ -12,6 +12,7 @@ import org.mule.runtime.core.api.MuleMessage;
 import org.mule.runtime.core.api.expression.ExpressionManager;
 import org.mule.runtime.core.api.lifecycle.Initialisable;
 import org.mule.runtime.core.api.lifecycle.InitialisationException;
+import org.mule.runtime.core.api.processor.MessageProcessor;
 import org.mule.runtime.core.expression.ExpressionConfig;
 
 import java.util.ArrayList;
@@ -24,6 +25,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.reactivestreams.Publisher;
 import org.w3c.dom.NodeList;
 
 /**
@@ -33,7 +35,7 @@ import org.w3c.dom.NodeList;
  * <b>EIP Reference:</b> <a href="http://www.eaipatterns.com/Sequencer.html">http://www.eaipatterns.com/Sequencer.html</a>
  */
 public class ExpressionSplitter extends AbstractSplitter
-    implements Initialisable
+    implements Initialisable, MessageProcessor
 {
 
     protected ExpressionManager expressionManager;
