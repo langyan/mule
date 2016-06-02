@@ -58,7 +58,7 @@ public abstract class AbstractRequestResponseMessageProcessor extends AbstractIn
         });
         if (next != null)
         {
-            flux = flux.map(tuple -> of(tuple.getT1(), from(from(tuple.getT2()).as(next))));
+            flux = flux.map(tuple -> of(tuple.getT1(), from(applyNext(tuple.getT2()))));
         }
         return flux.flatMap(tuple -> from(tuple.getT2()).flatMap(event -> {
             try
