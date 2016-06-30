@@ -7,6 +7,7 @@
 package org.mule.extension.validation.internal;
 
 import static org.mule.runtime.core.config.i18n.MessageFactory.createStaticMessage;
+import org.mule.extension.validation.internal.el.ValidationElExtension;
 import org.mule.runtime.core.AbstractAnnotatedObject;
 import org.mule.runtime.core.api.MuleContext;
 import org.mule.runtime.core.api.MuleRuntimeException;
@@ -49,7 +50,8 @@ import java.util.Locale;
 @Extension(name = "Validation Module", description = "Allows performing validations and throw an Exception if the validation fails")
 @Operations({CommonValidationOperations.class, CustomValidatorOperation.class, ValidationStrategies.class, NumberValidationOperation.class})
 @Extensible(alias = "validator-message-processor")
-@Export(resources = {"/META-INF/services/org/mule/runtime/core/i18n"})
+//TODO registry-bootstrap is not exported! Fix this whenever the mechanism is defined
+@Export(resources = "/META-INF/services/org/mule/runtime/core/i18n", classes = {ValidationElExtension.class, Validator.class})
 public class ValidationExtension extends AbstractAnnotatedObject implements Config, NamedObject, Initialisable, MuleContextAware
 {
 

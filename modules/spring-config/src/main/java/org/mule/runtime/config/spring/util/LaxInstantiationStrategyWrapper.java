@@ -9,6 +9,7 @@ package org.mule.runtime.config.spring.util;
 import static org.mule.runtime.core.util.ClassUtils.withContextClassLoader;
 import org.mule.runtime.config.spring.OptionalObjectsController;
 import org.mule.runtime.config.spring.processors.DiscardedOptionalBeanPostProcessor;
+import org.mule.runtime.core.util.ClassUtils;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;

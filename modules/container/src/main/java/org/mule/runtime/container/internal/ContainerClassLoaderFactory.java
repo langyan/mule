@@ -52,6 +52,7 @@ public class ContainerClassLoaderFactory
             "javax.activation",
             "javax.activity",
             "javax.annotation",
+            "javax.crypto",
             "javax.imageio",
             "javax.jws",
             "javax.lang.model",
@@ -95,7 +96,7 @@ public class ContainerClassLoaderFactory
      */
     public ArtifactClassLoader createContainerClassLoader(final ClassLoader parentClassLoader)
     {
-        final Set<String> parentOnlyPackages = new HashSet<>(BOOT_PACKAGES);
+        final Set<String> parentOnlyPackages = new HashSet<>(getBootPackages());
         parentOnlyPackages.addAll(SYSTEM_PACKAGES);
 
         final List<MuleModule> muleModules = moduleDiscoverer.discover();
@@ -142,6 +143,16 @@ public class ContainerClassLoaderFactory
 
     private FilteringArtifactClassLoader createContainerFilteringClassLoader(List<MuleModule> muleModules, ArtifactClassLoader containerClassLoader)
     {
-        return new FilteringContainerClassLoader(containerClassLoader, new ContainerClassLoaderFilterFactory().create(BOOT_PACKAGES, muleModules));
+        return new FilteringContainerClassLoader(containerClassLoader, new ContainerClassLoaderFilterFactory().create(getBootPackages(), muleModules));
     }
+
+    /**
+     * @return a {@link Set} of packages that define all the prefixes that must be loaded from the container
+     * classLoader without being filtered
+     */
+    protected Set<String> getBootPackages()
+    {
+        return BOOT_PACKAGES;
+    }
+
 }

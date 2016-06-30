@@ -9,8 +9,7 @@ package org.mule.test.config.spring.parsers.specific;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-
-import org.mule.functional.junit4.FunctionalTestCase;
+import org.mule.test.AbstractIntegrationTestCase;
 import org.mule.runtime.api.message.NullPayload;
 import org.mule.runtime.core.DefaultMuleEvent;
 import org.mule.runtime.core.DefaultMuleMessage;
@@ -29,7 +28,7 @@ import java.util.Collection;
 
 import org.junit.Test;
 
-public class ServerNotificationManagerTestCase extends FunctionalTestCase
+public class ServerNotificationManagerTestCase extends AbstractIntegrationTestCase
 {
     @Override
     protected String getConfigFile()

@@ -6,7 +6,6 @@
  */
 package org.mule.test.config.dsl;
 
-import static org.mule.test.config.dsl.ParserXmlNamespaceInfoProvider.PARSERS_TEST_NAMESACE;
 import static org.mule.runtime.config.spring.dsl.api.AttributeDefinition.Builder.fromChildConfiguration;
 import static org.mule.runtime.config.spring.dsl.api.AttributeDefinition.Builder.fromChildMapConfiguration;
 import static org.mule.runtime.config.spring.dsl.api.AttributeDefinition.Builder.fromMultipleDefinitions;
@@ -16,8 +15,8 @@ import static org.mule.runtime.config.spring.dsl.api.TypeDefinition.fromMapEntry
 import static org.mule.runtime.config.spring.dsl.api.TypeDefinition.fromType;
 import org.mule.runtime.config.spring.dsl.api.ComponentBuildingDefinition;
 import org.mule.runtime.config.spring.dsl.api.ComponentBuildingDefinitionProvider;
-import org.mule.test.config.spring.parsers.beans.ParameterAndChildElement;
 import org.mule.test.config.spring.parsers.beans.SimpleCollectionObject;
+import org.mule.test.config.spring.parsers.beans.ParameterAndChildElement;
 import org.mule.test.config.spring.parsers.beans.SimplePojo;
 import org.mule.runtime.core.api.MuleContext;
 
@@ -42,7 +41,7 @@ public class ParserComponentBuildingDefinitionProvider implements ComponentBuild
     {
         List<ComponentBuildingDefinition> definitions = new ArrayList<>();
         ComponentBuildingDefinition.Builder baseBuilder = new ComponentBuildingDefinition.Builder()
-                .withNamespace(PARSERS_TEST_NAMESACE);
+                .withNamespace(ParserXmlNamespaceInfoProvider.PARSERS_TEST_NAMESACE);
         definitions.add(baseBuilder
                                 .copy()
                                 .withIdentifier("parameter-collection-parser")
