@@ -10,8 +10,8 @@ package org.mule.functional.junit4;
 import static org.mule.functional.junit4.runners.AnnotationUtils.getAnnotationAttributeFrom;
 import static org.mule.functional.junit4.runners.AnnotationUtils.getAnnotationAttributeFromHierarchy;
 import org.mule.functional.junit4.runners.ArtifactClassLoaderRunnerConfig;
-import org.mule.functional.junit4.runners.ArtifactClassloaderTestRunner;
 import org.mule.functional.junit4.runners.ClassLoaderIsolatedExtensionsManagerConfigurationBuilder;
+import org.mule.functional.junit4.runners.ClassLoaderPerTestRunner;
 import org.mule.functional.junit4.runners.RunnerDelegateTo;
 import org.mule.runtime.core.api.config.ConfigurationBuilder;
 
@@ -34,7 +34,7 @@ import org.junit.runner.RunWith;
  *
  * @since 4.0
  */
-@RunWith(ArtifactClassloaderTestRunner.class)
+@RunWith(ClassLoaderPerTestRunner.class)
 public abstract class ArtifactFunctionalTestCase extends FunctionalTestCase
 {
     @Override
@@ -42,10 +42,10 @@ public abstract class ArtifactFunctionalTestCase extends FunctionalTestCase
     {
         super.addBuilders(builders);
         Class<?> runner = getAnnotationAttributeFrom(this.getClass(), RunWith.class, "value");
-        if (runner == null || !runner.equals(ArtifactClassloaderTestRunner.class))
+        if (runner == null || !runner.equals(ClassLoaderPerTestRunner.class))
         {
             throw new IllegalStateException(this.getClass().getName() + " extends " + ArtifactFunctionalTestCase.class.getName()
-                                            + " so it should be annotated to only run with: " + ArtifactClassloaderTestRunner.class + ". See " + RunnerDelegateTo.class + " for defining a delegate runner to be used.");
+                                            + " so it should be annotated to only run with: " + ClassLoaderPerTestRunner.class + ". See " + RunnerDelegateTo.class + " for defining a delegate runner to be used.");
         }
 
         List<Class<?>[]> extensionsAnnotatedClasses = getAnnotationAttributeFromHierarchy(this.getClass(), ArtifactClassLoaderRunnerConfig.class, "extensions");
