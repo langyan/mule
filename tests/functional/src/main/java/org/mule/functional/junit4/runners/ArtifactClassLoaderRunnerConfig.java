@@ -27,7 +27,8 @@ public @interface ArtifactClassLoaderRunnerConfig
 
     /**
      * @return a comma separated list of packages to be added as PARENT_ONLY for the
-     * container classloader, default packages are "org.junit,junit,org.hamcrest,org.mockito".
+     * container classloader, default (and required) packages are "org.junit,junit,org.hamcrest,org.mockito".
+     * In case of having to append one you should also include the default list.
      */
     String extraBootPackages() default "org.junit,junit,org.hamcrest,org.mockito";
 
@@ -42,7 +43,8 @@ public @interface ArtifactClassLoaderRunnerConfig
      * only starts with for partial matching org.mule*:*:*) that would be used in order to exclude artifacts that should not be added to
      * the application classloader due to they will be already exposed through plugin or container. This will not be applied to those
      * artifacts that are declared as test scope but it will be used for filtering its dependencies.
-     * Default exclusion is "org.mule:*:*,org.mule.modules*:*:*,org.mule.transports:*:*,org.mule.mvel:*:*,org.mule.common:*:*"
+     * Default (and required) exclusion is "org.mule:*:*,org.mule.modules*:*:*,org.mule.transports:*:*,org.mule.mvel:*:*,org.mule.common:*:*"
+     * In case of having to append one this list should be also included.
      */
     String exclusions() default "org.mule:*:*,org.mule.modules*:*:*,org.mule.transports:*:*,org.mule.mvel:*:*,org.mule.common:*:*";
 }

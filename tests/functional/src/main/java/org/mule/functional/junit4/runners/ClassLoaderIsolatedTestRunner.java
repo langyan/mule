@@ -100,10 +100,10 @@ public class ClassLoaderIsolatedTestRunner extends Runner
         try
         {
             Thread.currentThread().setContextClassLoader(classLoader);
-            innerRunnerClass.getMethod("run", RunNotifier.class).invoke(innerRunner, notifier);
+            innerRunnerClass.getMethod("run", classLoader.loadClass(RunNotifier.class.getName())).invoke(innerRunner, notifier);
         }
         catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException
-                | SecurityException e)
+                | SecurityException | ClassNotFoundException e)
         {
             notifier.fireTestFailure(new Failure(getDescription(), e));
         }

@@ -18,6 +18,7 @@ import org.mule.runtime.module.extension.internal.manager.DefaultExtensionManage
 import org.mule.runtime.module.extension.internal.manager.ExtensionManagerAdapter;
 import org.mule.runtime.module.extension.internal.manager.ExtensionManagerAdapterFactory;
 
+import java.lang.reflect.Method;
 import java.net.URL;
 
 import org.slf4j.Logger;
@@ -58,13 +59,15 @@ public class ClassLoaderIsolatedExtensionsManagerConfigurationBuilder extends Ab
         {
             // Extension Class should be resolved by the extension/plugin class loader
             ClassLoader extensionClassLoader = forName(extensionClass.getName()).getClassLoader();
-            if (!(extensionClassLoader instanceof ArtifactClassLoader))
+            if (!(ArtifactClassLoader.class.isAssignableFrom(forName(extensionClassLoader.getClass().getName()))))
             {
                 throw new IllegalStateException("This configuration builder should be used when test is annotated to run with: " + ArtifactClassloaderTestRunner.class);
             }
 
             // There will be more than one extension manifest file so we just filter by convention
-            URL manifestUrl = ((ArtifactClassLoader) extensionClassLoader).findResource("META-INF/" + EXTENSION_MANIFEST_FILE_NAME);
+            Method findResourceMethod = extensionClassLoader.getClass().getMethod("findResource", String.class);
+            findResourceMethod.setAccessible(true);
+            URL manifestUrl = (URL) findResourceMethod.invoke(extensionClassLoader, "META-INF/" + EXTENSION_MANIFEST_FILE_NAME);
             if (LOGGER.isDebugEnabled())
             {
                 LOGGER.debug("Discovered extension " + extensionClass.getName());
