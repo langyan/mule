@@ -114,10 +114,11 @@ public class MuleClassPathClassifier implements ClassPathClassifier
         boolean shouldAddTransitiveDepFromExclude = false;
 
         Predicate<MavenArtifact> onlyTheCompileArtifact = artifact -> artifact.equals(compileArtifact);
-        Predicate<MavenArtifact> onlyProvidedArtifacts = artifact -> artifact.isProvidedScope();
+        //TODO see case in validations with commmons-collections!d
+        Predicate<MavenArtifact> onlyProvidedAndCompileArtifacts = artifact -> artifact.isProvidedScope() || artifact.isCompileScope();
 
         // After removing all the plugin and application urls we add provided dependencies urls (supports for having same dependencies as provided transitive and compile either test)
-        Set<URL> containerProvidedDependenciesURLs = classLoaderURLsBuilder.buildClassLoaderURLs(shouldAddOnlyDependencies, shouldAddTransitiveDepFromExclude, onlyTheCompileArtifact, onlyProvidedArtifacts);
+        Set<URL> containerProvidedDependenciesURLs = classLoaderURLsBuilder.buildClassLoaderURLs(shouldAddOnlyDependencies, shouldAddTransitiveDepFromExclude, onlyTheCompileArtifact, onlyProvidedAndCompileArtifacts);
         containerURLs.addAll(containerProvidedDependenciesURLs);
 
         return containerURLs;

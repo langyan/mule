@@ -8,6 +8,7 @@
 package org.mule.runtime.container.internal;
 
 import org.mule.runtime.module.artifact.classloader.ArtifactClassLoader;
+import org.mule.runtime.module.artifact.classloader.ClassLoaderLookupPolicy;
 import org.mule.runtime.module.artifact.classloader.ClassLoaderLookupStrategy;
 import org.mule.runtime.module.artifact.classloader.EnumerationAdapter;
 import org.mule.runtime.module.artifact.classloader.FilteringArtifactClassLoader;
@@ -98,12 +99,37 @@ public class ContainerClassLoaderFactory
      */
     public ArtifactClassLoader createContainerClassLoader(final ClassLoader parentClassLoader)
     {
+        final List<MuleModule> muleModules = moduleDiscoverer.discover();
+        final ClassLoaderLookupPolicy containerLookupPolicy = getContainerClassLoaderLookupPolicy(muleModules);
+        return createArtifactClassLoader(parentClassLoader, muleModules, containerLookupPolicy);
+    }
+
+    /**
+     * Creates the container lookup policy to be used by child class loaders.
+     *
+     * @param muleModules
+     * @return a non null {@link ClassLoaderLookupPolicy} that contains the lookup policies for boot, system packages.
+     * plus exported packages by the given list of {@link MuleModule}.
+     */
+    public ClassLoaderLookupPolicy getContainerClassLoaderLookupPolicy(List<MuleModule> muleModules)
+    {
         final Set<String> parentOnlyPackages = new HashSet<>(getBootPackages());
         parentOnlyPackages.addAll(SYSTEM_PACKAGES);
 
-        final List<MuleModule> muleModules = moduleDiscoverer.discover();
         final Map<String, ClassLoaderLookupStrategy> lookupStrategies = buildClassLoaderLookupStrategy(muleModules);
-        final MuleClassLoaderLookupPolicy containerLookupPolicy = new MuleClassLoaderLookupPolicy(lookupStrategies, parentOnlyPackages);
+        return new MuleClassLoaderLookupPolicy(lookupStrategies, parentOnlyPackages);
+    }
+
+    /**
+     * Creates an {@link ArtifactClassLoader} that always resolves resources by delegating to the parentClassLoader.
+     *
+     * @param parentClassLoader
+     * @param muleModules
+     * @param containerLookupPolicy
+     * @return a {@link ArtifactClassLoader} to be used in a {@link FilteringContainerClassLoader}
+     */
+    protected ArtifactClassLoader createArtifactClassLoader(final ClassLoader parentClassLoader, List<MuleModule> muleModules, final ClassLoaderLookupPolicy containerLookupPolicy)
+    {
         final ArtifactClassLoader containerClassLoader = new MuleArtifactClassLoader("mule", new URL[0], parentClassLoader, containerLookupPolicy)
         {
 
@@ -144,7 +170,7 @@ public class ContainerClassLoaderFactory
         return result;
     }
 
-    private FilteringArtifactClassLoader createContainerFilteringClassLoader(List<MuleModule> muleModules, ArtifactClassLoader containerClassLoader)
+    protected FilteringArtifactClassLoader createContainerFilteringClassLoader(List<MuleModule> muleModules, ArtifactClassLoader containerClassLoader)
     {
         return new FilteringContainerClassLoader(containerClassLoader, new ContainerClassLoaderFilterFactory().create(getBootPackages(), muleModules));
     }

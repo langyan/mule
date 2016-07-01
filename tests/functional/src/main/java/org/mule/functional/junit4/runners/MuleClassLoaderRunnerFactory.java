@@ -9,21 +9,25 @@ package org.mule.functional.junit4.runners;
 
 import static org.mule.functional.junit4.runners.AnnotationUtils.getAnnotationAttributeFrom;
 import static org.mule.runtime.module.extension.internal.ExtensionProperties.EXTENSION_MANIFEST_FILE_NAME;
+import org.mule.runtime.container.internal.ContainerClassLoaderFilterFactory;
+import org.mule.runtime.container.internal.MuleModule;
 import org.mule.runtime.extension.api.manifest.ExtensionManifest;
 import org.mule.runtime.module.artifact.classloader.ArtifactClassLoaderFilter;
 import org.mule.runtime.module.artifact.classloader.ArtifactClassLoaderFilterFactory;
-import org.mule.runtime.module.artifact.classloader.ClassLoaderLookupPolicyProvider;
+import org.mule.runtime.module.artifact.classloader.ClassLoaderFilter;
+import org.mule.runtime.module.artifact.classloader.ClassLoaderLookupPolicy;
 import org.mule.runtime.module.artifact.classloader.CompositeClassLoader;
 import org.mule.runtime.module.artifact.classloader.DefaultArtifactClassLoaderFilterFactory;
 import org.mule.runtime.module.artifact.classloader.FilteringArtifactClassLoader;
 import org.mule.runtime.module.artifact.classloader.MuleArtifactClassLoader;
+import org.mule.runtime.module.artifact.classloader.MuleClassLoaderLookupPolicy;
 import org.mule.runtime.module.extension.internal.manager.DefaultExtensionManager;
 
 import com.google.common.collect.Sets;
 
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -56,39 +60,46 @@ public class MuleClassLoaderRunnerFactory implements ClassLoaderRunnerFactory
     {
         // Container classLoader
         logClassLoaderUrls("CONTAINER", artifactUrlClassification.getContainer());
-        final TestContainerClassLoaderFactory testContainerClassLoaderFactory = new TestContainerClassLoaderFactory(getExtraBootPackages(klass));
-        ClassLoader classLoader = testContainerClassLoaderFactory.createContainerClassLoader(new URLClassLoader(artifactUrlClassification.getContainer().toArray(new URL[0]))).getClassLoader();
+        final TestContainerClassLoaderFactory testContainerClassLoaderFactory = new TestContainerClassLoaderFactory(getExtraBootPackages(klass), artifactUrlClassification.getContainer().toArray(new URL[0]));
+
+        MuleArtifactClassLoader launcherArtifact = new MuleArtifactClassLoader("launcher", new URL[0],
+                                                                               MuleClassLoaderRunnerFactory.class.getClassLoader(), new MuleClassLoaderLookupPolicy(Collections.emptyMap(), Collections.<String>emptySet()));
+        ClassLoaderFilter filteredClassLoaderLauncher = new ContainerClassLoaderFilterFactory().create(testContainerClassLoaderFactory.getBootPackages(), Collections.<MuleModule>emptyList());
+
+        ClassLoader classLoader = testContainerClassLoaderFactory.createContainerClassLoader(new FilteringArtifactClassLoader(launcherArtifact, filteredClassLoaderLauncher)).getClassLoader();
+
+        ClassLoaderLookupPolicy childClassLoaderLookupPolicy = testContainerClassLoaderFactory.getContainerClassLoaderLookupPolicy(classLoader);
 
         // Plugin classloaders
         if (!artifactUrlClassification.getPlugins().isEmpty())
         {
             final List<ClassLoader> pluginClassLoaders = new ArrayList<>();
-            //TODO(gfernandes) workaround until we define what to do with CompositeClassLoader if for resources it should also delegate to the parent classloader or not
-            pluginClassLoaders.add(new MuleArtifactClassLoader("sharedLibs", new URL[0], classLoader, ((ClassLoaderLookupPolicyProvider) classLoader).getClassLoaderLookupPolicy()));
+            pluginClassLoaders.add(new MuleArtifactClassLoader("sharedLibs", new URL[0], classLoader, childClassLoaderLookupPolicy));
 
             for (Set<URL> pluginUrls : artifactUrlClassification.getPlugins())
             {
                 // Plugin classLoader
                 logClassLoaderUrls("PLUGIN", pluginUrls);
-                MuleArtifactClassLoader pluginCL = new MuleArtifactClassLoader("plugin", pluginUrls.toArray(new URL[0]), classLoader, ((ClassLoaderLookupPolicyProvider) classLoader).getClassLoaderLookupPolicy());
+                MuleArtifactClassLoader pluginCL = new MuleArtifactClassLoader("plugin", pluginUrls.toArray(new URL[0]), classLoader, childClassLoaderLookupPolicy);
 
                 URL manifestUrl = pluginCL.findResource("META-INF/" + EXTENSION_MANIFEST_FILE_NAME);
                 ExtensionManifest extensionManifest = extensionManager.parseExtensionManifestXml(manifestUrl);
                 ArtifactClassLoaderFilter filter = artifactClassLoaderFilterFactory.create(extensionManifest.getExportedPackages().stream().collect(Collectors.joining(", ")), extensionManifest.getExportedResources().stream().collect(Collectors.joining(", ")));
                 pluginClassLoaders.add(new FilteringArtifactClassLoader(pluginCL, filter));
             }
-            classLoader = new CompositeClassLoader(classLoader, pluginClassLoaders, ((ClassLoaderLookupPolicyProvider) classLoader).getClassLoaderLookupPolicy());
+            classLoader = new CompositeClassLoader(classLoader, pluginClassLoaders, childClassLoaderLookupPolicy);
         }
 
         // Application classLoader
         logClassLoaderUrls("APP", artifactUrlClassification.getApplication());
-        classLoader = new MuleArtifactClassLoader("app", artifactUrlClassification.getApplication().toArray(new URL[0]), classLoader, ((ClassLoaderLookupPolicyProvider) classLoader).getClassLoaderLookupPolicy());
+        classLoader = new MuleArtifactClassLoader("app", artifactUrlClassification.getApplication().toArray(new URL[0]), classLoader, childClassLoaderLookupPolicy);
 
         return classLoader;
     }
 
     private void logClassLoaderUrls(final String classLoaderName, final Set<URL> urls)
     {
+        //TODO add system property!
         if (logger.isDebugEnabled())
         {
             StringBuilder builder = new StringBuilder(classLoaderName).append(" classloader urls: [");
