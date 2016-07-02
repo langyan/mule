@@ -6,13 +6,16 @@
  */
 package org.mule.functional.junit4.runners;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.LinkedHashMap;
-import java.util.Set;
+import org.mule.runtime.core.util.ClassUtils;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import org.junit.runner.Runner;
+import org.junit.runner.notification.RunNotifier;
+import org.junit.runners.BlockJUnit4ClassRunner;
+import org.junit.runners.Suite;
 import org.junit.runners.model.InitializationError;
 
 /**
@@ -20,22 +23,10 @@ import org.junit.runners.model.InitializationError;
  *
  * @since 4.0
  */
-public class ArtifactClassloaderTestRunner extends AbstractRunnerDelegate
+public class ArtifactClassloaderTestRunner extends Suite
 {
-
-    private final Runner delegate;
-
-    private volatile static Set<URL> classPathURLs;
-    private volatile static LinkedHashMap<MavenArtifact, Set<MavenArtifact>> allDependencies;
-
-    static {
-        classPathURLs = new DefaultClassPathURLsProvider().getURLs();
-        allDependencies = new DependencyGraphMavenDependenciesResolver().buildDependencies();
-    }
-
-    private MavenMultiModuleArtifactMapping mavenMultiModuleArtifactMapping = new MuleMavenMultiModuleArtifactMapping();
-    private ClassLoaderRunnerFactory classLoaderRunnerFactory = new MuleClassLoaderRunnerFactory();
-    private ClassPathClassifier classPathClassifier = new MuleClassPathClassifier();
+    private static final List<Runner> NO_RUNNERS = Collections.<Runner>emptyList();
+    private final ArrayList<Runner> runners = new ArrayList<Runner>();
 
     /**
      * Creates a Runner to run {@code klass}
@@ -45,20 +36,46 @@ public class ArtifactClassloaderTestRunner extends AbstractRunnerDelegate
      */
     public ArtifactClassloaderTestRunner(final Class<?> klass) throws Exception
     {
-        ClassLoader classLoader = buildArtifactClassloader(klass);
-        delegate = new ClassLoaderIsolatedTestRunner(classLoader, klass);
+        super(createTestClassUsingClassLoader(klass), NO_RUNNERS);
+        Class<? extends Runner> runnerClass = BlockJUnit4ClassRunner.class;
+        RunnerDelegateTo runnerDelegateTo = klass.getAnnotation(RunnerDelegateTo.class);
+        if (runnerDelegateTo != null)
+        {
+            runnerClass = runnerDelegateTo.value();
+        }
+        runners.add(runnerClass.cast(runnerClass.getConstructor(Class.class).newInstance(getTestClass().getJavaClass())));
     }
 
     @Override
-    protected Runner getDelegateRunner()
-    {
-        return delegate;
+    protected List<Runner> getChildren() {
+        return runners;
     }
 
-    private ClassLoader buildArtifactClassloader(final Class<?> klass) throws IOException, URISyntaxException
-    {
-        ArtifactUrlClassification artifactUrlClassification = classPathClassifier.classify(klass, classPathURLs, allDependencies, mavenMultiModuleArtifactMapping);
-        return classLoaderRunnerFactory.createClassLoader(klass, artifactUrlClassification);
+    protected void runChild(final Runner runner, final RunNotifier notifier) {
+        ClassUtils.withContextClassLoader(getTestClass().getJavaClass().getClassLoader(), () -> runner.run(notifier));
     }
 
+    private static Class<?> createTestClassUsingClassLoader(Class<?> klass) throws InitializationError
+    {
+        // Initializes utility classes
+        ClassPathURLsProvider classPathURLsProvider = new DefaultClassPathURLsProvider();
+        MavenDependenciesResolver mavenDependenciesResolver = new DependencyGraphMavenDependenciesResolver();
+        MavenMultiModuleArtifactMapping mavenMultiModuleArtifactMapping = new MuleMavenMultiModuleArtifactMapping();
+        ClassLoaderRunnerFactory classLoaderRunnerFactory = new MuleClassLoaderRunnerFactory();
+        ClassPathClassifier classPathClassifier = new MuleClassPathClassifier();
+
+        // Does the classification and creation of the isolated ClassLoader
+        ArtifactUrlClassification artifactUrlClassification = classPathClassifier.classify(klass, classPathURLsProvider.getURLs(),
+                                                                                           mavenDependenciesResolver.buildDependencies(), mavenMultiModuleArtifactMapping);
+        ClassLoader isolatedClassLoader = classLoaderRunnerFactory.createClassLoader(klass, artifactUrlClassification);
+
+        try
+        {
+            return isolatedClassLoader.loadClass(klass.getName());
+        }
+        catch (Exception e)
+        {
+            throw new InitializationError(e);
+        }
+    }
 }

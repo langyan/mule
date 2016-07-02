@@ -27,10 +27,10 @@ public @interface ArtifactClassLoaderRunnerConfig
 
     /**
      * @return a comma separated list of packages to be added as PARENT_ONLY for the
-     * container classloader, default (and required) packages are "org.junit,junit,org.hamcrest,org.mockito".
+     * container class loader, default (and required) packages is empty.
      * In case of having to append one you should also include the default list.
      */
-    String extraBootPackages() default "org.junit,junit,org.hamcrest,org.mockito";
+    String extraBootPackages() default "";
 
     /**
      * @return array of classes defining extensions that need to be added as plugins to the classloader used
@@ -41,10 +41,10 @@ public @interface ArtifactClassLoaderRunnerConfig
     /**
      * @return a comma separated list of groupId:artifactId:type (it does support wildcards org.mule:*:* or *:mule-core:* but
      * only starts with for partial matching org.mule*:*:*) that would be used in order to exclude artifacts that should not be added to
-     * the application classloader due to they will be already exposed through plugin or container. This will not be applied to those
-     * artifacts that are declared as test scope but it will be used for filtering its dependencies.
-     * Default (and required) exclusion is "org.mule:*:*,org.mule.modules*:*:*,org.mule.transports:*:*,org.mule.mvel:*:*,org.mule.common:*:*"
-     * In case of having to append one this list should be also included.
+     * the application class loader neither the extension/plugin class loaders due to they will be already exposed through the container.
+     * Default exclusion is already defined in excluded.properties file and by using this annotation the ones defined here will be appended
+     * to those defined in file.
      */
-    String exclusions() default "org.mule:*:*,org.mule.modules*:*:*,org.mule.transports:*:*,org.mule.mvel:*:*,org.mule.common:*:*";
+    String exclusions() default "";
+
 }
