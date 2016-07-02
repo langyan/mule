@@ -7,20 +7,7 @@
 
 package org.mule.functional.junit4.runners;
 
-import java.lang.annotation.Annotation;
-import java.util.List;
-
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.internal.runners.statements.Fail;
-import org.junit.internal.runners.statements.RunAfters;
-import org.junit.internal.runners.statements.RunBefores;
-import org.junit.rules.MethodRule;
-import org.junit.rules.TestRule;
 import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.model.FrameworkMethod;
@@ -103,104 +90,6 @@ public class ClassLoaderPerTestRunner extends BlockJUnit4ClassRunner
 
         // We can carry out the normal JUnit functionality with our newly discovered method now.
         return super.methodBlock(newMethod);
-    }
-
-    private Class<? extends Annotation> loadAnnotationWithIsolatedClassLoader(Class<?> clazz)
-    {
-        try
-        {
-            return (Class<? extends Annotation>) getTestClass().getJavaClass().getClassLoader().loadClass(clazz.getName());
-        }
-        catch (ClassNotFoundException e)
-        {
-            throw new IllegalArgumentException("Couldn't find annotation class to be loaded with isolated class loader", e);
-        }
-    }
-
-    @Override
-    protected Statement withBeforeClasses(Statement statement)
-    {
-        List<FrameworkMethod> befores = getTestClass()
-                .getAnnotatedMethods(loadAnnotationWithIsolatedClassLoader(BeforeClass.class));
-        return befores.isEmpty() ? statement :
-               new RunBefores(statement, befores, null);
-    }
-
-    @Override
-    protected Statement withAfterClasses(Statement statement)
-    {
-        List<FrameworkMethod> afters = getTestClass()
-                .getAnnotatedMethods(loadAnnotationWithIsolatedClassLoader(AfterClass.class));
-        return afters.isEmpty() ? statement :
-               new RunAfters(statement, afters, null);
-
-    }
-
-    @Override
-    protected List<TestRule> classRules()
-    {
-        // We now to need to search in the class from the custom loader.
-        //We also need to search with the annotation loaded by the custom class loader or otherwise we don't find any method.
-        Class<? extends Annotation> classRuleFromClassLoader = loadAnnotationWithIsolatedClassLoader(ClassRule.class);
-        List<TestRule> result = getTestClass().getAnnotatedMethodValues(null, classRuleFromClassLoader, TestRule.class);
-
-        result.addAll(getTestClass().getAnnotatedFieldValues(null, classRuleFromClassLoader, TestRule.class));
-
-        return result;
-    }
-
-    @Override
-    protected synchronized Statement withAfters(FrameworkMethod method, Object target, Statement statement)
-    {
-        // We now to need to search in the class from the custom loader.
-        //We also need to search with the annotation loaded by the custom class loader or otherwise we don't find any method.
-        List<FrameworkMethod> afters =
-                getTestClass()
-                        .getAnnotatedMethods(loadAnnotationWithIsolatedClassLoader(After.class));
-
-        return new RunAfters(statement, afters, target);
-    }
-
-    @Override
-    protected synchronized Statement withBefores(FrameworkMethod method, Object target, Statement statement)
-    {
-        // We now to need to search in the class from the custom loader.
-        //We also need to search with the annotation loaded by the custom class loader or otherwise we don't find any method.
-        List<FrameworkMethod> befores =
-                getTestClass()
-                        .getAnnotatedMethods(loadAnnotationWithIsolatedClassLoader(Before.class));
-
-        return new RunBefores(statement, befores, target);
-    }
-
-    @Override
-    protected synchronized List<TestRule> getTestRules(Object target)
-    {
-        Class<? extends Annotation> ruleFromClassLoader = loadAnnotationWithIsolatedClassLoader(Rule.class);
-        List<TestRule> result =
-                getTestClass()
-                        .getAnnotatedMethodValues(target, ruleFromClassLoader, TestRule.class);
-
-        result.addAll(
-                getTestClass()
-                        .getAnnotatedFieldValues(target, ruleFromClassLoader, TestRule.class));
-
-        return result;
-    }
-
-    @Override
-    protected synchronized List<MethodRule> rules(Object target)
-    {
-        Class<? extends Annotation> ruleFromClassLoader = loadAnnotationWithIsolatedClassLoader(Rule.class);
-        List<MethodRule> rules =
-                getTestClass()
-                        .getAnnotatedMethodValues(target, ruleFromClassLoader, MethodRule.class);
-
-        rules.addAll(
-                getTestClass()
-                        .getAnnotatedFieldValues(target, ruleFromClassLoader, MethodRule.class));
-
-        return rules;
     }
 
     @Override
