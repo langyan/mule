@@ -32,23 +32,6 @@ import org.junit.runners.model.Statement;
  */
 public class ClassLoaderPerTestRunner extends BlockJUnit4ClassRunner
 {
-    private Object beforeFromClassLoader;
-    private Object afterFromClassLoader;
-    private Object ruleFromClassLoader;
-
-    private static Object beforeClassFromClassLoader;
-    private static Object afterClassFromClassLoader;
-    private static Object classRuleFromClassLoader;
-
-    private ClassLoader originalCl;
-    private static ClassLoader runnerCl;
-
-    private static ClassPathURLsProvider classPathURLsProvider = new DefaultClassPathURLsProvider();
-    private static MavenDependenciesResolver mavenDependenciesResolver = new DependencyGraphMavenDependenciesResolver();
-    private static MavenMultiModuleArtifactMapping mavenMultiModuleArtifactMapping = new MuleMavenMultiModuleArtifactMapping();
-    private static ClassLoaderRunnerFactory classLoaderRunnerFactory = new MuleClassLoaderRunnerFactory();
-    private static ClassPathClassifier classPathClassifier = new MuleClassPathClassifier();
-
     /**
      * Instantiates a new test per class loader runner.
      *
@@ -59,33 +42,37 @@ public class ClassLoaderPerTestRunner extends BlockJUnit4ClassRunner
             throws InitializationError
     {
         super(createTestClassUsingClassLoader(klass));
-
-        originalCl = Thread.currentThread().getContextClassLoader();
     }
 
+    /**
+     * Creates the isolated {@link ClassLoader} that would be used to run the Test.
+     * A {@link ClassLoader} would be created by Test class.
+     * @param klass
+     * @return the test class loaded with the isolated {@link ClassLoader}
+     * @throws InitializationError
+     */
+    //TODO(gsfernandes) see the impact of having to create a classloader for test class vs what Runner docs says:
+    //" * The default runner implementation guarantees that the instances of the test case\n"+
+    //        " * class will be constructed immediately before running the test and that the runner\n"+
+    //        " * will retain no reference to the test case instances, generally making them\n"+
+    //        " * available for garbage collection."
     private static Class<?> createTestClassUsingClassLoader(Class<?> klass) throws InitializationError
     {
-        if (runnerCl == null)
-        {
-            // Creates for the whole test methods the same class loader to be used
-            ArtifactUrlClassification artifactUrlClassification = classPathClassifier.classify(klass, classPathURLsProvider.getURLs(),
-                                                                                               mavenDependenciesResolver.buildDependencies(), mavenMultiModuleArtifactMapping);
-            runnerCl = classLoaderRunnerFactory.createClassLoader(klass, artifactUrlClassification);
+        // Initializes utility classes
+        ClassPathURLsProvider classPathURLsProvider = new DefaultClassPathURLsProvider();
+        MavenDependenciesResolver mavenDependenciesResolver = new DependencyGraphMavenDependenciesResolver();
+        MavenMultiModuleArtifactMapping mavenMultiModuleArtifactMapping = new MuleMavenMultiModuleArtifactMapping();
+        ClassLoaderRunnerFactory classLoaderRunnerFactory = new MuleClassLoaderRunnerFactory();
+        ClassPathClassifier classPathClassifier = new MuleClassPathClassifier();
 
-            try
-            {
-                beforeClassFromClassLoader = runnerCl.loadClass(BeforeClass.class.getName());
-                afterClassFromClassLoader = runnerCl.loadClass(AfterClass.class.getName());
-                classRuleFromClassLoader = runnerCl.loadClass(ClassRule.class.getName());
-            }
-            catch (Exception e)
-            {
-                throw new InitializationError(e);
-            }
-        }
+        // Does the classification and creation of the isolated ClassLoader
+        ArtifactUrlClassification artifactUrlClassification = classPathClassifier.classify(klass, classPathURLsProvider.getURLs(),
+                                                                                           mavenDependenciesResolver.buildDependencies(), mavenMultiModuleArtifactMapping);
+        ClassLoader isolatedClassLoader = classLoaderRunnerFactory.createClassLoader(klass, artifactUrlClassification);
+
         try
         {
-            return runnerCl.loadClass(klass.getName());
+            return isolatedClassLoader.loadClass(klass.getName());
         }
         catch (Exception e)
         {
@@ -99,13 +86,8 @@ public class ClassLoaderPerTestRunner extends BlockJUnit4ClassRunner
         FrameworkMethod newMethod = null;
         try
         {
-            // See withAfters and withBefores for the reason.
-            beforeFromClassLoader = runnerCl.loadClass(Before.class.getName());
-            afterFromClassLoader = runnerCl.loadClass(After.class.getName());
-            ruleFromClassLoader = runnerCl.loadClass(Rule.class.getName());
-
             // Need the class from the custom loader now, so lets load the class.
-            Thread.currentThread().setContextClassLoader(runnerCl);
+            Thread.currentThread().setContextClassLoader(getTestClass().getJavaClass().getClassLoader());
             // The method as parameter is from the original class and thus not found in our
             // class loaded by the custom name (reflection is class loader sensitive)
             // So find the same method but now in the class from the class Loader.
@@ -123,11 +105,23 @@ public class ClassLoaderPerTestRunner extends BlockJUnit4ClassRunner
         return super.methodBlock(newMethod);
     }
 
+    private Class<? extends Annotation> loadAnnotationWithIsolatedClassLoader(Class<?> clazz)
+    {
+        try
+        {
+            return (Class<? extends Annotation>) getTestClass().getJavaClass().getClassLoader().loadClass(clazz.getName());
+        }
+        catch (ClassNotFoundException e)
+        {
+            throw new IllegalArgumentException("Couldn't find annotation class to be loaded with isolated class loader", e);
+        }
+    }
+
     @Override
     protected Statement withBeforeClasses(Statement statement)
     {
         List<FrameworkMethod> befores = getTestClass()
-                .getAnnotatedMethods((Class<? extends Annotation>) beforeClassFromClassLoader);
+                .getAnnotatedMethods(loadAnnotationWithIsolatedClassLoader(BeforeClass.class));
         return befores.isEmpty() ? statement :
                new RunBefores(statement, befores, null);
     }
@@ -136,16 +130,21 @@ public class ClassLoaderPerTestRunner extends BlockJUnit4ClassRunner
     protected Statement withAfterClasses(Statement statement)
     {
         List<FrameworkMethod> afters = getTestClass()
-                .getAnnotatedMethods((Class<? extends Annotation>) afterClassFromClassLoader);
+                .getAnnotatedMethods(loadAnnotationWithIsolatedClassLoader(AfterClass.class));
         return afters.isEmpty() ? statement :
                new RunAfters(statement, afters, null);
 
     }
 
-    protected List<TestRule> classRules() {
-        List<TestRule> result = getTestClass().getAnnotatedMethodValues(null, (Class<? extends Annotation>) classRuleFromClassLoader, TestRule.class);
+    @Override
+    protected List<TestRule> classRules()
+    {
+        // We now to need to search in the class from the custom loader.
+        //We also need to search with the annotation loaded by the custom class loader or otherwise we don't find any method.
+        Class<? extends Annotation> classRuleFromClassLoader = loadAnnotationWithIsolatedClassLoader(ClassRule.class);
+        List<TestRule> result = getTestClass().getAnnotatedMethodValues(null, classRuleFromClassLoader, TestRule.class);
 
-        result.addAll(getTestClass().getAnnotatedFieldValues(null, (Class<? extends Annotation>) classRuleFromClassLoader, TestRule.class));
+        result.addAll(getTestClass().getAnnotatedFieldValues(null, classRuleFromClassLoader, TestRule.class));
 
         return result;
     }
@@ -157,7 +156,7 @@ public class ClassLoaderPerTestRunner extends BlockJUnit4ClassRunner
         //We also need to search with the annotation loaded by the custom class loader or otherwise we don't find any method.
         List<FrameworkMethod> afters =
                 getTestClass()
-                        .getAnnotatedMethods((Class<? extends Annotation>) afterFromClassLoader);
+                        .getAnnotatedMethods(loadAnnotationWithIsolatedClassLoader(After.class));
 
         return new RunAfters(statement, afters, target);
     }
@@ -169,30 +168,22 @@ public class ClassLoaderPerTestRunner extends BlockJUnit4ClassRunner
         //We also need to search with the annotation loaded by the custom class loader or otherwise we don't find any method.
         List<FrameworkMethod> befores =
                 getTestClass()
-                        .getAnnotatedMethods((Class<? extends Annotation>) beforeFromClassLoader);
+                        .getAnnotatedMethods(loadAnnotationWithIsolatedClassLoader(Before.class));
 
         return new RunBefores(statement, befores, target);
     }
 
-    protected List<TestRule> lateClassRules() {
-        List<TestRule> result = getTestClass().getAnnotatedMethodValues(null, (Class<? extends Annotation>) classRuleFromClassLoader, TestRule.class);
-
-        result.addAll(getTestClass().getAnnotatedFieldValues(null, (Class<? extends Annotation>) classRuleFromClassLoader, TestRule.class));
-
-        return result;
-    }
-
-
     @Override
     protected synchronized List<TestRule> getTestRules(Object target)
     {
+        Class<? extends Annotation> ruleFromClassLoader = loadAnnotationWithIsolatedClassLoader(Rule.class);
         List<TestRule> result =
                 getTestClass()
-                        .getAnnotatedMethodValues(target, (Class<? extends Annotation>) ruleFromClassLoader, TestRule.class);
+                        .getAnnotatedMethodValues(target, ruleFromClassLoader, TestRule.class);
 
         result.addAll(
                 getTestClass()
-                        .getAnnotatedFieldValues(target, (Class<? extends Annotation>) ruleFromClassLoader, TestRule.class));
+                        .getAnnotatedFieldValues(target, ruleFromClassLoader, TestRule.class));
 
         return result;
     }
@@ -200,13 +191,14 @@ public class ClassLoaderPerTestRunner extends BlockJUnit4ClassRunner
     @Override
     protected synchronized List<MethodRule> rules(Object target)
     {
+        Class<? extends Annotation> ruleFromClassLoader = loadAnnotationWithIsolatedClassLoader(Rule.class);
         List<MethodRule> rules =
                 getTestClass()
-                        .getAnnotatedMethodValues(target, (Class<? extends Annotation>) ruleFromClassLoader, MethodRule.class);
+                        .getAnnotatedMethodValues(target, ruleFromClassLoader, MethodRule.class);
 
         rules.addAll(
                 getTestClass()
-                        .getAnnotatedFieldValues(target, (Class<? extends Annotation>) ruleFromClassLoader, MethodRule.class));
+                        .getAnnotatedFieldValues(target, ruleFromClassLoader, MethodRule.class));
 
         return rules;
     }
@@ -215,6 +207,6 @@ public class ClassLoaderPerTestRunner extends BlockJUnit4ClassRunner
     protected void runChild(FrameworkMethod method, RunNotifier notifier)
     {
         super.runChild(method, notifier);
-        Thread.currentThread().setContextClassLoader(originalCl);
+        Thread.currentThread().setContextClassLoader(ClassLoaderPerTestRunner.class.getClassLoader());
     }
 }
