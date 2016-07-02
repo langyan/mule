@@ -29,6 +29,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -113,7 +114,30 @@ public class MuleClassLoaderRunnerFactory implements ClassLoaderRunnerFactory
     {
         String extraPackages = getAnnotationAttributeFrom(klass, ArtifactClassLoaderRunnerConfig.class, "extraBootPackages");
 
-        return Sets.newHashSet(extraPackages.split(","));
+        Set<String> packages = Sets.newHashSet(extraPackages.split(","));
+
+        // Add default boot package always, they are defined in excluded.properties file!
+        try
+        {
+            Properties excludedProperties = RunnerModuleUtils.getExcludedProperties();
+            String excludedExtraBootPackages = excludedProperties.getProperty("extraBoot.packages");
+            if (excludedExtraBootPackages != null)
+            {
+                for (String extraBootPackage : excludedExtraBootPackages.split(","))
+                {
+                    packages.add(extraBootPackage);
+                }
+            }
+            else
+            {
+                logger.warn("excluded.properties found but there is no list of extra boot packages defined to be added to container, this could be the reason why the test may fail later due to JUnit classes are not found");
+            }
+        }
+        catch (Exception e)
+        {
+            throw new RuntimeException("Error while loading excluded.properties file", e);
+        }
+        return packages;
     }
 
 }

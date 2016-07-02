@@ -7,6 +7,8 @@
 
 package org.mule.functional.junit4.runners;
 
+import static java.nio.file.Files.readAllLines;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -55,8 +57,8 @@ public class DependencyGraphMavenDependenciesResolver implements MavenDependenci
 
 
             LinkedHashMap<MavenArtifact, Set<MavenArtifact>> mavenArtifactsDependencies = new LinkedHashMap<>();
-            Files.readAllLines(dependenciesGraphFile.toPath(),
-                               Charset.defaultCharset()).stream()
+            readAllLines(dependenciesGraphFile.toPath(),
+                         Charset.defaultCharset()).stream()
                     .filter(line -> line.contains(DEPENDENCIES_GRAPH_ARROW)).forEach(line ->
                                                                                      {
                                                                                          MavenArtifact from = parseDotDependencyArtifactFrom(line);
