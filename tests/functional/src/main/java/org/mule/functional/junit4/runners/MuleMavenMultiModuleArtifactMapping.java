@@ -60,6 +60,7 @@ public class MuleMavenMultiModuleArtifactMapping implements MavenMultiModuleArti
         mapModule("mule-module-builders", "/modules/builders/");
         mapModule("mule-module-json", "/modules/json/");
         mapModule("mule-module-json", "/modules/json/");
+        mapModule("mule-module-repository", "/modules/repository/");
 
         mapModule("mule-tests-functional", "/tests/functional/");
         mapModule("mule-tests-functional-plugins", "/tests/functional-plugins/");
