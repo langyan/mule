@@ -122,7 +122,19 @@ public class MuleClassPathClassifier implements ClassPathClassifier
     private Set<URL> extensionClassPathClassification(Class<?> extension, Predicate<MavenArtifact> exclusion, MavenMultiModuleArtifactMapping mavenMultiModuleMapping, ClassLoaderURLsBuilder classLoaderURLsBuilder, MavenArtifact compileArtifact, File targetTestClassesFolder)
     {
         Set<URL> extensionURLs = new LinkedHashSet<>();
-        String extensionMavenArtifactId = mavenMultiModuleMapping.getMavenArtifactIdFor(extension);
+        File extensionSourceCodeLocation = new File(extension.getProtectionDomain().getCodeSource().getLocation().getPath());
+        // Just move up from jar/classes to the artifactId/multi-module folder
+        File relativeFolder = extensionSourceCodeLocation.getParentFile().getParentFile();
+        final StringBuilder extensionMavenArtifactId = new StringBuilder();
+        if (extensionSourceCodeLocation.isFile())
+        {
+            // It is a jar file, therefore the extension is not being tested as multi-module maven project
+            extensionMavenArtifactId.append(relativeFolder.getName());
+        }
+        else
+        {
+            extensionMavenArtifactId.append(mavenMultiModuleMapping.getMavenArtifactIdFor(relativeFolder.getAbsolutePath() + File.separator));
+        }
 
         // First we need to add META-INF folder for generated resources due to they may be already created by another mvn install goal by the extension maven plugin
         File generatedResourcesDirectory = new File(targetTestClassesFolder.getParent(), GENERATED_TEST_SOURCES + File.separator + extensionMavenArtifactId + File.separator + "META-INF");
@@ -140,9 +152,9 @@ public class MuleClassPathClassifier implements ClassPathClassifier
         }
 
         // Just get the extension maven artifact without its dependencies (case if the extension maven artifact doesn't have dependencies)
-        extensionURLs.addAll(classLoaderURLsBuilder.buildClassLoaderURLs(!compileArtifact.getArtifactId().equals(extensionMavenArtifactId), false, artifact -> artifact.equals(compileArtifact), dependency -> dependency.getArtifactId().equals(extensionMavenArtifactId)));
+        extensionURLs.addAll(classLoaderURLsBuilder.buildClassLoaderURLs(!compileArtifact.getArtifactId().equals(extensionMavenArtifactId.toString()), false, artifact -> artifact.equals(compileArtifact), dependency -> dependency.getArtifactId().equals(extensionMavenArtifactId)));
         // Get dependencies from the extension maven artifact
-        extensionURLs.addAll(classLoaderURLsBuilder.buildClassLoaderURLs(true, false, artifact -> artifact.getArtifactId().equals(extensionMavenArtifactId), dep -> dep.isCompileScope() && !exclusion.test(dep)));
+        extensionURLs.addAll(classLoaderURLsBuilder.buildClassLoaderURLs(true, false, artifact -> artifact.getArtifactId().equals(extensionMavenArtifactId.toString()), dep -> dep.isCompileScope() && !exclusion.test(dep)));
 
         return extensionURLs;
     }
