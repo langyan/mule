@@ -43,23 +43,21 @@ public class MuleClassPathClassifier implements ClassPathClassifier
 
     public static final String GENERATED_TEST_SOURCES = "generated-test-sources";
 
-    private static final String TARGET_TEST_CLASSES = "/target/test-classes/";
-    private static final String TARGET_CLASSES = "/target/";
-
     protected final transient Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Override
     public ArtifactUrlClassification classify(Class<?> klass, Set<URL> classPathURLs, LinkedHashMap<MavenArtifact, Set<MavenArtifact>> allDependencies, MavenMultiModuleArtifactMapping mavenMultiModuleMapping)
     {
-        final String currentArtifactFolder = new File(System.getProperty("user.dir")).getPath();
+        final File targetTestClassesFolder = new File(klass.getProtectionDomain().getCodeSource().getLocation().getPath());
+
         final ClassLoaderURLsBuilder classLoaderURLsBuilder = new ClassLoaderURLsBuilder(classPathURLs, mavenMultiModuleMapping, allDependencies);
         Predicate<MavenArtifact> exclusion = getExclusionsPredicate(klass);
 
         MavenArtifact compileArtifact = getCompileArtifact(allDependencies);
         logger.debug("Classification based on: " + compileArtifact);
 
-        Set<URL> appURLs = buildApplicationUrls(exclusion, classPathURLs, currentArtifactFolder, compileArtifact, classLoaderURLsBuilder);
-        List<Set<URL>> extensionsURLs = buildExtensionsUrls(klass, exclusion, currentArtifactFolder, compileArtifact, classLoaderURLsBuilder, mavenMultiModuleMapping);
+        Set<URL> appURLs = buildApplicationUrls(exclusion, classPathURLs, compileArtifact, classLoaderURLsBuilder, targetTestClassesFolder);
+        List<Set<URL>> extensionsURLs = buildExtensionsUrls(klass, exclusion, compileArtifact, classLoaderURLsBuilder, mavenMultiModuleMapping, targetTestClassesFolder);
         Set<URL> containerURLs = buildContainerUrls(classPathURLs, appURLs, extensionsURLs, compileArtifact, classLoaderURLsBuilder);
 
         return new ArtifactUrlClassification(containerURLs, extensionsURLs, appURLs);
@@ -75,7 +73,7 @@ public class MuleClassPathClassifier implements ClassPathClassifier
         return compileArtifact.get();
     }
 
-    protected Set<URL> buildApplicationUrls(Predicate<MavenArtifact> exclusion, Set<URL> classPathURLs, String currentArtifactFolder, MavenArtifact compileArtifact, ClassLoaderURLsBuilder classLoaderURLsBuilder)
+    protected Set<URL> buildApplicationUrls(Predicate<MavenArtifact> exclusion, Set<URL> classPathURLs, MavenArtifact compileArtifact, ClassLoaderURLsBuilder classLoaderURLsBuilder, File targetTestClassesFolder)
     {
         boolean shouldAddOnlyDependencies = true;
         boolean shouldAddTransitiveDepFromExclude = true;
@@ -85,21 +83,17 @@ public class MuleClassPathClassifier implements ClassPathClassifier
 
         Set<URL> appURLs = classLoaderURLsBuilder.buildClassLoaderURLs(shouldAddOnlyDependencies, shouldAddTransitiveDepFromExclude, onlyTheCompileArtifact, onlyTestArtifactsNotExcluded);
         // Plus the target/test-classes of the current compiled artifact
-        appURLs.addAll(buildArtifactTargetClassesURL(currentArtifactFolder, classPathURLs));
+        appURLs.addAll(classPathURLs.stream().filter(url -> url.getFile().trim().equals(targetTestClassesFolder.getAbsolutePath() + File.separator)).collect(Collectors.toSet()));
 
         return appURLs;
     }
 
-    protected List<Set<URL>> buildExtensionsUrls(Class<?> klass, Predicate<MavenArtifact> exclusion, String currentArtifactFolder, MavenArtifact compileArtifact, ClassLoaderURLsBuilder classLoaderURLsBuilder, MavenMultiModuleArtifactMapping mavenMultiModuleMapping)
+    protected List<Set<URL>> buildExtensionsUrls(Class<?> klass, Predicate<MavenArtifact> exclusion, MavenArtifact compileArtifact, ClassLoaderURLsBuilder classLoaderURLsBuilder, MavenMultiModuleArtifactMapping mavenMultiModuleMapping, File targetTestClassesFolder)
     {
         Class[] extensions = getExtensions(klass);
 
         List<Set<URL>> extensionsURLs = new ArrayList<>(extensions.length);
-        if (extensions.length > 0)
-        {
-            stream(extensions).forEach(extension -> extensionsURLs.add(extensionClassPathClassification(extension, exclusion, mavenMultiModuleMapping, classLoaderURLsBuilder, compileArtifact, currentArtifactFolder)));
-        }
-
+        stream(extensions).forEach(extension -> extensionsURLs.add(extensionClassPathClassification(extension, exclusion, mavenMultiModuleMapping, classLoaderURLsBuilder, compileArtifact, targetTestClassesFolder)));
         return extensionsURLs;
     }
 
@@ -125,13 +119,13 @@ public class MuleClassPathClassifier implements ClassPathClassifier
         return containerURLs;
     }
 
-    private Set<URL> extensionClassPathClassification(Class<?> extension, Predicate<MavenArtifact> exclusion, MavenMultiModuleArtifactMapping mavenMultiModuleMapping, ClassLoaderURLsBuilder classLoaderURLsBuilder, MavenArtifact compileArtifact, String currentArtifactFolder)
+    private Set<URL> extensionClassPathClassification(Class<?> extension, Predicate<MavenArtifact> exclusion, MavenMultiModuleArtifactMapping mavenMultiModuleMapping, ClassLoaderURLsBuilder classLoaderURLsBuilder, MavenArtifact compileArtifact, File targetTestClassesFolder)
     {
         Set<URL> extensionURLs = new LinkedHashSet<>();
         String extensionMavenArtifactId = mavenMultiModuleMapping.getMavenArtifactIdFor(extension);
 
         // First we need to add META-INF folder for generated resources due to they may be already created by another mvn install goal by the extension maven plugin
-        File generatedResourcesDirectory = new File(currentArtifactFolder + TARGET_CLASSES + GENERATED_TEST_SOURCES + File.separator + extensionMavenArtifactId + File.separator + "META-INF");
+        File generatedResourcesDirectory = new File(targetTestClassesFolder.getParent(), GENERATED_TEST_SOURCES + File.separator + extensionMavenArtifactId + File.separator + "META-INF");
         generatedResourcesDirectory.mkdirs();
         ExtensionsTestInfrastructureDiscoverer extensionDiscoverer = new ExtensionsTestInfrastructureDiscoverer(generatedResourcesDirectory);
         extensionDiscoverer.discoverExtensions(new Describer[0], new Class[] {extension});
@@ -152,12 +146,6 @@ public class MuleClassPathClassifier implements ClassPathClassifier
 
         return extensionURLs;
     }
-
-    private Set<URL> buildArtifactTargetClassesURL(String currentArtifactFolderName, Set<URL> urls)
-    {
-        return urls.stream().filter(url -> url.getFile().trim().equals(currentArtifactFolderName + TARGET_TEST_CLASSES)).collect(Collectors.toSet());
-    }
-
 
     private Class[] getExtensions(Class<?> klass)
     {
