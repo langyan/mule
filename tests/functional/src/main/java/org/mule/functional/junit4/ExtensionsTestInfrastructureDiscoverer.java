@@ -127,7 +127,6 @@ public class ExtensionsTestInfrastructureDiscoverer
             loadExtensionsFromDescribers(extensionManager, describers);
         }
 
-        //TODO: support for multiple extensions here, resources should be returned by extension
         ExtensionsTestInfrastructureResourcesGenerator generator = new ExtensionsTestInfrastructureResourcesGenerator(getResourceFactories(), generatedResourcesDirectory);
         extensionManager.getExtensions().forEach(generator::generateFor);
         return generator.dumpAll();

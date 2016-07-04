@@ -13,7 +13,6 @@ package org.mule.functional.junit4.runners;
  *
  * @since 4.0
  */
-//TODO(gfernandes) find a way to get the maven artifactId without the need of this mapping!
 public interface MavenMultiModuleArtifactMapping
 {
 
@@ -24,9 +23,9 @@ public interface MavenMultiModuleArtifactMapping
     String mapModuleFolderNameFor(String artifactId);
 
     /**
-     * @param extensionClass
-     * @return the maven artifactId for a given extension class.
+     * @param path the folder path where the classes of the artifact were found. Without the target/classes/.
+     * @return the maven artifactId for a artifact path.
      */
-    String getMavenArtifactIdFor(Class<?> extensionClass);
+    String getMavenArtifactIdFor(String path);
 
 }
