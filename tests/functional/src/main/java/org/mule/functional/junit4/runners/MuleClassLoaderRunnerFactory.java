@@ -77,7 +77,7 @@ public class MuleClassLoaderRunnerFactory implements ClassLoaderRunnerFactory
             final List<ClassLoader> pluginClassLoaders = new ArrayList<>();
             pluginClassLoaders.add(new MuleArtifactClassLoader("sharedLibs", new URL[0], classLoader, childClassLoaderLookupPolicy));
 
-            for (Set<URL> pluginUrls : artifactUrlClassification.getPlugins())
+            for (List<URL> pluginUrls : artifactUrlClassification.getPlugins())
             {
                 // Plugin classLoader
                 logClassLoaderUrls("PLUGIN", pluginUrls);
@@ -98,7 +98,7 @@ public class MuleClassLoaderRunnerFactory implements ClassLoaderRunnerFactory
         return classLoader;
     }
 
-    private void logClassLoaderUrls(final String classLoaderName, final Set<URL> urls)
+    private void logClassLoaderUrls(final String classLoaderName, final List<URL> urls)
     {
         //TODO add system property!
         if (logger.isDebugEnabled())
