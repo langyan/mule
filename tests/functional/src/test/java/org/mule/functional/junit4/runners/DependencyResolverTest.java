@@ -9,9 +9,6 @@ package org.mule.functional.junit4.runners;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertTrue;
-import static org.mule.functional.junit4.runners.DependencyResolver.ConfigurationBuilder;
-import static org.mule.functional.junit4.runners.DependencyResolver.DependenciesFilterBuilder;
-import static org.mule.functional.junit4.runners.DependencyResolver.TransitiveDependenciesFilterBuilder;
 
 import org.mule.runtime.core.util.ValueHolder;
 import org.mule.tck.size.SmallTest;
