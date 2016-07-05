@@ -7,8 +7,8 @@
 
 package org.mule.functional.junit4;
 
-import static org.mule.functional.junit4.runners.AnnotationUtils.getAnnotationAttributeFrom;
-import static org.mule.functional.junit4.runners.AnnotationUtils.getAnnotationAttributeFromHierarchy;
+import static org.mule.functional.util.AnnotationUtils.getAnnotationAttributeFrom;
+import static org.mule.functional.util.AnnotationUtils.getAnnotationAttributeFromHierarchy;
 import org.mule.functional.junit4.runners.ArtifactClassLoaderRunnerConfig;
 import org.mule.functional.junit4.runners.ArtifactClassloaderTestRunner;
 import org.mule.functional.junit4.runners.ClassLoaderIsolatedExtensionsManagerConfigurationBuilder;

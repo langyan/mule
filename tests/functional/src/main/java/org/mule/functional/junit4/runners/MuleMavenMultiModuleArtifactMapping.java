@@ -8,6 +8,7 @@
 package org.mule.functional.junit4.runners;
 
 import static java.lang.Thread.currentThread;
+import static org.apache.commons.lang.StringUtils.isEmpty;
 import static org.mule.runtime.core.util.PropertiesUtils.loadProperties;
 
 import java.io.IOException;
@@ -38,7 +39,12 @@ public class MuleMavenMultiModuleArtifactMapping implements MavenMultiModuleArti
     @Override
     public String mapModuleFolderNameFor(String artifactId)
     {
-        return mappings.getProperty(artifactId);
+        String folder = mappings.getProperty(artifactId);
+        if(isEmpty(folder))
+        {
+            throw new IllegalArgumentException("No folder mapped in multi-module for artifactId: " + artifactId);
+        }
+        return folder;
     }
 
     @Override

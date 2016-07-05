@@ -7,11 +7,14 @@
 
 package org.mule.functional.junit4.runners;
 
+import com.google.common.collect.Lists;
+
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -31,7 +34,7 @@ public class DefaultClassPathURLsProvider implements ClassPathURLsProvider
      * @return Gets the urls from the {@code java.class.path} and {@code sun.boot.class.path} system properties
      */
     @Override
-    public Set<URL> getURLs()
+    public List<URL> getURLs()
     {
         final Set<URL> urls = new HashSet<>();
         addUrlsFromSystemProperty(urls, "java.class.path");
@@ -44,7 +47,7 @@ public class DefaultClassPathURLsProvider implements ClassPathURLsProvider
             logger.debug(builder.toString());
         }
 
-        return urls;
+        return Lists.newArrayList(urls);
     }
 
     protected void addUrlsFromSystemProperty(final Collection<URL> urls, final String propertyName)
