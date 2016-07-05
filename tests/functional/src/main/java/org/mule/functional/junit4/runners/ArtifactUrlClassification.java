@@ -19,13 +19,13 @@ public class ArtifactUrlClassification
 {
 
     private final List<URL> container;
-    private final List<List<URL>> plugins;
+    private final List<PluginUrlClassification> pluginUrlClassifications;
     private final List<URL> application;
 
-    public ArtifactUrlClassification(List<URL> container, List<List<URL>> plugins, List<URL> application)
+    public ArtifactUrlClassification(List<URL> container, List<PluginUrlClassification> pluginUrlClassifications, List<URL> application)
     {
         this.container = container;
-        this.plugins = plugins;
+        this.pluginUrlClassifications = pluginUrlClassifications;
         this.application = application;
     }
 
@@ -34,9 +34,9 @@ public class ArtifactUrlClassification
         return container;
     }
 
-    public List<List<URL>> getPlugins()
+    public List<PluginUrlClassification> getPluginClassifications()
     {
-        return plugins;
+        return pluginUrlClassifications;
     }
 
     public List<URL> getApplication()

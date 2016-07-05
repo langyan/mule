@@ -7,15 +7,16 @@
 
 package org.mule.functional.junit4;
 
+import static java.util.Arrays.stream;
 import static org.mule.functional.util.AnnotationUtils.getAnnotationAttributeFrom;
-import static org.mule.functional.util.AnnotationUtils.getAnnotationAttributeFromHierarchy;
 import org.mule.functional.junit4.runners.ArtifactClassLoaderRunnerConfig;
+import org.mule.functional.junit4.runners.ArtifactClassLoaderRunnerConfig.DEFAULT;
+import org.mule.functional.junit4.runners.ArtifactClassLoaderRunnerConfigs;
 import org.mule.functional.junit4.runners.ArtifactClassloaderTestRunner;
 import org.mule.functional.junit4.runners.ClassLoaderIsolatedExtensionsManagerConfigurationBuilder;
 import org.mule.functional.junit4.runners.RunnerDelegateTo;
 import org.mule.runtime.core.api.config.ConfigurationBuilder;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -48,11 +49,11 @@ public abstract class ArtifactFunctionalTestCase extends FunctionalTestCase
                                             + " so it should be annotated to only run with: " + ArtifactClassloaderTestRunner.class + ". See " + RunnerDelegateTo.class + " for defining a delegate runner to be used.");
         }
 
-        List<Class<?>[]> extensionsAnnotatedClasses = getAnnotationAttributeFromHierarchy(this.getClass(), ArtifactClassLoaderRunnerConfig.class, "extensions");
-        if (!extensionsAnnotatedClasses.isEmpty())
+        ArtifactClassLoaderRunnerConfigs annotationGroup = this.getClass().getAnnotation(ArtifactClassLoaderRunnerConfigs.class);
+        if (annotationGroup != null)
         {
-            Set<Class<?>> extensionsAnnotatedClassesNoDups = extensionsAnnotatedClasses.stream().flatMap(Arrays::stream).collect(Collectors.toSet());
-            builders.add(0, new ClassLoaderIsolatedExtensionsManagerConfigurationBuilder(extensionsAnnotatedClassesNoDups.toArray(new Class<?>[0])));
+            Set<Class> extensionsAnnotatedClasses = stream(annotationGroup.value()).filter(a -> !a.extension().equals(DEFAULT.class)).map(a -> a.extension()).collect(Collectors.toSet());
+            builders.add(0, new ClassLoaderIsolatedExtensionsManagerConfigurationBuilder(extensionsAnnotatedClasses.toArray(new Class<?>[0])));
         }
     }
 

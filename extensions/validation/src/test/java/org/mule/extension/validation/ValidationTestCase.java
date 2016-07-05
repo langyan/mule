@@ -20,7 +20,7 @@ import org.mule.functional.junit4.FlowRunner;
 import org.mule.functional.junit4.runners.ArtifactClassLoaderRunnerConfig;
 import org.mule.runtime.core.config.i18n.Message;
 
-@ArtifactClassLoaderRunnerConfig(extensions = ValidationExtension.class)
+@ArtifactClassLoaderRunnerConfig(extension = ValidationExtension.class, exposeForTesting = ValidationMessages.class)
 abstract class ValidationTestCase extends ArtifactFunctionalTestCase
 {
 
