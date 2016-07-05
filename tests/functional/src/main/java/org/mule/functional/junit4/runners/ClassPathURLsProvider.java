@@ -8,7 +8,7 @@
 package org.mule.functional.junit4.runners;
 
 import java.net.URL;
-import java.util.Set;
+import java.util.List;
 
 /**
  * Resolves the classpath URLs.
@@ -19,7 +19,7 @@ public interface ClassPathURLsProvider
 {
 
     /**
-     * @return a {@link Set} of the classpath {@link URL}
+     * @return a {@link List} of the classpath {@link URL}
      */
-    Set<URL> getURLs();
+    List<URL> getURLs();
 }

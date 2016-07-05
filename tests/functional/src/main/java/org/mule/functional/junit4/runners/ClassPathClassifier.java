@@ -8,8 +8,6 @@
 package org.mule.functional.junit4.runners;
 
 import java.net.URL;
-import java.util.LinkedHashMap;
-import java.util.Set;
 
 /**
  * A {@link ClassPathClassifier} is responsible for building the {@link ArtifactUrlClassification} that would be used for creating
@@ -21,11 +19,9 @@ public interface ClassPathClassifier
 {
     /**
      * Implements the logic for classifying how the URLs provided for dependencies should be arranged
-     * @param klass the class of the test being tested
-     * @param classPathURLs current URLs for the classpath provided by JUnit (it is the complete list of URLs)
-     * @param allDependencies Maven dependencies for the given artifact tested (with its duplications). The map has as key an artifact and values are its dependencies
-     * @param mavenMultiModuleArtifactMapping mapper used to identify a multi-module project folder from its artifact metadata
+     *
+     * @param context {@link ClassPathClassifierContext} to be used during the classification
      * @return a {@link ArtifactUrlClassification} with the corresponding {@link URL}s
      */
-    ArtifactUrlClassification classify(Class<?> klass, Set<URL> classPathURLs, LinkedHashMap<MavenArtifact, Set<MavenArtifact>> allDependencies, MavenMultiModuleArtifactMapping mavenMultiModuleArtifactMapping);
+    ArtifactUrlClassification classify(ClassPathClassifierContext context);
 }

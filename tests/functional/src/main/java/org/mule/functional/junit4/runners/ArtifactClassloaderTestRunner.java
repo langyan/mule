@@ -65,8 +65,8 @@ public class ArtifactClassloaderTestRunner extends Suite
         ClassPathClassifier classPathClassifier = new MuleClassPathClassifier();
 
         // Does the classification and creation of the isolated ClassLoader
-        ArtifactUrlClassification artifactUrlClassification = classPathClassifier.classify(klass, classPathURLsProvider.getURLs(),
-                                                                                           mavenDependenciesResolver.buildDependencies(), mavenMultiModuleArtifactMapping);
+        ArtifactUrlClassification artifactUrlClassification = classPathClassifier.classify(new DefaultClassPathClassifierContext(klass, classPathURLsProvider.getURLs(),
+                                                                                           mavenDependenciesResolver.buildDependencies(), mavenMultiModuleArtifactMapping));
         ClassLoader isolatedClassLoader = classLoaderRunnerFactory.createClassLoader(klass, artifactUrlClassification);
 
         try

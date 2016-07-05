@@ -7,7 +7,7 @@
 
 package org.mule.functional.junit4.runners;
 
-import static org.mule.functional.junit4.runners.AnnotationUtils.getAnnotationAttributeFrom;
+import static org.mule.functional.util.AnnotationUtils.getAnnotationAttributeFrom;
 import static org.mule.runtime.module.extension.internal.ExtensionProperties.EXTENSION_MANIFEST_FILE_NAME;
 import org.mule.runtime.container.internal.ContainerClassLoaderFilterFactory;
 import org.mule.runtime.container.internal.MuleModule;

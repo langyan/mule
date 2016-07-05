@@ -5,7 +5,7 @@
  * LICENSE.txt file.
  */
 
-package org.mule.functional.junit4.runners;
+package org.mule.functional.util;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
