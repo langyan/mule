@@ -54,7 +54,7 @@ import java.util.Locale;
 @Operations({CommonValidationOperations.class, CustomValidatorOperation.class, ValidationStrategies.class, NumberValidationOperation.class})
 @Extensible(alias = "validator-message-processor")
 //TODO gfernandes check if needed to classes too!
-@Export(resources = "/META-INF/services/org/mule/runtime/core/i18n"}) //, classes = {ValidationElExtension.class, Validator.class})
+@Export(resources = "/META-INF/services/org/mule/runtime/core/i18n") //, classes = {ValidationElExtension.class, Validator.class})
 public class ValidationExtension extends AbstractAnnotatedObject implements Config, NamedObject, Initialisable, MuleContextAware
 {
 
