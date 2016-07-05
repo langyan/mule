@@ -55,6 +55,8 @@ import org.apache.commons.io.FileUtils;
  * In this way, the user experience is greatly simplified when running the test
  * either through an IDE or build tool such as maven or gradle.
  * <p/>
+ *
+ * @since 4.0
  */
 public class ExtensionsTestInfrastructureDiscoverer
 {
