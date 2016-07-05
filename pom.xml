@@ -1447,6 +1447,11 @@
                     <groupId>com.github.ferstl</groupId>
                     <artifactId>depgraph-maven-plugin</artifactId>
                     <version>${depgraph.maven.plugin.version}</version>
+                    <configuration>
+                        <showDuplicates>true</showDuplicates>
+                        <showConflicts>true</showConflicts>
+                        <outputFile>${project.build.testOutputDirectory}/dependency-graph.dot</outputFile>
+                    </configuration>
                     <executions>
                         <execution>
                             <id>depgraph-dependencies-graph</id>
@@ -1454,11 +1459,6 @@
                                 <goal>graph</goal>
                             </goals>
                             <phase>none</phase>
-                            <configuration>
-                                <showDuplicates>true</showDuplicates>
-                                <showConflicts>true</showConflicts>
-                                <outputFile>${project.build.testOutputDirectory}/dependency-graph.dot</outputFile>
-                            </configuration>
                         </execution>
                     </executions>
                 </plugin>
