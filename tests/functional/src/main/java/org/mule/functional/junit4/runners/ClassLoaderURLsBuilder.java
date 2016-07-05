@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Responsible of filtering, traversing and collect a list of URLs with different conditions and patterns in order to
  * build class loaders by filtering an initial and complete classpath urls and using a maven dependency graph represented
- * by their dependencies transitions in a {@link Map}.
+ * by their dependencies transitions in a {@link java.util.Map}.
  *
  * @since 4.0
  */
@@ -45,8 +45,7 @@ public class ClassLoaderURLsBuilder
     public Set<URL> buildClassLoaderURLs(final boolean shouldAddOnlyDependencies,
                                          final boolean shouldAddTransitiveDepFromExcluded,
                                          final Predicate<MavenArtifact> predicateArtifact,
-                                         final Predicate<MavenArtifact> predicateDependency
-    )
+                                         final Predicate<MavenArtifact> predicateDependency)
     {
         Set<MavenArtifact> collectedDependencies = new HashSet<>();
 
@@ -63,16 +62,18 @@ public class ClassLoaderURLsBuilder
                     collectedDependencies.addAll(getDependencies(artifact, predicateDependency, shouldAddTransitiveDepFromExcluded));
                 });
 
-        Set<URL> fetchedURLs = new HashSet<>();
-        collectedDependencies.forEach(artifact -> addURL(fetchedURLs, artifact, urls, mavenMultiModuleMapping));
-        return fetchedURLs;
+        return collectedDependencies.stream().
+                filter(artifact -> !artifact.getType().equals("pom"))
+                .map(artifact -> getURL(artifact, urls, mavenMultiModuleMapping)).collect(Collectors.toSet());
     }
 
     /**
      * It builds a list of MavenArtifact representing the dependencies of the provided artifact.
      *
-     * @param artifact a MavenArtifact for which we want to know its dependencies
-     * @return recursively gets the dependencies for the given artifact
+     * @param artifact a MavenArtifact for which we want to know its dependencies.
+     * @param predicate a filter to be applied for each dependency, if the filter passes the dependency is added and recursively collected its dependencies using the same filter.
+     * @param shouldAddTransitiveDepFromExcluded if true does not stop when a dependency does not match the filter and collects it dependencies too.
+     * @return recursively gets the dependencies for the given artifact.
      */
     private Set<MavenArtifact> getDependencies(final MavenArtifact artifact, final Predicate<MavenArtifact> predicate, final boolean shouldAddTransitiveDepFromExcluded)
     {
@@ -98,30 +99,24 @@ public class ClassLoaderURLsBuilder
         return dependencies;
     }
 
-    private void addURL(final Collection<URL> collection, final MavenArtifact artifact, final Collection<URL> urls, final MavenMultiModuleArtifactMapping mavenMultiModuleMapping)
+    private URL getURL(final MavenArtifact artifact, final Collection<URL> urls, final MavenMultiModuleArtifactMapping mavenMultiModuleMapping)
     {
-        if (artifact.getType().equals("pom"))
-        {
-            logger.debug("Artifact ignored and not added to classloader: " + artifact);
-            return;
-        }
-
         Optional<URL> artifactURL = urls.stream().filter(filePath -> filePath.getFile().contains(artifact.getGroupIdAsPath() + File.separator + artifact.getArtifactId() + File.separator)).findFirst();
         if (artifactURL.isPresent())
         {
-            collection.add(artifactURL.get());
+            return artifactURL.get();
         }
         else
         {
-            addModuleURL(collection, artifact, urls, mavenMultiModuleMapping);
+            return getModuleURL(artifact, urls, mavenMultiModuleMapping);
         }
     }
 
-    private void addModuleURL(final Collection<URL> collection, final MavenArtifact artifact, final Collection<URL> urls, final MavenMultiModuleArtifactMapping mavenMultiModuleMapping)
+    private URL getModuleURL(final MavenArtifact artifact, final Collection<URL> urls, final MavenMultiModuleArtifactMapping mavenMultiModuleMapping)
     {
         final StringBuilder moduleFolder = new StringBuilder(mavenMultiModuleMapping.mapModuleFolderNameFor(artifact.getArtifactId())).append("target/");
 
-        // Fix to handle when running test during an intall phase due to maven builds the classpath pointing out to packaged files instead of classes folders.
+        // Fix to handle when running test during an install phase due to maven builds the classpath pointing out to packaged files instead of classes folders.
         final StringBuilder explodedUrlSuffix = new StringBuilder();
         final StringBuilder packagedUrlSuffix = new StringBuilder();
         if (artifact.isTestScope() && artifact.getType().equals("test-jar"))
@@ -143,13 +138,11 @@ public class ClassLoaderURLsBuilder
             }
             return false;
         }).findFirst();
-        if (localFile.isPresent())
-        {
-            collection.add(localFile.get());
-        }
-        else
+        if (!localFile.isPresent())
         {
             throw new IllegalArgumentException("Cannot locate artifact as multi-module dependency: '" + artifact + "', on module folder: " + moduleFolder + " using exploded url suffix regex: " + explodedUrlSuffix + " or " + packagedUrlSuffix);
+
         }
+        return localFile.get();
     }
 } 

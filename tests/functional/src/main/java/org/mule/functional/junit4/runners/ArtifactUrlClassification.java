@@ -9,7 +9,6 @@ package org.mule.functional.junit4.runners;
 
 import java.net.URL;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Defines the list of URLS for each class loader that would be created in order to run the test.
@@ -19,28 +18,28 @@ import java.util.Set;
 public class ArtifactUrlClassification
 {
 
-    private final Set<URL> container;
-    private final List<Set<URL>> plugins;
-    private final Set<URL> application;
+    private final List<URL> container;
+    private final List<List<URL>> plugins;
+    private final List<URL> application;
 
-    public ArtifactUrlClassification(Set<URL> container, List<Set<URL>> plugins, Set<URL> application)
+    public ArtifactUrlClassification(List<URL> container, List<List<URL>> plugins, List<URL> application)
     {
         this.container = container;
         this.plugins = plugins;
         this.application = application;
     }
 
-    public Set<URL> getContainer()
+    public List<URL> getContainer()
     {
         return container;
     }
 
-    public List<Set<URL>> getPlugins()
+    public List<List<URL>> getPlugins()
     {
         return plugins;
     }
 
-    public Set<URL> getApplication()
+    public List<URL> getApplication()
     {
         return application;
     }
