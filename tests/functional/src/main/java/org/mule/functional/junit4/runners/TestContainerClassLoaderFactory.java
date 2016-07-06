@@ -7,6 +7,7 @@
 
 package org.mule.functional.junit4.runners;
 
+import static org.mule.runtime.core.util.ClassUtils.withContextClassLoader;
 import org.mule.runtime.container.internal.ClasspathModuleDiscoverer;
 import org.mule.runtime.container.internal.ContainerClassLoaderFactory;
 import org.mule.runtime.container.internal.MuleModule;
@@ -18,6 +19,7 @@ import org.mule.runtime.module.artifact.classloader.MuleClassLoaderLookupPolicy;
 import com.google.common.collect.ImmutableSet;
 
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -45,7 +47,7 @@ public class TestContainerClassLoaderFactory extends ContainerClassLoaderFactory
     protected ArtifactClassLoader createArtifactClassLoader(ClassLoader parentClassLoader, List<MuleModule> muleModules, ClassLoaderLookupPolicy containerLookupPolicy)
     {
         final ArtifactClassLoader containerClassLoader = new MuleArtifactClassLoader("mule", urls, parentClassLoader, new MuleClassLoaderLookupPolicy(Collections.emptyMap(), getBootPackages()));
-        return createContainerFilteringClassLoader(muleModules, containerClassLoader);
+        return createContainerFilteringClassLoader(discoverModules(), containerClassLoader);
     }
 
     @Override
@@ -54,14 +56,14 @@ public class TestContainerClassLoaderFactory extends ContainerClassLoaderFactory
         return ImmutableSet.<String>builder().addAll(super.getBootPackages()).addAll(extraBootPackages).build();
     }
 
-    public ClassLoaderLookupPolicy getContainerClassLoaderLookupPolicy(ClassLoader classLoader)
+    public ClassLoaderLookupPolicy getContainerClassLoaderLookupPolicy()
     {
-        return super.getContainerClassLoaderLookupPolicy(discoverModules(classLoader));
+        return withContextClassLoader(new URLClassLoader(urls, null), () -> super.getContainerClassLoaderLookupPolicy(discoverModules()));
     }
 
-    private List<MuleModule> discoverModules(ClassLoader classLoader)
+    private List<MuleModule> discoverModules()
     {
-        return new ClasspathModuleDiscoverer(classLoader).discover();
+        return new ClasspathModuleDiscoverer(Thread.currentThread().getContextClassLoader()).discover();
     }
 
 }

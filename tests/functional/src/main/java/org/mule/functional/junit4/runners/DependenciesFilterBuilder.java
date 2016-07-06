@@ -13,6 +13,8 @@ import java.util.function.Predicate;
 
 /**
  * Filter definition for selecting dependencies when resolving them from {@link DependencyResolver}
+ *
+ * @since 4.0
  */
 public final class DependenciesFilterBuilder
 {

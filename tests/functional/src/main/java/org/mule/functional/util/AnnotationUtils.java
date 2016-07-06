@@ -9,6 +9,8 @@ package org.mule.functional.util;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Utility for annotations related stuff.
@@ -56,4 +58,26 @@ public class AnnotationUtils
         return extensions;
     }
 
+    /**
+     * @param klass
+     * @param annotationClass
+     * @param methodName
+     * @param <T>
+     * @return a (@link List} of T for the attributes annotated in all the object hierarchy until it reaches {@link Object} class.
+     */
+    public static <T> List<T> getAnnotationAttributeFromHierarchy(Class<?> klass, Class<? extends Annotation> annotationClass, String methodName)
+    {
+        List<T> extensions = new ArrayList<>();
+        Class<?> currentClass = klass;
+        while (currentClass != Object.class)
+        {
+            T attributeFrom = getAnnotationAttributeFrom(currentClass, annotationClass, methodName);
+            if (attributeFrom != null)
+            {
+                extensions.add(attributeFrom);
+            }
+            currentClass = currentClass.getSuperclass();
+        }
+        return extensions;
+    }
 }

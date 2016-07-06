@@ -11,7 +11,8 @@ import static org.junit.Assert.assertThat;
 import static org.junit.rules.ExpectedException.none;
 
 import org.mule.extension.file.internal.FileConnector;
-import org.mule.functional.junit4.ExtensionFunctionalTestCase;
+import org.mule.functional.junit4.ArtifactFunctionalTestCase;
+import org.mule.functional.junit4.runners.ArtifactClassLoaderRunnerConfig;
 import org.mule.runtime.api.message.MuleMessage;
 import org.mule.runtime.core.api.MuleEvent;
 import org.mule.runtime.core.util.IOUtils;
@@ -28,7 +29,8 @@ import org.junit.Rule;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 
-public abstract class FileConnectorTestCase extends ExtensionFunctionalTestCase
+@ArtifactClassLoaderRunnerConfig(extensions = FileConnector.class)
+public abstract class FileConnectorTestCase extends ArtifactFunctionalTestCase
 {
 
     protected static final String HELLO_WORLD = "Hello World!";
@@ -60,12 +62,6 @@ public abstract class FileConnectorTestCase extends ExtensionFunctionalTestCase
     protected void doTearDownAfterMuleContextDispose() throws Exception
     {
         temporaryFolder.delete();
-    }
-
-    @Override
-    protected Class<?>[] getAnnotatedExtensionClasses()
-    {
-        return new Class<?>[] {FileConnector.class};
     }
 
     protected void assertExists(boolean exists, File... files)

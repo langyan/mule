@@ -7,9 +7,9 @@
 
 package org.mule.functional.junit4.runners;
 
-import static java.util.Arrays.stream;
-import static java.util.stream.Stream.concat;
-import static org.mule.functional.util.AnnotationUtils.getAnnotationAttributeFrom;
+import static java.util.Collections.addAll;
+import static org.apache.commons.lang3.StringUtils.isEmpty;
+import static org.mule.functional.util.AnnotationUtils.getAnnotationAttributeFromHierarchy;
 import static org.mule.runtime.module.extension.internal.ExtensionProperties.EXTENSION_MANIFEST_FILE_NAME;
 import org.mule.runtime.container.internal.ContainerClassLoaderFilterFactory;
 import org.mule.runtime.container.internal.MuleModule;
@@ -71,7 +71,7 @@ public class MuleClassLoaderRunnerFactory implements ClassLoaderRunnerFactory
 
         ClassLoader classLoader = testContainerClassLoaderFactory.createContainerClassLoader(new FilteringArtifactClassLoader(launcherArtifact, filteredClassLoaderLauncher)).getClassLoader();
 
-        ClassLoaderLookupPolicy childClassLoaderLookupPolicy = testContainerClassLoaderFactory.getContainerClassLoaderLookupPolicy(classLoader);
+        ClassLoaderLookupPolicy childClassLoaderLookupPolicy = testContainerClassLoaderFactory.getContainerClassLoaderLookupPolicy();
 
         // Plugin classloaders
         if (!artifactUrlClassification.getPluginClassifications().isEmpty())
@@ -87,9 +87,8 @@ public class MuleClassLoaderRunnerFactory implements ClassLoaderRunnerFactory
 
                 URL manifestUrl = pluginCL.findResource("META-INF/" + EXTENSION_MANIFEST_FILE_NAME);
                 ExtensionManifest extensionManifest = extensionManager.parseExtensionManifestXml(manifestUrl);
-                List<String> extraTestPackages = getExtraTestPackages(klass, pluginUrlClassification.getExtension());
-                ArtifactClassLoaderFilter filter = artifactClassLoaderFilterFactory.create(concat(extensionManifest.getExportedPackages().stream(), extraTestPackages.stream())
-                                   .collect(Collectors.joining(", ")), extensionManifest.getExportedResources().stream().collect(Collectors.joining(", ")));
+                ArtifactClassLoaderFilter filter = artifactClassLoaderFilterFactory.create(extensionManifest.getExportedPackages().stream().collect(Collectors.joining(", ")),
+                                                                                           extensionManifest.getExportedResources().stream().collect(Collectors.joining(", ")));
                 pluginClassLoaders.add(new FilteringArtifactClassLoader(pluginCL, filter));
             }
             classLoader = new CompositeClassLoader(classLoader, pluginClassLoaders, childClassLoaderLookupPolicy);
@@ -100,20 +99,6 @@ public class MuleClassLoaderRunnerFactory implements ClassLoaderRunnerFactory
         classLoader = new MuleArtifactClassLoader("app", artifactUrlClassification.getApplication().toArray(new URL[0]), classLoader, childClassLoaderLookupPolicy);
 
         return classLoader;
-    }
-
-    private List<String> getExtraTestPackages(Class<?> klass, Class<?> extension)
-    {
-        List<String> extraTestPackages = new ArrayList<>();
-        ArtifactClassLoaderRunnerConfig[] annotations = klass.getAnnotationsByType(ArtifactClassLoaderRunnerConfig.class);
-        for(ArtifactClassLoaderRunnerConfig annotation : annotations)
-        {
-            if (annotation.extension().equals(extension))
-            {
-                stream(annotation.exposeForTesting()).map(extraClass -> extraClass.getPackage().getName()).forEach(extraTestPackages::add);
-            }
-        }
-        return extraTestPackages;
     }
 
     private void logClassLoaderUrls(final String classLoaderName, final List<URL> urls)
@@ -130,9 +115,10 @@ public class MuleClassLoaderRunnerFactory implements ClassLoaderRunnerFactory
 
     private Set<String> getExtraBootPackages(Class<?> klass)
     {
-        String extraPackages = getAnnotationAttributeFrom(klass, ArtifactClassLoaderRunnerConfig.class, "extraBootPackages");
+        Set<String> packages = Sets.newHashSet();
 
-        Set<String> packages = Sets.newHashSet(extraPackages.split(","));
+        List<String> extraBootPackagesList = getAnnotationAttributeFromHierarchy(klass, ArtifactClassLoaderRunnerConfig.class, "extraBootPackages");
+        extraBootPackagesList.stream().filter(extraBootPackages -> !isEmpty(extraBootPackages)).forEach(extraBootPackages -> addAll(packages, extraBootPackages.split(",")));
 
         // Add default boot package always, they are defined in excluded.properties file!
         try

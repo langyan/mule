@@ -15,6 +15,8 @@ import java.util.function.Predicate;
 
 /**
  * Builder for setting the resolution strategy for {@link DependencyResolver}
+ *
+ * @since 4.0
  */
 public final class ConfigurationBuilder
 {

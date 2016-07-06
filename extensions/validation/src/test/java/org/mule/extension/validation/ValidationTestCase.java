@@ -15,13 +15,12 @@ import static org.junit.Assert.assertThat;
 import org.mule.extension.validation.api.ValidationException;
 import org.mule.extension.validation.api.ValidationExtension;
 import org.mule.extension.validation.internal.ValidationMessages;
-import org.mule.functional.junit4.ArtifactFunctionalTestCase;
+import org.mule.functional.junit4.ExtensionFunctionalTestCase;
 import org.mule.functional.junit4.FlowRunner;
-import org.mule.functional.junit4.runners.ArtifactClassLoaderRunnerConfig;
+import org.mule.runtime.core.api.MuleException;
 import org.mule.runtime.core.config.i18n.Message;
 
-@ArtifactClassLoaderRunnerConfig(extension = ValidationExtension.class, exposeForTesting = ValidationMessages.class)
-abstract class ValidationTestCase extends ArtifactFunctionalTestCase
+abstract class ValidationTestCase extends ExtensionFunctionalTestCase
 {
 
     static final String VALID_URL = "http://localhost:8080";
@@ -33,12 +32,18 @@ abstract class ValidationTestCase extends ArtifactFunctionalTestCase
     protected ValidationMessages messages;
 
     @Override
+    protected Class<?>[] getAnnotatedExtensionClasses()
+    {
+        return new Class<?>[] {ValidationExtension.class};
+    }
+
+    @Override
     protected void doSetUp() throws Exception
     {
         messages = new ValidationMessages();
     }
 
-    protected void assertValid(FlowRunner runner) throws Exception
+    protected void assertValid(FlowRunner runner) throws MuleException, Exception
     {
         assertThat(runner.run().getMessage().getExceptionPayload(), is(nullValue()));
         runner.reset();

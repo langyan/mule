@@ -8,7 +8,7 @@
 package org.mule.functional.junit4.runners;
 
 import static com.google.common.collect.Lists.newArrayList;
-import static org.mule.functional.util.AnnotationUtils.getAnnotationAttributeFrom;
+import static org.mule.functional.util.AnnotationUtils.getAnnotationAttributeFromHierarchy;
 import org.mule.functional.junit4.ExtensionsTestInfrastructureDiscoverer;
 import org.mule.runtime.extension.api.introspection.declaration.spi.Describer;
 
@@ -18,6 +18,7 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -119,14 +120,13 @@ public class MuleClassPathClassifier implements ClassPathClassifier
     private List<PluginUrlClassification> buildExtensionsClassification(final ClassPathClassifierContext context, final Predicate<MavenArtifact> exclusion, final MavenArtifact compileArtifact, final MavenArtifactToClassPathURLResolver artifactToClassPathURLResolver, final File targetTestClassesFolder)
     {
         List<PluginUrlClassification> pluginClassifications = new ArrayList<>();
-        ArtifactClassLoaderRunnerConfig[] annotations = context.getTestClass().getAnnotationsByType(ArtifactClassLoaderRunnerConfig.class);
-        for(ArtifactClassLoaderRunnerConfig annotation : annotations)
+        List<Class<?>[]> extensionsAnnotatedClasses = getAnnotationAttributeFromHierarchy(context.getTestClass(), ArtifactClassLoaderRunnerConfig.class, "extensions");
+        if (!extensionsAnnotatedClasses.isEmpty())
         {
-            Class extension = annotation.extension();
-            if (!extension.equals(ArtifactClassLoaderRunnerConfig.DEFAULT.class))
-            {
-                pluginClassifications.add(extensionClassPathClassification(extension, exclusion, context.getMavenMultiModuleArtifactMapping(), artifactToClassPathURLResolver, context.getMavenDependencies(), compileArtifact, targetTestClassesFolder, context.getClassPathURLs()));
-            }
+            Set<Class<?>> extensionsAnnotatedClassesNoDups = extensionsAnnotatedClasses.stream().flatMap(Arrays::stream).collect(Collectors.toSet());
+            extensionsAnnotatedClassesNoDups.forEach(extension ->
+                pluginClassifications.add(extensionClassPathClassification(extension, exclusion, context.getMavenMultiModuleArtifactMapping(), artifactToClassPathURLResolver, context.getMavenDependencies(), compileArtifact, targetTestClassesFolder, context.getClassPathURLs()))
+            );
         }
         return pluginClassifications;
     }
@@ -209,10 +209,13 @@ public class MuleClassPathClassifier implements ClassPathClassifier
         {
             throw new RuntimeException("Error while loading excluded.properties file", e);
         }
-        String exclusionsToBeAppended = getAnnotationAttributeFrom(klass, ArtifactClassLoaderRunnerConfig.class, "exclusions");
-        if (exclusionsToBeAppended != null && exclusionsToBeAppended.length() > 0)
+        List<String> exclusionsAnnotated = getAnnotationAttributeFromHierarchy(klass, ArtifactClassLoaderRunnerConfig.class, "exclusions");
+        for (String exclusionsToBeAppended : exclusionsAnnotated)
         {
-            exclusionPredicate = createPredicate(exclusionPredicate, exclusionsToBeAppended);
+            if (exclusionsToBeAppended != null && exclusionsToBeAppended.length() > 0)
+            {
+                exclusionPredicate = createPredicate(exclusionPredicate, exclusionsToBeAppended);
+            }
         }
 
         return exclusionPredicate;

@@ -6,7 +6,7 @@
  */
 package org.mule.functional.junit4.runners;
 
-import org.mule.runtime.core.util.ClassUtils;
+import static org.mule.runtime.core.util.ClassUtils.withContextClassLoader;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -52,7 +52,7 @@ public class ArtifactClassloaderTestRunner extends Suite
     }
 
     protected void runChild(final Runner runner, final RunNotifier notifier) {
-        ClassUtils.withContextClassLoader(getTestClass().getJavaClass().getClassLoader(), () -> runner.run(notifier));
+        withContextClassLoader(getTestClass().getJavaClass().getClassLoader(), () -> runner.run(notifier));
     }
 
     private static Class<?> createTestClassUsingClassLoader(Class<?> klass) throws InitializationError
