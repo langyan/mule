@@ -6,17 +6,21 @@
  */
 package org.mule.functional.junit4.runners;
 
+import static java.util.Collections.emptyList;
 import static org.mule.runtime.core.util.ClassUtils.withContextClassLoader;
+import org.mule.runtime.module.artifact.classloader.ArtifactClassLoader;
 
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.junit.runner.Runner;
 import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.Suite;
+import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.InitializationError;
+import org.junit.runners.model.TestClass;
 
 /**
  * Runner that does the testing of the class using a different {@link ClassLoader} from the one that launched the test.
@@ -25,8 +29,8 @@ import org.junit.runners.model.InitializationError;
  */
 public class ArtifactClassloaderTestRunner extends Suite
 {
-    private static final List<Runner> NO_RUNNERS = Collections.<Runner>emptyList();
-    private final ArrayList<Runner> runners = new ArrayList<Runner>();
+    private static final List<Runner> NO_RUNNERS = emptyList();
+    private final ArrayList<Runner> runners = new ArrayList<>();
 
     /**
      * Creates a Runner to run {@code klass}
@@ -34,7 +38,7 @@ public class ArtifactClassloaderTestRunner extends Suite
      * @param klass
      * @throws InitializationError if the test class is malformed.
      */
-    public ArtifactClassloaderTestRunner(final Class<?> klass) throws Exception
+    public ArtifactClassloaderTestRunner(final Class<?> klass) throws Throwable
     {
         super(createTestClassUsingClassLoader(klass), NO_RUNNERS);
         Class<? extends Runner> runnerClass = BlockJUnit4ClassRunner.class;
@@ -55,7 +59,7 @@ public class ArtifactClassloaderTestRunner extends Suite
         withContextClassLoader(getTestClass().getJavaClass().getClassLoader(), () -> runner.run(notifier));
     }
 
-    private static Class<?> createTestClassUsingClassLoader(Class<?> klass) throws InitializationError
+    private static Class<?> createTestClassUsingClassLoader(Class<?> klass) throws Throwable
     {
         // Initializes utility classes
         ClassPathURLsProvider classPathURLsProvider = new DefaultClassPathURLsProvider();
@@ -67,15 +71,30 @@ public class ArtifactClassloaderTestRunner extends Suite
         // Does the classification and creation of the isolated ClassLoader
         ArtifactUrlClassification artifactUrlClassification = classPathClassifier.classify(new DefaultClassPathClassifierContext(klass, classPathURLsProvider.getURLs(),
                                                                                            mavenDependenciesResolver.buildDependencies(), mavenMultiModuleArtifactMapping));
-        ClassLoader isolatedClassLoader = classLoaderRunnerFactory.createClassLoader(klass, artifactUrlClassification);
+        ClassLoaderTestRunner classLoaderTestRunner = classLoaderRunnerFactory.createClassLoader(klass, artifactUrlClassification);
 
-        try
+        Class<?> isolatedTestClass = classLoaderTestRunner.loadClassWithApplicationClassLoader(klass.getName());
+
+        TestClass testClass = new TestClass(isolatedTestClass);
+        Class<? extends Annotation> artifactContextAwareAnn = (Class<? extends Annotation>) classLoaderTestRunner.loadClassWithApplicationClassLoader(ArtifactClassloaderRunnerContextAware.class.getName());
+        List<FrameworkMethod> contextAwareMethods = testClass.getAnnotatedMethods(artifactContextAwareAnn);
+        for (FrameworkMethod method : contextAwareMethods)
         {
-            return isolatedClassLoader.loadClass(klass.getName());
+            if (!method.isStatic() || !method.isPublic())
+            {
+                throw new IllegalStateException("Method marked with annotation " + ArtifactClassloaderRunnerContextAware.class.getName() + " should be public static and it should receive a parameter of type List<" + ArtifactClassLoader.class + ">");
+            }
+            try
+            {
+                method.invokeExplosively(null, classLoaderTestRunner.getPlugins());
+            }
+            catch (IllegalArgumentException e)
+            {
+                throw new IllegalStateException("Method marked with annotation " + ArtifactClassloaderRunnerContextAware.class.getName() + " should receive a parameter of type List<" + ArtifactClassLoader.class + ">");
+            }
         }
-        catch (Exception e)
-        {
-            throw new InitializationError(e);
-        }
+
+        return isolatedTestClass;
     }
+
 }

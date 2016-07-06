@@ -8,6 +8,7 @@
 package org.mule.functional.junit4.runners;
 
 import static com.google.common.collect.Lists.newArrayList;
+import static java.lang.Class.forName;
 import static org.mule.functional.util.AnnotationUtils.getAnnotationAttributeFromHierarchy;
 import org.mule.functional.junit4.ExtensionsTestInfrastructureDiscoverer;
 import org.mule.runtime.extension.api.introspection.declaration.spi.Describer;
@@ -120,21 +121,30 @@ public class MuleClassPathClassifier implements ClassPathClassifier
     private List<PluginUrlClassification> buildExtensionsClassification(final ClassPathClassifierContext context, final Predicate<MavenArtifact> exclusion, final MavenArtifact compileArtifact, final MavenArtifactToClassPathURLResolver artifactToClassPathURLResolver, final File targetTestClassesFolder)
     {
         List<PluginUrlClassification> pluginClassifications = new ArrayList<>();
-        List<Class<?>[]> extensionsAnnotatedClasses = getAnnotationAttributeFromHierarchy(context.getTestClass(), ArtifactClassLoaderRunnerConfig.class, "extensions");
+        List<String[]> extensionsAnnotatedClasses = getAnnotationAttributeFromHierarchy(context.getTestClass(), ArtifactClassLoaderRunnerConfig.class, "extensions");
         if (!extensionsAnnotatedClasses.isEmpty())
         {
-            Set<Class<?>> extensionsAnnotatedClassesNoDups = extensionsAnnotatedClasses.stream().flatMap(Arrays::stream).collect(Collectors.toSet());
-            extensionsAnnotatedClassesNoDups.forEach(extension ->
-                pluginClassifications.add(extensionClassPathClassification(extension, exclusion, context.getMavenMultiModuleArtifactMapping(), artifactToClassPathURLResolver, context.getMavenDependencies(), compileArtifact, targetTestClassesFolder, context.getClassPathURLs()))
+            Set<String> extensionsAnnotatedClassesNoDups = extensionsAnnotatedClasses.stream().flatMap(Arrays::stream).collect(Collectors.toSet());
+            extensionsAnnotatedClassesNoDups.forEach(extensionClass ->
+                pluginClassifications.add(extensionClassPathClassification(extensionClass, exclusion, context.getMavenMultiModuleArtifactMapping(), artifactToClassPathURLResolver, context.getMavenDependencies(), compileArtifact, targetTestClassesFolder, context.getClassPathURLs()))
             );
         }
         return pluginClassifications;
     }
 
-    private PluginUrlClassification extensionClassPathClassification(final Class<?> extension, final Predicate<MavenArtifact> exclusion, final MavenMultiModuleArtifactMapping mavenMultiModuleMapping, final MavenArtifactToClassPathURLResolver artifactToClassPathURLResolver, final LinkedHashMap<MavenArtifact, Set<MavenArtifact>> allDependencies, final MavenArtifact compileArtifact, final File targetTestClassesFolder, final List<URL> classPathURLs)
+    private PluginUrlClassification extensionClassPathClassification(final String extensionClassName, final Predicate<MavenArtifact> exclusion, final MavenMultiModuleArtifactMapping mavenMultiModuleMapping, final MavenArtifactToClassPathURLResolver artifactToClassPathURLResolver, final LinkedHashMap<MavenArtifact, Set<MavenArtifact>> allDependencies, final MavenArtifact compileArtifact, final File targetTestClassesFolder, final List<URL> classPathURLs)
     {
-        logger.debug("Classifying classpath for extension class: " + extension.getName());
+        logger.debug("Classifying classpath for extension class: " + extensionClassName);
         Set<URL> extensionURLs = new LinkedHashSet<>();
+        Class extension;
+        try
+        {
+            extension = forName(extensionClassName);
+        }
+        catch (ClassNotFoundException e)
+        {
+            throw new IllegalArgumentException("Cannot create plugin/extension class loader classification due to extension class not found", e);
+        }
         File extensionSourceCodeLocation = new File(extension.getProtectionDomain().getCodeSource().getLocation().getPath());
         // Just move up from jar/classes to the artifactId/multi-module folder
         File relativeFolder = extensionSourceCodeLocation.getParentFile().getParentFile();

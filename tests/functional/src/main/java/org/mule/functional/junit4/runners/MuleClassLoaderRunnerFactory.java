@@ -14,6 +14,7 @@ import static org.mule.runtime.module.extension.internal.ExtensionProperties.EXT
 import org.mule.runtime.container.internal.ContainerClassLoaderFilterFactory;
 import org.mule.runtime.container.internal.MuleModule;
 import org.mule.runtime.extension.api.manifest.ExtensionManifest;
+import org.mule.runtime.module.artifact.classloader.ArtifactClassLoader;
 import org.mule.runtime.module.artifact.classloader.ArtifactClassLoaderFilter;
 import org.mule.runtime.module.artifact.classloader.ArtifactClassLoaderFilterFactory;
 import org.mule.runtime.module.artifact.classloader.ClassLoaderFilter;
@@ -59,7 +60,7 @@ public class MuleClassLoaderRunnerFactory implements ClassLoaderRunnerFactory
     private DefaultExtensionManager extensionManager = new DefaultExtensionManager();
 
     @Override
-    public ClassLoader createClassLoader(Class<?> klass, ArtifactUrlClassification artifactUrlClassification)
+    public ClassLoaderTestRunner createClassLoader(Class<?> klass, ArtifactUrlClassification artifactUrlClassification)
     {
         // Container classLoader
         logClassLoaderUrls("CONTAINER", artifactUrlClassification.getContainer());
@@ -69,10 +70,12 @@ public class MuleClassLoaderRunnerFactory implements ClassLoaderRunnerFactory
                                                                                MuleClassLoaderRunnerFactory.class.getClassLoader(), new MuleClassLoaderLookupPolicy(Collections.emptyMap(), Collections.<String>emptySet()));
         ClassLoaderFilter filteredClassLoaderLauncher = new ContainerClassLoaderFilterFactory().create(testContainerClassLoaderFactory.getBootPackages(), Collections.<MuleModule>emptyList());
 
-        ClassLoader classLoader = testContainerClassLoaderFactory.createContainerClassLoader(new FilteringArtifactClassLoader(launcherArtifact, filteredClassLoaderLauncher)).getClassLoader();
+        ArtifactClassLoader containerClassLoader = testContainerClassLoaderFactory.createContainerClassLoader(new FilteringArtifactClassLoader(launcherArtifact, filteredClassLoaderLauncher));
+        ClassLoader classLoader = containerClassLoader.getClassLoader();
 
         ClassLoaderLookupPolicy childClassLoaderLookupPolicy = testContainerClassLoaderFactory.getContainerClassLoaderLookupPolicy();
 
+        List<ArtifactClassLoader> pluginsArtifactClassLoaders = new ArrayList<>();
         // Plugin classloaders
         if (!artifactUrlClassification.getPluginClassifications().isEmpty())
         {
@@ -83,7 +86,8 @@ public class MuleClassLoaderRunnerFactory implements ClassLoaderRunnerFactory
             {
                 // Plugin classLoader
                 logClassLoaderUrls("PLUGIN (" + pluginUrlClassification.getExtension().getName() + ")", pluginUrlClassification.getUrls());
-                MuleArtifactClassLoader pluginCL = new MuleArtifactClassLoader("plugin", pluginUrlClassification.getUrls().toArray(new URL[0]), classLoader, childClassLoaderLookupPolicy);
+                MuleArtifactClassLoader pluginCL = new MuleArtifactClassLoader(pluginUrlClassification.getExtension().getName(), pluginUrlClassification.getUrls().toArray(new URL[0]), classLoader, childClassLoaderLookupPolicy);
+                pluginsArtifactClassLoaders.add(pluginCL);
 
                 URL manifestUrl = pluginCL.findResource("META-INF/" + EXTENSION_MANIFEST_FILE_NAME);
                 ExtensionManifest extensionManifest = extensionManager.parseExtensionManifestXml(manifestUrl);
@@ -96,9 +100,9 @@ public class MuleClassLoaderRunnerFactory implements ClassLoaderRunnerFactory
 
         // Application classLoader
         logClassLoaderUrls("APP", artifactUrlClassification.getApplication());
-        classLoader = new MuleArtifactClassLoader("app", artifactUrlClassification.getApplication().toArray(new URL[0]), classLoader, childClassLoaderLookupPolicy);
+        ArtifactClassLoader appClassLoader = new MuleArtifactClassLoader("app", artifactUrlClassification.getApplication().toArray(new URL[0]), classLoader, childClassLoaderLookupPolicy);
 
-        return classLoader;
+        return new ClassLoaderTestRunner(containerClassLoader, pluginsArtifactClassLoaders, appClassLoader);
     }
 
     private void logClassLoaderUrls(final String classLoaderName, final List<URL> urls)

@@ -33,10 +33,10 @@ public @interface ArtifactClassLoaderRunnerConfig
     String extraBootPackages() default "";
 
     /**
-     * @return {@link Class[]} that defines the extensions that would be used to create and load it using a plugin/extensio
+     * @return {@link String[]} with the extension {@link Class} name of the extensions that would be used to create and load it using a plugin/extensio
      * {@link ClassLoader}. If no extensions are defined the plugin/extension class loaders will not be created.
      */
-    Class[] extensions() default {};
+    String[] extensions() default {};
 
     /**
      * @return a comma separated list of groupId:artifactId:type (it does support wildcards org.mule:*:* or *:mule-core:* but
