@@ -17,6 +17,10 @@ import java.lang.annotation.Target;
  * Defines that the test is going to be run with an {@link ArtifactClassloaderTestRunner} and would need
  * the context to register extensions.
  *
+ * A public static method should be defined and annotated with this annotation in order to be called by the runner
+ * so the test later could get access to the plugins/extensions {@link ClassLoader}.
+ * See {@link org.mule.functional.junit4.ArtifactFunctionalTestCase} where this is used.
+ *
  * @since 4.0
  */
 @Retention(RetentionPolicy.RUNTIME)
@@ -24,12 +28,4 @@ import java.lang.annotation.Target;
 @Inherited
 public @interface ArtifactClassloaderRunnerContextAware
 {
-
-    ///**
-    // * Sets the list of {@link ArtifactClassLoader} for the extensions classified.
-    // *
-    // * @param extensionClassLoaders the list of {@link ArtifactClassLoader} for each extesion/plugin that was
-    // *                             classified and created by the runner.
-    // */
-    //void setExtensionClassLoaders(List<ArtifactClassLoader> extensionClassLoaders);
 }
