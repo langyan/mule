@@ -14,6 +14,7 @@ import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.runner.Description;
 import org.junit.runner.Runner;
 import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.BlockJUnit4ClassRunner;
@@ -54,6 +55,13 @@ public class ArtifactClassloaderTestRunner extends Suite
     protected List<Runner> getChildren() {
         return runners;
     }
+
+    @Override
+    public Description getDescription() {
+        // Just to avoid having duplicated name in IDEA/Eclipse JUnit panel view due to this is a Suite, we always have only one delegate/child runner.
+        return runners.get(0).getDescription();
+    }
+
 
     protected void runChild(final Runner runner, final RunNotifier notifier) {
         withContextClassLoader(getTestClass().getJavaClass().getClassLoader(), () -> runner.run(notifier));

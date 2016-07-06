@@ -7,9 +7,12 @@
 
 package org.mule.functional.junit4.runners;
 
+import static java.lang.Boolean.valueOf;
+import static java.lang.System.getProperty;
 import static java.util.Collections.addAll;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.mule.functional.util.AnnotationUtils.getAnnotationAttributeFromHierarchy;
+import static org.mule.runtime.core.api.config.MuleProperties.MULE_LOG_VERBOSE_CLASSLOADING;
 import static org.mule.runtime.module.extension.internal.ExtensionProperties.EXTENSION_MANIFEST_FILE_NAME;
 import org.mule.runtime.container.internal.ContainerClassLoaderFilterFactory;
 import org.mule.runtime.container.internal.MuleModule;
@@ -107,14 +110,27 @@ public class MuleClassLoaderRunnerFactory implements ClassLoaderRunnerFactory
 
     private void logClassLoaderUrls(final String classLoaderName, final List<URL> urls)
     {
-        //TODO add system property!
-        if (logger.isDebugEnabled())
+        StringBuilder builder = new StringBuilder(classLoaderName).append(" classloader urls: [");
+        urls.stream().forEach(e -> builder.append("\n").append(" ").append(e.getFile()));
+        builder.append("\n]");
+        logClassLoadingTrace(builder.toString());
+    }
+
+    private void logClassLoadingTrace(String message)
+    {
+        if (isVerboseClassLoading())
         {
-            StringBuilder builder = new StringBuilder(classLoaderName).append(" classloader urls: [");
-            urls.stream().forEach(e -> builder.append("\n").append(" ").append(e.getFile()));
-            builder.append("\n]");
-            logger.debug(builder.toString());
+            logger.info(message);
         }
+        else if (logger.isTraceEnabled())
+        {
+            logger.trace(message);
+        }
+    }
+
+    private Boolean isVerboseClassLoading()
+    {
+        return valueOf(getProperty(MULE_LOG_VERBOSE_CLASSLOADING));
     }
 
     private Set<String> getExtraBootPackages(Class<?> klass)
