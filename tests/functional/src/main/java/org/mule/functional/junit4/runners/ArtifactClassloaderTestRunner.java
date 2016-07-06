@@ -67,6 +67,12 @@ public class ArtifactClassloaderTestRunner extends Suite
         withContextClassLoader(getTestClass().getJavaClass().getClassLoader(), () -> runner.run(notifier));
     }
 
+    /**
+     * @param klass
+     * @return the {@link ClassLoader} that would be used to run the test. This way the test will be isolated and it will behave
+     * similar as an application running in a Mule standalone container.
+     * @throws Throwable
+     */
     private static Class<?> createTestClassUsingClassLoader(Class<?> klass) throws Throwable
     {
         // Initializes utility classes
@@ -83,6 +89,19 @@ public class ArtifactClassloaderTestRunner extends Suite
 
         Class<?> isolatedTestClass = classLoaderTestRunner.loadClassWithApplicationClassLoader(klass.getName());
 
+        injectPluginsClassLoaders(classLoaderTestRunner, isolatedTestClass);
+
+        return isolatedTestClass;
+    }
+
+    /**
+     * Invokes the method to inject the plugin/extension classloaders for registering the extensions to the {@link org.mule.runtime.core.api.MuleContext}.
+     * @param classLoaderTestRunner
+     * @param isolatedTestClass
+     * @throws Throwable
+     */
+    private static void injectPluginsClassLoaders(ClassLoaderTestRunner classLoaderTestRunner, Class<?> isolatedTestClass) throws Throwable
+    {
         TestClass testClass = new TestClass(isolatedTestClass);
         Class<? extends Annotation> artifactContextAwareAnn = (Class<? extends Annotation>) classLoaderTestRunner.loadClassWithApplicationClassLoader(ArtifactClassloaderRunnerContextAware.class.getName());
         List<FrameworkMethod> contextAwareMethods = testClass.getAnnotatedMethods(artifactContextAwareAnn);
@@ -101,8 +120,6 @@ public class ArtifactClassloaderTestRunner extends Suite
                 throw new IllegalStateException("Method marked with annotation " + ArtifactClassloaderRunnerContextAware.class.getName() + " should receive a parameter of type List<" + ArtifactClassLoader.class + ">");
             }
         }
-
-        return isolatedTestClass;
     }
 
 }
