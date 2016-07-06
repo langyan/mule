@@ -302,9 +302,9 @@ public abstract class AbstractExceptionListener extends AbstractMessageProcessor
 
         MuleMessage logMessage = event.getMessage();
         String logUniqueId = StringUtils.defaultString(logMessage.getUniqueId(), NOT_SET);
-        String correlationId = StringUtils.defaultString(logMessage.getCorrelationId(), NOT_SET);
-        Integer correlationGroupSize = logMessage.getCorrelationGroupSize();
-        Integer correlationGroupSeq = logMessage.getCorrelationSequence();
+        String correlationId = StringUtils.defaultString(logMessage.getCorrelation().getId(), NOT_SET);
+        Integer correlationGroupSize = logMessage.getCorrelation().getGroupSize();
+        Integer correlationGroupSeq = logMessage.getCorrelation().getSequence();
 
         String printableLogMessage = MessageFormat.format("Message identification summary here: " +
                 "id={0} correlationId={1}, correlationGroup={2}, correlationSeq={3}",

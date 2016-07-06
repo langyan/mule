@@ -10,10 +10,10 @@ import org.mule.compatibility.core.api.endpoint.OutboundEndpoint;
 import org.mule.runtime.core.api.MuleEvent;
 import org.mule.runtime.core.api.MuleException;
 import org.mule.runtime.core.api.MuleMessage;
+import org.mule.runtime.core.api.MuleMessage.Builder;
 import org.mule.runtime.core.processor.AbstractRequestResponseMessageProcessor;
 
 import java.io.Serializable;
-import java.util.List;
 
 /**
  * Propagates properties from request message to response message as defined by
@@ -37,17 +37,24 @@ public class OutboundResponsePropertiesMessageProcessor extends AbstractRequestR
     {
         if (isEventValid(response))
         {
+            final MuleMessage message = response.getMessage();
+            final Builder builder = MuleMessage.builder(message);
+
+            builder.correlationId(message.getCorrelation().getId());
+            builder.correlationSequence(message.getCorrelation().getSequence());
+            builder.correlationGroupSize(message.getCorrelation().getGroupSize());
+
             // Properties which should be carried over from the request message
             // to the response message
-            List<String> responseProperties = endpoint.getResponseProperties();
-            for (String propertyName : responseProperties)
+            for (String propertyName : endpoint.getResponseProperties())
             {
                 Serializable propertyValue = request.getMessage().getOutboundProperty(propertyName);
                 if (propertyValue != null)
                 {
-                    response.setMessage(MuleMessage.builder(response.getMessage()).addOutboundProperty(propertyName, propertyValue).build());
+                    builder.addOutboundProperty(propertyName, propertyValue);
                 }
             }
+            response.setMessage(builder.build());
         }
         return response;
     }

@@ -191,12 +191,12 @@ public abstract class AbstractOutboundRouter extends AbstractMessageProcessorOwn
         }
         if (enableCorrelation != CorrelationMode.NEVER)
         {
-            boolean correlationSet = message.getCorrelationId() != null;
+            boolean correlationSet = message.getCorrelation().getId() != null;
             if (correlationSet && (enableCorrelation == CorrelationMode.IF_NOT_SET))
             {
                 if (logger.isDebugEnabled())
                 {
-                    logger.debug("CorrelationId is already set to '" + message.getCorrelationId()
+                    logger.debug("CorrelationId is already set to '" + message.getCorrelation().getId()
                                  + "' , not setting it again");
                 }
                 return;
@@ -205,7 +205,7 @@ public abstract class AbstractOutboundRouter extends AbstractMessageProcessorOwn
             {
                 if (logger.isDebugEnabled())
                 {
-                    logger.debug("CorrelationId is already set to '" + message.getCorrelationId()
+                    logger.debug("CorrelationId is already set to '" + message.getCorrelation().getId()
                                  + "', but router is configured to overwrite it");
                 }
             }

@@ -126,7 +126,7 @@ public abstract class AbstractMessageSequenceSplitter extends AbstractIntercepti
             final Builder builder = MuleMessage.builder(event.getMessage());
             if (enableCorrelation != NEVER)
             {
-                boolean correlationSet = event.getMessage().getCorrelationId() != null;
+                boolean correlationSet = event.getMessage().getCorrelation().getId() != null;
                 if ((!correlationSet && (enableCorrelation == IF_NOT_SET)) || (enableCorrelation == ALWAYS))
                 {
                     builder.correlationId(correlationId);

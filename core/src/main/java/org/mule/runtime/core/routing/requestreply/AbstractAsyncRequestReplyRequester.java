@@ -187,9 +187,9 @@ public abstract class AbstractAsyncRequestReplyRequester extends AbstractInterce
         // TODO add logic to use also seqNo when present so it works with split
         // messages
         String correlationId = event.getFlowConstruct().getMessageInfoMapping().getCorrelationId(event);
-        if (event.getMessage().getCorrelationSequence() != null)
+        if (event.getMessage().getCorrelation().getSequence() != null)
         {
-            correlationId += event.getMessage().getCorrelationSequence();
+            correlationId += event.getMessage().getCorrelation().getSequence();
         }
         return correlationId;
     }

@@ -42,10 +42,7 @@ public abstract class AbstractRoutingStrategy implements RoutingStrategy
      * TODO MULE-9858
      */
     @Deprecated
-    protected static List<String> magicProperties = Arrays.asList(
-            MuleProperties.MULE_CORRELATION_ID_PROPERTY, MuleProperties.MULE_CORRELATION_ID_PROPERTY,
-            MuleProperties.MULE_CORRELATION_GROUP_SIZE_PROPERTY,
-            MuleProperties.MULE_CORRELATION_SEQUENCE_PROPERTY, MuleProperties.MULE_SESSION_PROPERTY);
+    protected static List<String> magicProperties = Arrays.asList(MuleProperties.MULE_SESSION_PROPERTY);
 
     /**
      * logger used by this class
@@ -165,6 +162,7 @@ public abstract class AbstractRoutingStrategy implements RoutingStrategy
     public static MuleMessage propagateMagicProperties(MuleMessage in)
     {
         final Builder builder = MuleMessage.builder(in);
+
         for (String name : magicProperties)
         {
             Serializable value = in.getInboundProperty(name);

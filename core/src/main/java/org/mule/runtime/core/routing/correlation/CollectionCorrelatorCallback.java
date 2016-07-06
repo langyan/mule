@@ -68,12 +68,12 @@ public class CollectionCorrelatorCallback implements EventCorrelatorCallback
 
     /**
      * Creates a new EventGroup that will expect the number of events as returned by
-     * {@link MuleMessage#getCorrelationGroupSize()}.
+     * {@link MuleMessage#getGroupSize()}.
      */
     @Override
     public EventGroup createEventGroup(MuleEvent event, Object groupId)
     {
-        return new EventGroup(groupId, muleContext, event.getMessage().getCorrelationGroupSize(), storePrefix);
+        return new EventGroup(groupId, muleContext, event.getMessage().getCorrelation().getGroupSize(), storePrefix);
     }
 
     /**

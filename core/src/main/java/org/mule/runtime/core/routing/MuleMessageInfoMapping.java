@@ -15,9 +15,10 @@ import org.mule.runtime.core.api.routing.MessageInfoMapping;
  */
 public class MuleMessageInfoMapping implements MessageInfoMapping
 {
+    @Override
     public String getCorrelationId(MuleEvent event)
     {
-        String id= event.getMessage().getCorrelationId();
+        String id = event.getMessage().getCorrelation().getId();
         if (id == null)
         {
             id = getMessageId(event);
@@ -25,6 +26,7 @@ public class MuleMessageInfoMapping implements MessageInfoMapping
         return id;
     }
 
+    @Override
     public String getMessageId(MuleEvent event)
     {
         return event.getMessage().getUniqueId();

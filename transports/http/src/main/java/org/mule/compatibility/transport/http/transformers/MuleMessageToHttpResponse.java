@@ -300,16 +300,16 @@ public class MuleMessageToHttpResponse extends AbstractMessageTransformer
             }
         }
 
-        if (msg.getCorrelationId() != null)
+        if (msg.getCorrelation().getId() != null)
         {
-            response.setHeader(new Header(CUSTOM_HEADER_PREFIX + MULE_CORRELATION_ID_PROPERTY, msg.getCorrelationId()));
-            if (msg.getCorrelationGroupSize() != null)
+            response.setHeader(new Header(CUSTOM_HEADER_PREFIX + MULE_CORRELATION_ID_PROPERTY, msg.getCorrelation().getId()));
+            if (msg.getCorrelation().getGroupSize() != null)
             {
-                response.setHeader(new Header(CUSTOM_HEADER_PREFIX + MULE_CORRELATION_GROUP_SIZE_PROPERTY, valueOf(msg.getCorrelationGroupSize())));
+                response.setHeader(new Header(CUSTOM_HEADER_PREFIX + MULE_CORRELATION_GROUP_SIZE_PROPERTY, valueOf(msg.getCorrelation().getGroupSize())));
             }
-            if (msg.getCorrelationSequence() != null)
+            if (msg.getCorrelation().getSequence() != null)
             {
-                response.setHeader(new Header(CUSTOM_HEADER_PREFIX + MULE_CORRELATION_SEQUENCE_PROPERTY, valueOf(msg.getCorrelationSequence())));
+                response.setHeader(new Header(CUSTOM_HEADER_PREFIX + MULE_CORRELATION_SEQUENCE_PROPERTY, valueOf(msg.getCorrelation().getSequence())));
             }
         }
         if (msg.getReplyTo() != null)

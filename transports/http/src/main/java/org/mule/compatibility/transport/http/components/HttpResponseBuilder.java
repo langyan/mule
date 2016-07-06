@@ -138,16 +138,16 @@ public class HttpResponseBuilder extends AbstractMessageProcessorOwner
 
     private void copyCorrelationIdProperties(HttpResponse response, MuleMessage message)
     {
-        if(message.getCorrelationId() != null)
+        if (message.getCorrelation().getId() != null)
         {
-            response.setHeader(new Header(CUSTOM_HEADER_PREFIX + MULE_CORRELATION_ID_PROPERTY, message.getCorrelationId()));
-            if (message.getCorrelationGroupSize() != null)
+            response.setHeader(new Header(CUSTOM_HEADER_PREFIX + MULE_CORRELATION_ID_PROPERTY, message.getCorrelation().getId()));
+            if (message.getCorrelation().getGroupSize() != null)
             {
-                response.setHeader(new Header(CUSTOM_HEADER_PREFIX + MULE_CORRELATION_GROUP_SIZE_PROPERTY, valueOf(message.getCorrelationGroupSize())));
+                response.setHeader(new Header(CUSTOM_HEADER_PREFIX + MULE_CORRELATION_GROUP_SIZE_PROPERTY, valueOf(message.getCorrelation().getGroupSize())));
             }
-            if (message.getCorrelationSequence() != null)
+            if (message.getCorrelation().getSequence() != null)
             {
-                response.setHeader(new Header(CUSTOM_HEADER_PREFIX + MULE_CORRELATION_SEQUENCE_PROPERTY, valueOf(message.getCorrelationSequence())));
+                response.setHeader(new Header(CUSTOM_HEADER_PREFIX + MULE_CORRELATION_SEQUENCE_PROPERTY, valueOf(message.getCorrelation().getSequence())));
             }
         }
     }

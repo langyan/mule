@@ -43,7 +43,7 @@ public abstract class AbstractSequenceRouter extends FilteringOutboundRouter
         }
         if (enableCorrelation != CorrelationMode.NEVER)
         {
-            boolean correlationSet = message.getCorrelationId() != null;
+            boolean correlationSet = message.getCorrelation().getId() != null;
             if (correlationSet && (enableCorrelation == CorrelationMode.IF_NOT_SET))
             {
                 logger.debug("CorrelationId is already set, not setting Correlation group size");

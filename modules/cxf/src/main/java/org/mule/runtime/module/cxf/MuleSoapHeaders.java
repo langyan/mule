@@ -51,14 +51,14 @@ public class MuleSoapHeaders
      */
     public MuleSoapHeaders(MuleEvent event)
     {
-        setCorrelationId(event.getMessage().getCorrelationId());
-        if (event.getMessage().getCorrelationGroupSize() != null)
+        setCorrelationId(event.getMessage().getCorrelation().getId());
+        if (event.getMessage().getCorrelation().getGroupSize() != null)
         {
-            setCorrelationGroup(String.valueOf(event.getMessage().getCorrelationGroupSize()));
+            setCorrelationGroup(String.valueOf(event.getMessage().getCorrelation().getGroupSize()));
         }
-        if (event.getMessage().getCorrelationSequence() != null)
+        if (event.getMessage().getCorrelation().getSequence() != null)
         {
-            setCorrelationSequence(String.valueOf(event.getMessage().getCorrelationSequence()));
+            setCorrelationSequence(String.valueOf(event.getMessage().getCorrelation().getSequence()));
         }
 
         // only propogate the reply to header if it's in the outbound scope

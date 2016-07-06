@@ -12,7 +12,6 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.mule.runtime.core.api.config.MuleProperties.MULE_CORRELATION_ID_PROPERTY;
 
 import org.mule.compatibility.core.api.endpoint.OutboundEndpoint;
 import org.mule.compatibility.core.endpoint.outbound.EndpointMulticastingRouter;
@@ -162,7 +161,7 @@ public class MulticastingRouterTestCase extends AbstractMuleContextEndpointTestC
         router.setRoutes(endpoints);
         router.setEnableCorrelation(CorrelationMode.NEVER);
 
-        MuleMessage message = MuleMessage.builder().payload(TEST_MESSAGE).addOutboundProperty(MULE_CORRELATION_ID_PROPERTY, "MyCustomCorrelationId").build();
+        MuleMessage message = MuleMessage.builder().payload(TEST_MESSAGE).correlationId("MyCustomCorrelationId").build();
 
         assertTrue(router.isMatch(getTestEvent(message)));
 
@@ -173,7 +172,7 @@ public class MulticastingRouterTestCase extends AbstractMuleContextEndpointTestC
             assertTrue(arguments[0] instanceof MuleEvent);
 
             MuleEvent event = (MuleEvent) arguments[0];
-            String correlationId = event.getMessage().getOutboundProperty(MULE_CORRELATION_ID_PROPERTY);
+            String correlationId = event.getMessage().getCorrelation().getId();
             assertNotNull(correlationId);
             assertEquals("MyCustomCorrelationId", correlationId);
 

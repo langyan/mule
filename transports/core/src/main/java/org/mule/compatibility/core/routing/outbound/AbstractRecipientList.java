@@ -51,7 +51,7 @@ public abstract class AbstractRecipientList extends FilteringOutboundRouter
 
         if (enableCorrelation != CorrelationMode.NEVER)
         {
-            boolean correlationSet = message.getCorrelationGroupSize() != null;
+            boolean correlationSet = message.getCorrelation().getGroupSize() != null;
             if (correlationSet && (enableCorrelation == CorrelationMode.IF_NOT_SET))
             {
                 logger.debug("CorrelationId is already set, not setting Correlation group size");
