@@ -40,10 +40,10 @@ public class PostRegistrationActionsPostProcessor implements BeanPostProcessor
     @Override
     public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException
     {
-        if (applicationContext.isRunning())
-        {
+        //if (applicationContext.isRunning())
+        //{
             registryHelper.postObjectRegistrationActions(bean);
-        }
+        //}
         return bean;
     }
 }

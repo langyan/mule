@@ -84,10 +84,9 @@ public class ManagementNamespaceHandlerTestCase extends FunctionalTestCase
         Registry registry = muleContext.getRegistry();
         assertNotNull(registry);
         Collection<Agent> agents = registry.lookupObjects(Agent.class);
-        assertEquals(agents.size(), 5);
+        assertEquals(agents.size(), 4);
         
         Iterator<Agent> iter = agents.iterator();
-        assertTrue(iter.next() instanceof Log4jAgent);
         assertTrue(iter.next() instanceof Mx4jAgent);
         assertTrue(iter.next() instanceof TestAgent);
         assertTrue(iter.next() instanceof JmxServerNotificationAgent);

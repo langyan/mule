@@ -45,12 +45,6 @@ public class SpringRegistryBootstrap extends AbstractRegistryBootstrap implement
 
     private OptionalObjectsController optionalObjectsController;
     private BeanDefinitionRegistry beanDefinitionRegistry;
-    private boolean lazyInitialization;
-
-    public void setLazyInitialization(boolean lazyInitialization)
-    {
-        this.lazyInitialization = lazyInitialization;
-    }
 
     /**
      * @param artifactType              type of artifact. Bootstrap entries may be associated to an specific type of artifact. If it's not associated to the related artifact it will be ignored.
@@ -88,7 +82,7 @@ public class SpringRegistryBootstrap extends AbstractRegistryBootstrap implement
     @Override
     protected void doRegisterTransformer(TransformerBootstrapProperty bootstrapProperty, Class<?> returnClass, Class<? extends Transformer> transformerClass) throws Exception
     {
-        BeanDefinitionBuilder builder = BeanDefinitionBuilder.rootBeanDefinition(transformerClass).setLazyInit(lazyInitialization);
+        BeanDefinitionBuilder builder = BeanDefinitionBuilder.rootBeanDefinition(transformerClass);
 
         DataType returnType = null;
 
@@ -156,12 +150,12 @@ public class SpringRegistryBootstrap extends AbstractRegistryBootstrap implement
         if (BootstrapObjectFactory.class.isAssignableFrom(clazz))
         {
             final Object value = bootstrapProperty.getService().instantiateClass(bootstrapProperty.getClassName());
-            builder = BeanDefinitionBuilder.rootBeanDefinition(BootstrapObjectFactoryBean.class).setLazyInit(lazyInitialization);
+            builder = BeanDefinitionBuilder.rootBeanDefinition(BootstrapObjectFactoryBean.class);
             builder.addConstructorArgValue(value);
         }
         else
         {
-            builder = BeanDefinitionBuilder.rootBeanDefinition(clazz).setLazyInit(lazyInitialization);
+            builder = BeanDefinitionBuilder.rootBeanDefinition(clazz);
         }
 
         doRegisterObject(bootstrapProperty.getKey(), builder);
@@ -183,7 +177,7 @@ public class SpringRegistryBootstrap extends AbstractRegistryBootstrap implement
     private void registerInstance(String key, Object value)
     {
         BeanDefinitionBuilder builder = BeanDefinitionBuilder.rootBeanDefinition(ConstantFactoryBean.class);
-        builder.addConstructorArgValue(value).setLazyInit(lazyInitialization);
+        builder.addConstructorArgValue(value);
         doRegisterObject(key, builder);
     }
 
