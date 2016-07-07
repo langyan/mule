@@ -8,7 +8,6 @@ package org.mule.runtime.core.config.bootstrap;
 
 import org.mule.runtime.core.api.MuleContext;
 import org.mule.runtime.core.api.MuleException;
-import org.mule.runtime.core.api.context.MuleContextAware;
 import org.mule.runtime.core.api.lifecycle.Initialisable;
 import org.mule.runtime.core.api.lifecycle.InitialisationException;
 import org.mule.runtime.core.api.transaction.TransactionFactory;
@@ -73,7 +72,7 @@ import org.slf4j.LoggerFactory;
  *
  * @since 3.7.0
  */
-public abstract class AbstractRegistryBootstrap implements Initialisable, MuleContextAware
+public abstract class AbstractRegistryBootstrap implements Initialisable
 {
 
     private static final String TRANSACTION_RESOURCE_SUFFIX = ".transaction.resource";
@@ -85,17 +84,18 @@ public abstract class AbstractRegistryBootstrap implements Initialisable, MuleCo
     public static final String OBJECT_KEY = ".object.";
     public static final String SINGLE_TX = ".singletx.";
 
-    protected ArtifactType supportedArtifactType = ArtifactType.APP;
+    protected ArtifactType artifactType = ArtifactType.APP;
     protected final transient Logger logger = LoggerFactory.getLogger(getClass());
     protected MuleContext muleContext;
 
     /**
-     * {@inheritDoc}
+     * @param artifactType              type of artifact. Bootstrap entries may be associated to an specific type of artifact. If it's not associated to the related artifact it will be ignored.
+     * @param muleContext               the {@code MuleContext} of the artifact.
      */
-    @Override
-    public void setMuleContext(MuleContext context)
+    public AbstractRegistryBootstrap(ArtifactType artifactType, MuleContext muleContext)
     {
-        this.muleContext = context;
+        this.artifactType = artifactType;
+        this.muleContext = muleContext;
     }
 
     /**
@@ -274,7 +274,7 @@ public abstract class AbstractRegistryBootstrap implements Initialisable, MuleCo
     {
         try
         {
-            if (!bootstrapProperty.getArtifactType().equals(ArtifactType.ALL) && !bootstrapProperty.getArtifactType().equals(supportedArtifactType))
+            if (!bootstrapProperty.getArtifactType().equals(ArtifactType.ALL) && !bootstrapProperty.getArtifactType().equals(artifactType))
             {
                 return;
             }
@@ -373,14 +373,4 @@ public abstract class AbstractRegistryBootstrap implements Initialisable, MuleCo
         }
     }
 
-    /**
-     * This attributes define which types or registry bootstrap entries will be
-     * created depending on the entry applyToArtifactType parameter value.
-     *
-     * @param supportedArtifactType type of the artifact to support.
-     */
-    public void setSupportedArtifactType(ArtifactType supportedArtifactType)
-    {
-        this.supportedArtifactType = supportedArtifactType;
-    }
 }
