@@ -25,7 +25,6 @@ import static org.mule.runtime.api.metadata.DataType.OBJECT;
 import static org.mule.runtime.api.metadata.DataType.STRING;
 import static org.mule.runtime.api.metadata.MediaType.ANY;
 import static org.mule.runtime.api.metadata.MediaType.APPLICATION_XML;
-import static org.mule.runtime.core.api.config.MuleProperties.CONTENT_TYPE_PROPERTY;
 import static org.mule.runtime.core.api.config.MuleProperties.MULE_ENCODING_PROPERTY;
 import static org.mule.runtime.core.api.config.MuleProperties.OBJECT_DEFAULT_RETRY_POLICY_TEMPLATE;
 import static org.mule.runtime.core.util.SystemUtils.getDefaultEncoding;
@@ -89,40 +88,7 @@ public class MuleMessageDataTypePropagationTestCase extends AbstractMuleTestCase
         MuleMessage message = MuleMessage.builder().payload(TEST).mediaType(ANY.withCharset(CUSTOM_ENCODING)).build();
 
         assertThat(message.getDataType().getMediaType().getCharset().get(), equalTo(CUSTOM_ENCODING));
-        assertThat(message.getOutboundPropertyNames(), not(hasItem(MULE_ENCODING_PROPERTY)));
-    }
-
-    @Test
-    public void doesNotUseEncodingFromInboundProperty() throws Exception
-    {
-        MuleMessage message = MuleMessage.builder().payload(TEST).addInboundProperty(MULE_ENCODING_PROPERTY,
-                                                                                     CUSTOM_ENCODING.name()).build();
         assertCustomEncoding(message);
-    }
-
-    @Test
-    public void doesNotUseEncodingFromOutboundProperty() throws Exception
-    {
-        MuleMessage muleMessage = MuleMessage.builder().payload(TEST).addOutboundProperty(MULE_ENCODING_PROPERTY,
-                                                                                          CUSTOM_ENCODING.name())
-                .build();
-        assertCustomEncoding(muleMessage);
-    }
-
-    @Test
-    public void doesNotUseContentTyperomInboundProperty() throws Exception
-    {
-        MuleMessage message = MuleMessage.builder().payload(TEST).addInboundProperty(CONTENT_TYPE_PROPERTY,
-                STRING.getMediaType().toRfcString()).build();
-        assertEmptyDataType(message);
-    }
-
-    @Test
-    public void doesNotUseContentTypeFromOutboundProperty() throws Exception
-    {
-        MuleMessage muleMessage = MuleMessage.builder().payload(TEST).addOutboundProperty(CONTENT_TYPE_PROPERTY,
-                STRING.getMediaType().toRfcString()).build();
-        assertEmptyDataType(muleMessage);
     }
 
     @Test

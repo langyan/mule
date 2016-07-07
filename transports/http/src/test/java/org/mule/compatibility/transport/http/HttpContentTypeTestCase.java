@@ -9,13 +9,10 @@ package org.mule.compatibility.transport.http;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.equalToIgnoringCase;
-import static org.hamcrest.Matchers.hasItem;
 
 import org.mule.functional.junit4.FunctionalTestCase;
 import org.mule.runtime.core.api.MuleMessage;
 import org.mule.runtime.core.api.client.MuleClient;
-import org.mule.runtime.core.api.config.MuleProperties;
 import org.mule.tck.junit4.rule.DynamicPort;
 
 import org.junit.Rule;
@@ -44,7 +41,7 @@ public class HttpContentTypeTestCase extends FunctionalTestCase
         MuleMessage response = client.send(url, TEST_MESSAGE, null);
 
 
-        assertContentTypeProperty(response);
+        assertContentType(response);
     }
 
     @Test
@@ -55,14 +52,13 @@ public class HttpContentTypeTestCase extends FunctionalTestCase
 
         MuleMessage response = client.send(url, TEST_MESSAGE, null);
 
-        assertContentTypeProperty(response);
+        assertContentType(response);
 
         assertThat(getPayloadAsString(response), equalTo(EXPECTED_CONTENT_TYPE));
     }
 
-    private void assertContentTypeProperty(MuleMessage response)
+    private void assertContentType(MuleMessage response)
     {
-        assertThat(response.getInboundPropertyNames(), hasItem(equalToIgnoringCase(MuleProperties.CONTENT_TYPE_PROPERTY)));
-        assertThat((String) response.getInboundProperty(MuleProperties.CONTENT_TYPE_PROPERTY), equalTo(EXPECTED_CONTENT_TYPE));
+        assertThat(response.getDataType().getMediaType().toRfcString(), equalTo(EXPECTED_CONTENT_TYPE));
     }
 }

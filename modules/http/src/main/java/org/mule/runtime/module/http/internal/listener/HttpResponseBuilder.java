@@ -13,6 +13,7 @@ import static org.mule.runtime.module.http.api.HttpConstants.RequestProperties.H
 import static org.mule.runtime.module.http.api.HttpConstants.ResponseProperties.HTTP_REASON_PROPERTY;
 import static org.mule.runtime.module.http.api.HttpHeaders.Names.CONNECTION;
 import static org.mule.runtime.module.http.api.HttpHeaders.Names.CONTENT_LENGTH;
+import static org.mule.runtime.module.http.api.HttpHeaders.Names.CONTENT_TYPE;
 import static org.mule.runtime.module.http.api.HttpHeaders.Names.TRANSFER_ENCODING;
 import static org.mule.runtime.module.http.api.HttpHeaders.Values.CHUNKED;
 import static org.mule.runtime.module.http.api.requester.HttpStreamingType.ALWAYS;
@@ -24,7 +25,6 @@ import org.mule.runtime.api.metadata.MediaType;
 import org.mule.runtime.core.api.MessagingException;
 import org.mule.runtime.core.api.MuleContext;
 import org.mule.runtime.core.api.MuleEvent;
-import org.mule.runtime.core.api.config.MuleProperties;
 import org.mule.runtime.core.api.context.MuleContextAware;
 import org.mule.runtime.core.api.lifecycle.Initialisable;
 import org.mule.runtime.core.api.lifecycle.InitialisationException;
@@ -104,12 +104,12 @@ public class HttpResponseBuilder extends HttpMessageBuilder implements Initialis
             }
         }
 
-        if (!outboundProperties.contains(MuleProperties.CONTENT_TYPE_PROPERTY))
+        if (!event.getMessage().getDataType().getMediaType().getCharset().isPresent())
         {
             DataType dataType = event.getMessage().getDataType();
             if (!MediaType.ANY.matches(dataType.getMediaType()))
             {
-                httpResponseHeaderBuilder.addHeader(MuleProperties.CONTENT_TYPE_PROPERTY, dataType.getMediaType().toRfcString());
+                httpResponseHeaderBuilder.addHeader(CONTENT_TYPE, dataType.getMediaType().toRfcString());
             }
         }
 
