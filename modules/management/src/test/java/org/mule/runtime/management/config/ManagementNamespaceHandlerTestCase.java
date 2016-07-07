@@ -27,7 +27,7 @@ import org.junit.Test;
 public class ManagementNamespaceHandlerTestCase extends FunctionalTestCase
 {
     private static final int CHAINSAW_PORT = 8080;
-    
+
     public ManagementNamespaceHandlerTestCase()
     {
         super();
