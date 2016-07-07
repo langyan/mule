@@ -22,6 +22,7 @@ import org.mule.functional.classloading.isolation.maven.MuleMavenMultiModuleArti
 import org.mule.runtime.module.artifact.classloader.ArtifactClassLoader;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
 import java.util.List;
 
 import org.junit.internal.builders.AnnotatedBuilder;
@@ -81,11 +82,13 @@ public class ArtifactClassloaderTestRunner extends Runner implements Filterable
 
         final Class<?> isolatedTestClass = getTestClass(clazz);
 
-        final RunnerDelegateTo runnerDelegateToAnnotation = isolatedTestClass.getAnnotation(RunnerDelegateTo.class);
+        final Class<? extends Annotation> runnerDelegateToClass = (Class<? extends Annotation>) classLoaderTestRunner.loadClassWithApplicationClassLoader(RunnerDelegateTo.class.getName());
+        final Annotation runnerDelegateToAnnotation = isolatedTestClass.getAnnotation(runnerDelegateToClass);
         if (runnerDelegateToAnnotation != null)
         {
+            final Method valueMethod = runnerDelegateToClass.getMethod("value");
             final AnnotatedBuilder annotatedBuilder = new AnnotatedBuilder(builder);
-            delegate = annotatedBuilder.buildRunner(runnerDelegateToAnnotation.value(), isolatedTestClass);
+            delegate = annotatedBuilder.buildRunner((Class<? extends Runner>) valueMethod.invoke(runnerDelegateToAnnotation), isolatedTestClass);
         }
         else
         {

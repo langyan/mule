@@ -108,7 +108,7 @@ public class MuleClassPathClassifier implements ClassPathClassifier
                                                                   new TransitiveDependenciesFilterBuilder()
                                                                           .match(transitiveDependency -> transitiveDependency.isTestScope() && !exclusion.test(transitiveDependency))
                                                                           .includeTransitiveDependenciesFromFiltered()
-                                                          )).resolveDependencies().stream().map(dependency -> artifactToClassPathURLResolver.resolveURL(dependency, context.getClassPathURLs())).collect(Collectors.toSet());
+                                                          )).resolveDependencies().stream().filter(d -> !d.isPomType()).map(dependency -> artifactToClassPathURLResolver.resolveURL(dependency, context.getClassPathURLs())).collect(Collectors.toSet());
         // Plus the target/test-classes of the current compiled artifact
         appURLs.addAll(context.getClassPathURLs().stream().filter(url -> url.getFile().trim().equals(targetTestClassesFolder.getAbsolutePath() + File.separator)).collect(Collectors.toSet()));
         return Lists.newArrayList(appURLs);
@@ -131,7 +131,7 @@ public class MuleClassPathClassifier implements ClassPathClassifier
                                                new TransitiveDependenciesFilterBuilder()
                                                        .match(transitiveDependency -> transitiveDependency.isProvidedScope() || transitiveDependency.isCompileScope())
                                                        .includeTransitiveDependenciesFromFiltered()
-                                       )).resolveDependencies().stream().map(dependency -> artifactToClassPathURLResolver.resolveURL(dependency, context.getClassPathURLs())).forEach(containerURLs::add);
+                                       )).resolveDependencies().stream().filter(d -> !d.isPomType()).map(dependency -> artifactToClassPathURLResolver.resolveURL(dependency, context.getClassPathURLs())).forEach(containerURLs::add);
 
         return newArrayList(containerURLs);
     }
@@ -231,7 +231,7 @@ public class MuleClassPathClassifier implements ClassPathClassifier
                                        .collectTransitiveDependencies(
                                                new TransitiveDependenciesFilterBuilder()
                                                        .match(transitiveDependency -> transitiveDependency.isCompileScope() && !exclusion.test(transitiveDependency))
-                                       )).resolveDependencies().stream().map(dependency -> artifactToClassPathURLResolver.resolveURL(dependency, classPathURLs)).forEach(extensionURLs::add);
+                                       )).resolveDependencies().stream().filter(d -> !d.isPomType()).map(dependency -> artifactToClassPathURLResolver.resolveURL(dependency, classPathURLs)).forEach(extensionURLs::add);
 
         return new PluginUrlClassification(extension, newArrayList(extensionURLs));
     }

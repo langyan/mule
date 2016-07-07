@@ -23,6 +23,8 @@ public class MavenArtifact
     public static final String MAVEN_PROVIDED_SCOPE = "provided";
     public static final String MAVEN_DEPENDENCIES_DELIMITER = ":";
 
+    public static final String POM_TYPE = "pom";
+
     private String groupId;
     private String artifactId;
     private String type;
@@ -81,6 +83,11 @@ public class MavenArtifact
     public boolean isProvidedScope()
     {
         return MAVEN_PROVIDED_SCOPE.equals(scope);
+    }
+
+    public boolean isPomType()
+    {
+        return POM_TYPE.endsWith(type);
     }
 
     @Override
