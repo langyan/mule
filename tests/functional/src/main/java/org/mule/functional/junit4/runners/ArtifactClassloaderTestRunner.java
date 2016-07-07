@@ -6,74 +6,84 @@
  */
 package org.mule.functional.junit4.runners;
 
-import static java.util.Collections.emptyList;
 import static org.mule.runtime.core.util.ClassUtils.withContextClassLoader;
 import org.mule.runtime.module.artifact.classloader.ArtifactClassLoader;
 
 import java.lang.annotation.Annotation;
-import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.internal.builders.AnnotatedBuilder;
 import org.junit.runner.Description;
 import org.junit.runner.Runner;
+import org.junit.runner.manipulation.Filter;
+import org.junit.runner.manipulation.Filterable;
+import org.junit.runner.manipulation.NoTestsRemainException;
 import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.BlockJUnit4ClassRunner;
-import org.junit.runners.Suite;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.InitializationError;
+import org.junit.runners.model.RunnerBuilder;
 import org.junit.runners.model.TestClass;
 
 /**
- * Runner that does the testing of the class using a different {@link ClassLoader} from the one that launched the test.
+ * Runner that mimics the class loading model used in a standalone container.
+ * In order to detect early issues related to isolation when building plugins these runner allow you to
+ * run your functional test cases using an isolated class loader.
+ *
+ * TODO
  *
  * @since 4.0
  */
-public class ArtifactClassloaderTestRunner extends Suite
+public class ArtifactClassloaderTestRunner extends Runner implements Filterable
 {
-    private static final List<Runner> NO_RUNNERS = emptyList();
-    private final ArrayList<Runner> runners = new ArrayList<>();
+    private final Runner delegate;
+    private final ClassLoaderTestRunner classLoaderTestRunner;
 
     /**
      * Creates a Runner to run {@code klass}
      *
-     * @param klass
-     * @throws InitializationError if the test class is malformed.
+     * @param clazz
+     * @param builder
+     * @throws Throwable if there was an error while initializing the runner.
      */
-    public ArtifactClassloaderTestRunner(final Class<?> klass) throws Throwable
+    public ArtifactClassloaderTestRunner(Class<?> clazz, RunnerBuilder builder) throws Throwable
     {
-        super(createTestClassUsingClassLoader(klass), NO_RUNNERS);
-        Class<? extends Runner> runnerClass = BlockJUnit4ClassRunner.class;
-        RunnerDelegateTo runnerDelegateTo = klass.getAnnotation(RunnerDelegateTo.class);
-        if (runnerDelegateTo != null)
+        classLoaderTestRunner = createClassLoaderTestRunner(clazz);
+
+        final Class<?> isolatedTestClass = getTestClass(clazz);
+
+        final RunnerDelegateTo runnerDelegateToAnnotation = isolatedTestClass.getAnnotation(RunnerDelegateTo.class);
+        if (runnerDelegateToAnnotation != null)
         {
-            runnerClass = runnerDelegateTo.value();
+            final AnnotatedBuilder annotatedBuilder = new AnnotatedBuilder(builder);
+            delegate = annotatedBuilder.buildRunner(runnerDelegateToAnnotation.value(), isolatedTestClass);
         }
-        runners.add(runnerClass.cast(runnerClass.getConstructor(Class.class).newInstance(getTestClass().getJavaClass())));
+        else
+        {
+            delegate = new BlockJUnit4ClassRunner(isolatedTestClass);
+        }
+
+        injectPluginsClassLoaders(classLoaderTestRunner, isolatedTestClass);
     }
 
-    @Override
-    protected List<Runner> getChildren() {
-        return runners;
-    }
-
-    @Override
-    public Description getDescription() {
-        // Just to avoid having duplicated name in IDEA/Eclipse JUnit panel view due to this is a Suite, we always have only one delegate/child runner.
-        return runners.get(0).getDescription();
-    }
-
-
-    protected void runChild(final Runner runner, final RunNotifier notifier) {
-        withContextClassLoader(getTestClass().getJavaClass().getClassLoader(), () -> runner.run(notifier));
+    private Class<?> getTestClass(Class<?> clazz) throws InitializationError
+    {
+        try
+        {
+            return classLoaderTestRunner.loadClassWithApplicationClassLoader(clazz.getName());
+        }
+        catch (Exception e)
+        {
+            throw new InitializationError(e);
+        }
     }
 
     /**
      * @param klass
-     * @return the {@link ClassLoader} that would be used to run the test. This way the test will be isolated and it will behave
+     * @return creates a {@link ClassLoaderTestRunner} that would be used to run the test. This way the test will be isolated and it will behave
      * similar as an application running in a Mule standalone container.
-     * @throws Throwable
      */
-    private static Class<?> createTestClassUsingClassLoader(Class<?> klass) throws Throwable
+    private static ClassLoaderTestRunner createClassLoaderTestRunner(Class<?> klass)
     {
         // Initializes utility classes
         ClassPathURLsProvider classPathURLsProvider = new DefaultClassPathURLsProvider();
@@ -85,17 +95,12 @@ public class ArtifactClassloaderTestRunner extends Suite
         // Does the classification and creation of the isolated ClassLoader
         ArtifactUrlClassification artifactUrlClassification = classPathClassifier.classify(new DefaultClassPathClassifierContext(klass, classPathURLsProvider.getURLs(),
                                                                                            mavenDependenciesResolver.buildDependencies(), mavenMultiModuleArtifactMapping));
-        ClassLoaderTestRunner classLoaderTestRunner = classLoaderRunnerFactory.createClassLoader(klass, artifactUrlClassification);
-
-        Class<?> isolatedTestClass = classLoaderTestRunner.loadClassWithApplicationClassLoader(klass.getName());
-
-        injectPluginsClassLoaders(classLoaderTestRunner, isolatedTestClass);
-
-        return isolatedTestClass;
+        return classLoaderRunnerFactory.createClassLoader(klass, artifactUrlClassification);
     }
 
     /**
      * Invokes the method to inject the plugin/extension classloaders for registering the extensions to the {@link org.mule.runtime.core.api.MuleContext}.
+     *
      * @param classLoaderTestRunner
      * @param isolatedTestClass
      * @throws Throwable
@@ -113,7 +118,7 @@ public class ArtifactClassloaderTestRunner extends Suite
             }
             try
             {
-                method.invokeExplosively(null, classLoaderTestRunner.getPlugins());
+                method.invokeExplosively(null, classLoaderTestRunner.getPluginClassLoaders());
             }
             catch (IllegalArgumentException e)
             {
@@ -122,4 +127,39 @@ public class ArtifactClassloaderTestRunner extends Suite
         }
     }
 
+    /**
+     * @return delegates to the internal runner to get the description needed by JUnit.
+     */
+    @Override
+    public Description getDescription()
+    {
+        return delegate.getDescription();
+    }
+
+    /**
+     * When the test is about to be executed the ThreadContextClassLoader is changed to use the application class loader that
+     * was created so the execution of the test will be done using an isolated class loader that mimics the standalone container.
+     *
+     * @param notifier
+     */
+    @Override
+    public void run(RunNotifier notifier)
+    {
+        withContextClassLoader(classLoaderTestRunner.getApplicationClassLoader().getClassLoader(), () -> delegate.run(notifier));
+    }
+
+    /**
+     * Delegates to the inner runner to filter.
+     *
+     * @param filter
+     * @throws NoTestsRemainException
+     */
+    @Override
+    public void filter(Filter filter) throws NoTestsRemainException
+    {
+        if (delegate instanceof Filterable)
+        {
+            ((Filterable) delegate).filter(filter);
+        }
+    }
 }

@@ -19,41 +19,34 @@ import java.util.List;
 public final class ClassLoaderTestRunner
 {
 
-    private ArtifactClassLoader container;
-    private List<ArtifactClassLoader> plugins;
-    private ArtifactClassLoader application;
+    private ArtifactClassLoader containerClassLoader;
+    private List<ArtifactClassLoader> pluginClassLoaders;
+    private ArtifactClassLoader applicationClassLoader;
 
-    public ClassLoaderTestRunner(ArtifactClassLoader container, List<ArtifactClassLoader> plugins, ArtifactClassLoader application)
+    public ClassLoaderTestRunner(ArtifactClassLoader containerClassLoader, List<ArtifactClassLoader> pluginClassLoaders, ArtifactClassLoader applicationClassLoader)
     {
-        this.container = container;
-        this.plugins = plugins;
-        this.application = application;
+        this.containerClassLoader = containerClassLoader;
+        this.pluginClassLoaders = pluginClassLoaders;
+        this.applicationClassLoader = applicationClassLoader;
     }
 
-    public ArtifactClassLoader getContainer()
+    public ArtifactClassLoader getContainerClassLoader()
     {
-        return container;
+        return containerClassLoader;
     }
 
-    public List<ArtifactClassLoader> getPlugins()
+    public List<ArtifactClassLoader> getPluginClassLoaders()
     {
-        return plugins;
+        return pluginClassLoaders;
     }
 
-    public ArtifactClassLoader getApplication()
+    public ArtifactClassLoader getApplicationClassLoader()
     {
-        return application;
+        return applicationClassLoader;
     }
 
-    public Class<?> loadClassWithApplicationClassLoader(String name)
+    public Class<?> loadClassWithApplicationClassLoader(String name) throws ClassNotFoundException
     {
-        try
-        {
-            return application.getClassLoader().loadClass(name);
-        }
-        catch (ClassNotFoundException e)
-        {
-            throw new RuntimeException("Couldn't load class using application class loader", e);
-        }
+        return applicationClassLoader.getClassLoader().loadClass(name);
     }
 }

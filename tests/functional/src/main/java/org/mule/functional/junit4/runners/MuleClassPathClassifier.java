@@ -242,13 +242,13 @@ public class MuleClassPathClassifier implements ClassPathClassifier
                 throw new IllegalArgumentException("Exclusion pattern should be a GAT format, groupId:artifactId:type");
             }
             Predicate<MavenArtifact> artifactExclusion = new MavenArtifactMatcherPredicate(exclusionSplit[0], exclusionSplit[1], exclusionSplit[2]);
-            if (exclusionPredicate == null)
+            if (predicate == null)
             {
                 predicate = artifactExclusion;
             }
             else
             {
-                predicate = exclusionPredicate.or(artifactExclusion);
+                predicate = predicate.or(artifactExclusion);
             }
         }
         return predicate;
