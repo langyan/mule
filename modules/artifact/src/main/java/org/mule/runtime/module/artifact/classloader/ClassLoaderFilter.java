@@ -7,12 +7,10 @@
 
 package org.mule.runtime.module.artifact.classloader;
 
-import java.io.Serializable;
-
 /**
  * Determines if a given class or resource is exported in a plugin classloader
  */
-public interface ClassLoaderFilter extends Serializable
+public interface ClassLoaderFilter
 {
 
     /**

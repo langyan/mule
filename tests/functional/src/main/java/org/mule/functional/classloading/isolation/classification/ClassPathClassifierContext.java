@@ -5,7 +5,10 @@
  * LICENSE.txt file.
  */
 
-package org.mule.functional.junit4.runners;
+package org.mule.functional.classloading.isolation.classification;
+
+import org.mule.functional.classloading.isolation.maven.MavenArtifact;
+import org.mule.functional.classloading.isolation.maven.MavenMultiModuleArtifactMapping;
 
 import java.net.URL;
 import java.util.LinkedHashMap;
@@ -31,7 +34,7 @@ public interface ClassPathClassifierContext
     List<URL> getClassPathURLs();
 
     /**
-     * @return a {@link LinkedHashMap<MavenArtifact, Set<MavenArtifact>>} Maven dependencies for the given artifact
+     * @return a {@link LinkedHashMap< MavenArtifact , Set<MavenArtifact>>} Maven dependencies for the given artifact
      * tested (with its duplications). The map has as key an artifact and values are its dependencies
      */
     LinkedHashMap<MavenArtifact, Set<MavenArtifact>> getMavenDependencies();

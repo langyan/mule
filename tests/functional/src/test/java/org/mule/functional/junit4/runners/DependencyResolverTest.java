@@ -10,6 +10,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertTrue;
 
+import org.mule.functional.classloading.isolation.maven.MavenArtifact;
+import org.mule.functional.classloading.isolation.maven.dependencies.ConfigurationBuilder;
+import org.mule.functional.classloading.isolation.maven.dependencies.DependenciesFilterBuilder;
+import org.mule.functional.classloading.isolation.maven.dependencies.DependencyResolver;
+import org.mule.functional.classloading.isolation.maven.dependencies.TransitiveDependenciesFilterBuilder;
 import org.mule.runtime.core.util.ValueHolder;
 import org.mule.tck.size.SmallTest;
 

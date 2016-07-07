@@ -12,7 +12,7 @@ import static org.mule.functional.util.AnnotationUtils.getAnnotationAttributeFro
 import org.mule.functional.junit4.runners.ArtifactClassLoaderRunnerConfig;
 import org.mule.functional.junit4.runners.PluginClassLoadersAware;
 import org.mule.functional.junit4.runners.ArtifactClassloaderTestRunner;
-import org.mule.functional.junit4.runners.ClassLoaderIsolatedExtensionsManagerConfigurationBuilder;
+import org.mule.functional.classloading.isolation.builder.ClassLoaderIsolatedExtensionsManagerConfigurationBuilder;
 import org.mule.functional.junit4.runners.RunnerDelegateTo;
 import org.mule.runtime.core.api.config.ConfigurationBuilder;
 import org.mule.runtime.module.artifact.classloader.ArtifactClassLoader;
@@ -27,10 +27,10 @@ import org.junit.runner.RunWith;
 /**
  * Base class for running {@link FunctionalTestCase} with class loader isolation that uses a {@link org.junit.runner.Runner}
  * that classifies the classpath provided by IDE/surfire-maven-plugin and classifies the URLs using the maven dependency graph.
- *
+ * <p/>
  * It has support for extensions and if the test class is annotated with {@link ArtifactClassLoaderRunnerConfig} and
  * extensions classes are defined.
- *
+ * <p/>
  * By default this test runs internally with a {@link org.junit.runners.JUnit4} runner.
  * For those cases where the test has to be run with another runner the {@link RunnerDelegateTo} should be used to define it.
  *
@@ -39,7 +39,7 @@ import org.junit.runner.RunWith;
 @RunWith(ArtifactClassloaderTestRunner.class)
 public abstract class ArtifactFunctionalTestCase extends FunctionalTestCase
 {
-    protected static List<ArtifactClassLoader> extensionClassLoaders;
+    private static List<ArtifactClassLoader> extensionClassLoaders;
 
     @PluginClassLoadersAware
     public static void setExtensionClassLoaders(List<ArtifactClassLoader> pluginClassLoaders)

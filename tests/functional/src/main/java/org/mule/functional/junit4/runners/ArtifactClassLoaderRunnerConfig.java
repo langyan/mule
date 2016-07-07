@@ -28,13 +28,21 @@ public @interface ArtifactClassLoaderRunnerConfig
     /**
      * @return a comma separated list of packages to be added as PARENT_ONLY for the
      * container class loader, default (and required) packages is empty.
-     * In case of having to append one you should also include the default list.
+     * <p/>
+     * A default list of extra boot packages is always added to the container class loader, it is defined by the excluded.properties file.
+     * <p/>
+     * In case if a particular test needs to add extra boot packages to append to the ones already defined in the file, it will
+     * have to define it here by using this annotation method.
      */
     String extraBootPackages() default "";
 
     /**
      * @return {@link String[]} with the extension {@link Class} name of the extensions that would be used to create and load it using a plugin/extensio
      * {@link ClassLoader}. If no extensions are defined the plugin/extension class loaders will not be created.
+     * <p/>
+     * Be aware that during the execution of the test that is marked with this annotation will may not have visibility of the extension class due to
+     * the extension class loader will not expose the class so, it is important to define this values explicitly by writing the class name as String and not by doing it with
+     * its class: 'MyExtension.class.getName()'
      */
     String[] extensions() default {};
 
@@ -42,6 +50,7 @@ public @interface ArtifactClassLoaderRunnerConfig
      * @return a comma separated list of groupId:artifactId:type (it does support wildcards org.mule:*:* or *:mule-core:* but
      * only starts with for partial matching org.mule*:*:*) that would be used in order to exclude artifacts that should not be added to
      * the application class loader neither the extension/plugin class loaders due to they will be already exposed through the container.
+     * <p/>
      * Default exclusion is already defined in excluded.properties file and by using this annotation the ones defined here will be appended
      * to those defined in file.
      */

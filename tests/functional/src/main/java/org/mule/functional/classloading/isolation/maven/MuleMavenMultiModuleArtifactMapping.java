@@ -5,7 +5,7 @@
  * LICENSE.txt file.
  */
 
-package org.mule.functional.junit4.runners;
+package org.mule.functional.classloading.isolation.maven;
 
 import static java.lang.Thread.currentThread;
 import static org.apache.commons.lang.StringUtils.isEmpty;

@@ -5,7 +5,10 @@
  * LICENSE.txt file.
  */
 
-package org.mule.functional.junit4.runners;
+package org.mule.functional.classloading.isolation.classification;
+
+import org.mule.functional.classloading.isolation.maven.MavenArtifact;
+import org.mule.functional.classloading.isolation.maven.MavenMultiModuleArtifactMapping;
 
 import java.net.URL;
 import java.util.LinkedHashMap;

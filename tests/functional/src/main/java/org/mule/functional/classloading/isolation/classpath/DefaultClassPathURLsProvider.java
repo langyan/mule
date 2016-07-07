@@ -5,7 +5,7 @@
  * LICENSE.txt file.
  */
 
-package org.mule.functional.junit4.runners;
+package org.mule.functional.classloading.isolation.classpath;
 
 import com.google.common.collect.Lists;
 

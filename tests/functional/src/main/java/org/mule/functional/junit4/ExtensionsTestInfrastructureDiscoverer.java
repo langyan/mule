@@ -7,18 +7,14 @@
 
 package org.mule.functional.junit4;
 
+import static com.google.common.collect.ImmutableList.copyOf;
+import static java.util.Arrays.stream;
+import static org.apache.commons.lang.ArrayUtils.isEmpty;
 import static org.mule.runtime.core.config.MuleManifest.getProductVersion;
-import org.mule.runtime.core.DefaultMuleContext;
-import org.mule.runtime.core.api.lifecycle.InitialisationException;
-import org.mule.runtime.core.api.registry.MuleRegistry;
 import org.mule.runtime.core.api.registry.ServiceRegistry;
 import org.mule.runtime.core.config.MuleManifest;
-import org.mule.runtime.core.registry.DefaultRegistryBroker;
-import org.mule.runtime.core.registry.MuleRegistryHelper;
 import org.mule.runtime.core.registry.SpiServiceRegistry;
-import org.mule.runtime.core.util.ArrayUtils;
 import org.mule.runtime.core.util.collection.ImmutableListCollector;
-import org.mule.runtime.extension.api.ExtensionManager;
 import org.mule.runtime.extension.api.introspection.ExtensionFactory;
 import org.mule.runtime.extension.api.introspection.declaration.DescribingContext;
 import org.mule.runtime.extension.api.introspection.declaration.spi.Describer;
@@ -29,11 +25,8 @@ import org.mule.runtime.module.extension.internal.DefaultDescribingContext;
 import org.mule.runtime.module.extension.internal.introspection.DefaultExtensionFactory;
 import org.mule.runtime.module.extension.internal.introspection.describer.AnnotationsBasedDescriber;
 import org.mule.runtime.module.extension.internal.introspection.version.StaticVersionResolver;
-import org.mule.runtime.module.extension.internal.manager.DefaultExtensionManager;
 import org.mule.runtime.module.extension.internal.manager.ExtensionManagerAdapter;
 import org.mule.runtime.module.extension.internal.resources.AbstractResourcesGenerator;
-
-import com.google.common.collect.ImmutableList;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -43,11 +36,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.jar.Manifest;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 
 /**
- * It creates a {@link ExtensionManager} and automatically registers extensions.
+ * It registers the extensions to a {@link org.mule.runtime.extension.api.ExtensionManager}.
  * <p/>
  * Once extensions are registered, a {@link ResourcesGenerator} is used to automatically
  * generate any backing resources needed (XSD schemas, spring bundles, etc).
@@ -65,6 +59,13 @@ public class ExtensionsTestInfrastructureDiscoverer
     private final ExtensionManagerAdapter extensionManager;
     private final File generatedResourcesDirectory;
 
+    /**
+     * Creates a {@link ExtensionsTestInfrastructureDiscoverer} that will use the extensionManager passed here in order
+     * to register the extensions, resources for the extensions will be created in the generatedResourcesDirectory.
+     *
+     * @param extensionManager
+     * @param generatedResourcesDirectory
+     */
     public ExtensionsTestInfrastructureDiscoverer(ExtensionManagerAdapter extensionManager, File generatedResourcesDirectory)
     {
         try
@@ -79,48 +80,22 @@ public class ExtensionsTestInfrastructureDiscoverer
         }
     }
 
-    public ExtensionsTestInfrastructureDiscoverer(File generatedResourcesDirectory)
-    {
-        this(new DefaultExtensionManager(), generatedResourcesDirectory);
-        ((DefaultExtensionManager) extensionManager).setMuleContext(new DefaultMuleContext()
-        {
-            @Override
-            public MuleRegistry getRegistry()
-            {
-                return new MuleRegistryHelper(new DefaultRegistryBroker(this), this);
-            }
-        });
-        try
-        {
-            ((DefaultExtensionManager) extensionManager).initialise();
-        }
-        catch (InitialisationException e)
-        {
-            throw new RuntimeException("Error while initialising the extension manager", e);
-        }
-    }
-
     /**
+     * It will register the extensions described or annotated and it will generate their resources.
+     * If no describers are defined the annotatedClasses would be used to generate the describers.
+     *
      * @param describers if empty it will use annotatedClasses param to build the describers
      * @param annotatedClasses used to build the describers
      * @return a {@link List} of the resources generated for the given describers or annotated classes
      */
     public List<GeneratedResource> discoverExtensions(Describer[] describers, Class<?>[] annotatedClasses)
     {
-        if (ArrayUtils.isEmpty(describers))
+        if (isEmpty(describers) && !isEmpty(annotatedClasses))
         {
-            if (!ArrayUtils.isEmpty(annotatedClasses))
-            {
-                describers = new Describer[annotatedClasses.length];
-                int i = 0;
-                for (Class<?> annotatedClass : annotatedClasses)
-                {
-                    describers[i++] = new AnnotationsBasedDescriber(annotatedClass, new StaticVersionResolver(getProductVersion()));
-                }
-            }
+            describers = stream(annotatedClasses).map(annotatedClass -> new AnnotationsBasedDescriber(annotatedClass, new StaticVersionResolver(getProductVersion()))).collect(Collectors.toList()).toArray(new Describer[annotatedClasses.length]);
         }
 
-        if (ArrayUtils.isEmpty(describers))
+        if (isEmpty(describers))
         {
             throw new IllegalStateException("No extension referenced from test");
         }
@@ -136,7 +111,7 @@ public class ExtensionsTestInfrastructureDiscoverer
 
     private List<GeneratedResourceFactory> getResourceFactories()
     {
-        return ImmutableList.copyOf(serviceRegistry.lookupProviders(GeneratedResourceFactory.class));
+        return copyOf(serviceRegistry.lookupProviders(GeneratedResourceFactory.class));
     }
 
     private void loadExtensionsFromDescribers(ExtensionManagerAdapter extensionManager, Describer[] describers)
@@ -148,6 +123,10 @@ public class ExtensionsTestInfrastructureDiscoverer
         }
     }
 
+    /**
+     * Implementation of an {@link AbstractResourcesGenerator} that writes the generated resources to the specified
+     * target directory but also exposes the content to be shared for testing purposes.
+     */
     private class ExtensionsTestInfrastructureResourcesGenerator extends AbstractResourcesGenerator
     {
 

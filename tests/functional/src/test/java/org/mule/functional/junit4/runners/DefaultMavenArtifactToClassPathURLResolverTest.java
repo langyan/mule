@@ -14,6 +14,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
+import org.mule.functional.classloading.isolation.classpath.DefaultMavenArtifactToClassPathURLResolver;
+import org.mule.functional.classloading.isolation.maven.MavenArtifact;
+import org.mule.functional.classloading.isolation.maven.MavenArtifactToClassPathURLResolver;
+import org.mule.functional.classloading.isolation.maven.MavenMultiModuleArtifactMapping;
 import org.mule.tck.size.SmallTest;
 
 import com.google.common.collect.Lists;

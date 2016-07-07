@@ -5,7 +5,7 @@
  * LICENSE.txt file.
  */
 
-package org.mule.functional.junit4.runners;
+package org.mule.functional.classloading.isolation.classloader;
 
 import static org.mule.runtime.core.util.ClassUtils.withContextClassLoader;
 import org.mule.runtime.container.internal.ClasspathModuleDiscoverer;

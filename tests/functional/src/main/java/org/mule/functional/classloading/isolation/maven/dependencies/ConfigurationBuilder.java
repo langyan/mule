@@ -5,8 +5,9 @@
  * LICENSE.txt file.
  */
 
-package org.mule.functional.junit4.runners;
+package org.mule.functional.classloading.isolation.maven.dependencies;
 
+import org.mule.functional.classloading.isolation.maven.MavenArtifact;
 import org.mule.functional.util.TruePredicate;
 
 import java.util.LinkedHashMap;

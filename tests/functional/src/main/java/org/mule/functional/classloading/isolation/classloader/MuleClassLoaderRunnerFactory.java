@@ -5,7 +5,7 @@
  * LICENSE.txt file.
  */
 
-package org.mule.functional.junit4.runners;
+package org.mule.functional.classloading.isolation.classloader;
 
 import static java.lang.Boolean.valueOf;
 import static java.lang.System.getProperty;
@@ -14,6 +14,11 @@ import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.mule.functional.util.AnnotationUtils.getAnnotationAttributeFromHierarchy;
 import static org.mule.runtime.core.api.config.MuleProperties.MULE_LOG_VERBOSE_CLASSLOADING;
 import static org.mule.runtime.module.extension.internal.ExtensionProperties.EXTENSION_MANIFEST_FILE_NAME;
+import org.mule.functional.junit4.runners.ArtifactClassLoaderRunnerConfig;
+import org.mule.functional.classloading.isolation.classification.ArtifactUrlClassification;
+import org.mule.functional.classloading.isolation.classification.ClassLoaderTestRunner;
+import org.mule.functional.classloading.isolation.classification.PluginUrlClassification;
+import org.mule.functional.classloading.isolation.utils.RunnerModuleUtils;
 import org.mule.runtime.container.internal.ContainerClassLoaderFilterFactory;
 import org.mule.runtime.container.internal.MuleModule;
 import org.mule.runtime.extension.api.manifest.ExtensionManifest;
@@ -43,31 +48,37 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Default Mule implementation that creates almost the same classloader hierarchy that is used by Mule when running
- * applications.
- * The classloaders created have the following hierarchy:
+ * Factory that creates that mimics the class loading hierarchy used in a standalone container.
+ * <p/>
+ * The class loaders created have the following hierarchy:
+ * <p/>
  * <ul>
  * <li>Container: all the provided scope dependencies plus their dependencies (if they are not test) and java</li>
- * <li>Plugin (optional): all the compile scope dependencies and their dependencies (only the ones with scope compile)</li>
+ * <li>Plugins (optional): for each plugin a class loader will be created with all the compile scope dependencies and their dependencies (only the ones with scope compile)</li>
  * <li>Application: all the test scope dependencies and their dependencies if they are not defined to be excluded, plus the test dependencies
  * from the compile scope dependencies (again if they are not excluded).</li>
  * </ul>
  *
  * @since 4.0
  */
-public class MuleClassLoaderRunnerFactory implements ClassLoaderRunnerFactory
+public class MuleClassLoaderRunnerFactory
 {
 
     protected final transient Logger logger = LoggerFactory.getLogger(this.getClass());
     private ArtifactClassLoaderFilterFactory artifactClassLoaderFilterFactory = new DefaultArtifactClassLoaderFilterFactory();
     private DefaultExtensionManager extensionManager = new DefaultExtensionManager();
 
-    @Override
+    /**
+     * Creates a {@link ClassLoaderTestRunner} containing the container, plugins and application {@link ArtifactClassLoader}s
+     * @param klass
+     * @param artifactUrlClassification
+     * @return a {@link ClassLoaderTestRunner}
+     */
     public ClassLoaderTestRunner createClassLoader(Class<?> klass, ArtifactUrlClassification artifactUrlClassification)
     {
         // Container classLoader
-        logClassLoaderUrls("CONTAINER", artifactUrlClassification.getContainer());
-        final TestContainerClassLoaderFactory testContainerClassLoaderFactory = new TestContainerClassLoaderFactory(getExtraBootPackages(klass), artifactUrlClassification.getContainer().toArray(new URL[0]));
+        logClassLoaderUrls("CONTAINER", artifactUrlClassification.getContainerURLs());
+        final TestContainerClassLoaderFactory testContainerClassLoaderFactory = new TestContainerClassLoaderFactory(getExtraBootPackages(klass), artifactUrlClassification.getContainerURLs().toArray(new URL[0]));
 
         MuleArtifactClassLoader launcherArtifact = new MuleArtifactClassLoader("launcher", new URL[0],
                                                                                MuleClassLoaderRunnerFactory.class.getClassLoader(), new MuleClassLoaderLookupPolicy(Collections.emptyMap(), Collections.<String>emptySet()));
@@ -80,12 +91,12 @@ public class MuleClassLoaderRunnerFactory implements ClassLoaderRunnerFactory
 
         List<ArtifactClassLoader> pluginsArtifactClassLoaders = new ArrayList<>();
         // Plugin classloaders
-        if (!artifactUrlClassification.getPluginClassifications().isEmpty())
+        if (!artifactUrlClassification.getPluginClassificationURLs().isEmpty())
         {
             final List<ClassLoader> pluginClassLoaders = new ArrayList<>();
             pluginClassLoaders.add(new MuleArtifactClassLoader("sharedLibs", new URL[0], classLoader, childClassLoaderLookupPolicy));
 
-            for (PluginUrlClassification pluginUrlClassification : artifactUrlClassification.getPluginClassifications())
+            for (PluginUrlClassification pluginUrlClassification : artifactUrlClassification.getPluginClassificationURLs())
             {
                 // Plugin classLoader
                 logClassLoaderUrls("PLUGIN (" + pluginUrlClassification.getExtension().getName() + ")", pluginUrlClassification.getUrls());
@@ -102,8 +113,8 @@ public class MuleClassLoaderRunnerFactory implements ClassLoaderRunnerFactory
         }
 
         // Application classLoader
-        logClassLoaderUrls("APP", artifactUrlClassification.getApplication());
-        ArtifactClassLoader appClassLoader = new MuleArtifactClassLoader("app", artifactUrlClassification.getApplication().toArray(new URL[0]), classLoader, childClassLoaderLookupPolicy);
+        logClassLoaderUrls("APP", artifactUrlClassification.getApplicationURLs());
+        ArtifactClassLoader appClassLoader = new MuleArtifactClassLoader("app", artifactUrlClassification.getApplicationURLs().toArray(new URL[0]), classLoader, childClassLoaderLookupPolicy);
 
         return new ClassLoaderTestRunner(containerClassLoader, pluginsArtifactClassLoaders, appClassLoader);
     }

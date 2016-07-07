@@ -4,9 +4,11 @@
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-package org.mule.functional.junit4.runners;
+package org.mule.functional.classloading.isolation.maven.dependencies;
 
 import static java.util.Collections.emptySet;
+
+import org.mule.functional.classloading.isolation.maven.MavenArtifact;
 
 import java.util.HashSet;
 import java.util.Set;

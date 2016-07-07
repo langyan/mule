@@ -5,8 +5,9 @@
  * LICENSE.txt file.
  */
 
-package org.mule.functional.junit4.runners;
+package org.mule.functional.classloading.isolation.builder;
 
+import static org.mule.runtime.core.util.Preconditions.checkArgument;
 import static org.mule.runtime.module.extension.internal.ExtensionProperties.EXTENSION_MANIFEST_FILE_NAME;
 import org.mule.runtime.core.api.MuleContext;
 import org.mule.runtime.core.api.lifecycle.InitialisationException;
@@ -17,6 +18,7 @@ import org.mule.runtime.module.extension.internal.manager.DefaultExtensionManage
 import org.mule.runtime.module.extension.internal.manager.ExtensionManagerAdapter;
 import org.mule.runtime.module.extension.internal.manager.ExtensionManagerAdapterFactory;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.List;
@@ -40,8 +42,18 @@ public class ClassLoaderIsolatedExtensionsManagerConfigurationBuilder extends Ab
     private final String[] extensionClasses;
     private final List<ArtifactClassLoader> extensionClassLoaders;
 
+    /**
+     * Creates an instance of the builder with the list of extensions class names to be registered using their class loaders.
+     * It will load the extension class with its corresponding extension class loader and register the extension.
+     * <p/>
+     * It assumes that a {@link ArtifactClassLoader} name should have the extension class name.
+     *
+     * @param extensionClasses
+     * @param extensionClassLoaders
+     */
     public ClassLoaderIsolatedExtensionsManagerConfigurationBuilder(String[] extensionClasses, List<ArtifactClassLoader> extensionClassLoaders)
     {
+        checkArgument(extensionClasses.length == extensionClassLoaders.size(), "Extension classes to be registered and class loaders don't match");
         this.extensionClasses = extensionClasses;
         this.extensionManagerAdapterFactory = new DefaultExtensionManagerAdapterFactory();
         this.extensionClassLoaders = extensionClassLoaders;
@@ -54,18 +66,7 @@ public class ClassLoaderIsolatedExtensionsManagerConfigurationBuilder extends Ab
 
         for (String extensionClass : extensionClasses)
         {
-            ClassLoader extensionClassLoader = null;
-            for (Object artifactClassLoader : extensionClassLoaders)
-            {
-                if(artifactClassLoader.getClass().getMethod("getArtifactName").invoke(artifactClassLoader).equals(extensionClass))
-                {
-                    extensionClassLoader = (ClassLoader) artifactClassLoader.getClass().getMethod("getClassLoader").invoke(artifactClassLoader);
-                }
-            }
-            if (extensionClassLoader == null)
-            {
-                throw new IllegalStateException("There is no extension class loader by name: " + extensionClass);
-            }
+            ClassLoader extensionClassLoader = findExtensionClassLoader(extensionClass);
 
             // There will be more than one extension manifest file so we just filter by convention
             Method findResourceMethod = extensionClassLoader.getClass().getMethod("findResource", String.class);
@@ -78,6 +79,30 @@ public class ClassLoaderIsolatedExtensionsManagerConfigurationBuilder extends Ab
             ExtensionManifest extensionManifest = extensionManager.parseExtensionManifestXml(manifestUrl);
             extensionManager.registerExtension(extensionManifest, extensionClassLoader);
         }
+    }
+
+    /**
+     * @param extensionClass
+     * @return Finds the extension class loader for the given extension class by filtering the {@link ArtifactClassLoader} by its name.
+     * @throws IllegalAccessException
+     * @throws InvocationTargetException
+     * @throws NoSuchMethodException
+     */
+    private ClassLoader findExtensionClassLoader(String extensionClass) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException
+    {
+        ClassLoader extensionClassLoader = null;
+        for (Object artifactClassLoader : extensionClassLoaders)
+        {
+            if(artifactClassLoader.getClass().getMethod("getArtifactName").invoke(artifactClassLoader).equals(extensionClass))
+            {
+                extensionClassLoader = (ClassLoader) artifactClassLoader.getClass().getMethod("getClassLoader").invoke(artifactClassLoader);
+            }
+        }
+        if (extensionClassLoader == null)
+        {
+            throw new IllegalStateException("There is no extension class loader by name: " + extensionClass);
+        }
+        return extensionClassLoader;
     }
 
     private ExtensionManagerAdapter createExtensionManager(MuleContext muleContext) throws InitialisationException

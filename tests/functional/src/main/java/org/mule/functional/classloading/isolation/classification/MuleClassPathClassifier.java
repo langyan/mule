@@ -5,13 +5,31 @@
  * LICENSE.txt file.
  */
 
-package org.mule.functional.junit4.runners;
+package org.mule.functional.classloading.isolation.classification;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static java.lang.Class.forName;
 import static org.mule.functional.util.AnnotationUtils.getAnnotationAttributeFromHierarchy;
 import org.mule.functional.junit4.ExtensionsTestInfrastructureDiscoverer;
+import org.mule.functional.junit4.runners.ArtifactClassLoaderRunnerConfig;
+import org.mule.functional.classloading.isolation.maven.dependencies.ConfigurationBuilder;
+import org.mule.functional.classloading.isolation.classpath.DefaultMavenArtifactToClassPathURLResolver;
+import org.mule.functional.classloading.isolation.maven.dependencies.DependenciesFilterBuilder;
+import org.mule.functional.classloading.isolation.maven.dependencies.DependencyResolver;
+import org.mule.functional.classloading.isolation.maven.MavenArtifact;
+import org.mule.functional.classloading.isolation.maven.MavenArtifactMatcherPredicate;
+import org.mule.functional.classloading.isolation.maven.MavenArtifactToClassPathURLResolver;
+import org.mule.functional.classloading.isolation.maven.MavenMultiModuleArtifactMapping;
+import org.mule.functional.classloading.isolation.utils.RunnerModuleUtils;
+import org.mule.functional.classloading.isolation.maven.dependencies.TransitiveDependenciesFilterBuilder;
+import org.mule.runtime.core.DefaultMuleContext;
+import org.mule.runtime.core.api.lifecycle.InitialisationException;
+import org.mule.runtime.core.api.registry.MuleRegistry;
+import org.mule.runtime.core.registry.DefaultRegistryBroker;
+import org.mule.runtime.core.registry.MuleRegistryHelper;
 import org.mule.runtime.extension.api.introspection.declaration.spi.Describer;
+import org.mule.runtime.module.extension.internal.manager.DefaultExtensionManager;
+import org.mule.runtime.module.extension.internal.manager.ExtensionManagerAdapter;
 
 import com.google.common.collect.Lists;
 
@@ -122,17 +140,45 @@ public class MuleClassPathClassifier implements ClassPathClassifier
     {
         List<PluginUrlClassification> pluginClassifications = new ArrayList<>();
         List<String[]> extensionsAnnotatedClasses = getAnnotationAttributeFromHierarchy(context.getTestClass(), ArtifactClassLoaderRunnerConfig.class, "extensions");
+
+        final ExtensionManagerAdapter extensionManager = createExtensionMananger();
+
         if (!extensionsAnnotatedClasses.isEmpty())
         {
             Set<String> extensionsAnnotatedClassesNoDups = extensionsAnnotatedClasses.stream().flatMap(Arrays::stream).collect(Collectors.toSet());
             extensionsAnnotatedClassesNoDups.forEach(extensionClass ->
-                pluginClassifications.add(extensionClassPathClassification(extensionClass, exclusion, context.getMavenMultiModuleArtifactMapping(), artifactToClassPathURLResolver, context.getMavenDependencies(), compileArtifact, targetTestClassesFolder, context.getClassPathURLs()))
+                pluginClassifications.add(extensionClassPathClassification(extensionClass, extensionManager, exclusion, context.getMavenMultiModuleArtifactMapping(), artifactToClassPathURLResolver, context.getMavenDependencies(), compileArtifact, targetTestClassesFolder, context.getClassPathURLs()))
             );
         }
         return pluginClassifications;
     }
 
-    private PluginUrlClassification extensionClassPathClassification(final String extensionClassName, final Predicate<MavenArtifact> exclusion, final MavenMultiModuleArtifactMapping mavenMultiModuleMapping, final MavenArtifactToClassPathURLResolver artifactToClassPathURLResolver, final LinkedHashMap<MavenArtifact, Set<MavenArtifact>> allDependencies, final MavenArtifact compileArtifact, final File targetTestClassesFolder, final List<URL> classPathURLs)
+    /**
+     * @return an {@link ExtensionManagerAdapter} that would be used to register the extensions, later it would be discarded.
+     */
+    private ExtensionManagerAdapter createExtensionMananger()
+    {
+        DefaultExtensionManager extensionManager = new DefaultExtensionManager();
+        extensionManager.setMuleContext(new DefaultMuleContext()
+        {
+            @Override
+            public MuleRegistry getRegistry()
+            {
+                return new MuleRegistryHelper(new DefaultRegistryBroker(this), this);
+            }
+        });
+        try
+        {
+            extensionManager.initialise();
+        }
+        catch (InitialisationException e)
+        {
+            throw new RuntimeException("Error while initialising the extension manager", e);
+        }
+        return extensionManager;
+    }
+
+    private PluginUrlClassification extensionClassPathClassification(final String extensionClassName, ExtensionManagerAdapter extensionManager, final Predicate<MavenArtifact> exclusion, final MavenMultiModuleArtifactMapping mavenMultiModuleMapping, final MavenArtifactToClassPathURLResolver artifactToClassPathURLResolver, final LinkedHashMap<MavenArtifact, Set<MavenArtifact>> allDependencies, final MavenArtifact compileArtifact, final File targetTestClassesFolder, final List<URL> classPathURLs)
     {
         logger.debug("Classifying classpath for extension class: " + extensionClassName);
         Set<URL> extensionURLs = new LinkedHashSet<>();
@@ -162,7 +208,7 @@ public class MuleClassPathClassifier implements ClassPathClassifier
         // First we need to add META-INF folder for generated resources due to they may be already created by another mvn install goal by the extension maven plugin
         File generatedResourcesDirectory = new File(targetTestClassesFolder.getParent(), GENERATED_TEST_SOURCES + File.separator + extensionMavenArtifactId + File.separator + "META-INF");
         generatedResourcesDirectory.mkdirs();
-        ExtensionsTestInfrastructureDiscoverer extensionDiscoverer = new ExtensionsTestInfrastructureDiscoverer(generatedResourcesDirectory);
+        ExtensionsTestInfrastructureDiscoverer extensionDiscoverer = new ExtensionsTestInfrastructureDiscoverer(extensionManager, generatedResourcesDirectory);
         extensionDiscoverer.discoverExtensions(new Describer[0], new Class[] {extension});
         try
         {

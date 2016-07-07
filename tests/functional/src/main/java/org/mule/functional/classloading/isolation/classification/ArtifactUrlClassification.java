@@ -5,13 +5,14 @@
  * LICENSE.txt file.
  */
 
-package org.mule.functional.junit4.runners;
+package org.mule.functional.classloading.isolation.classification;
 
 import java.net.URL;
 import java.util.List;
 
 /**
  * Defines the list of URLS for each class loader that would be created in order to run the test.
+ * It is the result of {@link ClassPathClassifier}.
  *
  * @since 4.0
  */
@@ -22,6 +23,13 @@ public class ArtifactUrlClassification
     private final List<PluginUrlClassification> pluginUrlClassifications;
     private final List<URL> application;
 
+    /**
+     * Creates a instance with the list of urls classified in container, plugins and application.
+     *
+     * @param container
+     * @param pluginUrlClassifications
+     * @param application
+     */
     public ArtifactUrlClassification(List<URL> container, List<PluginUrlClassification> pluginUrlClassifications, List<URL> application)
     {
         this.container = container;
@@ -29,17 +37,17 @@ public class ArtifactUrlClassification
         this.application = application;
     }
 
-    public List<URL> getContainer()
+    public List<URL> getContainerURLs()
     {
         return container;
     }
 
-    public List<PluginUrlClassification> getPluginClassifications()
+    public List<PluginUrlClassification> getPluginClassificationURLs()
     {
         return pluginUrlClassifications;
     }
 
-    public List<URL> getApplication()
+    public List<URL> getApplicationURLs()
     {
         return application;
     }

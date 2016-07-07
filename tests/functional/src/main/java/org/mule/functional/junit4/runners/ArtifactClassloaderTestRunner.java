@@ -7,6 +7,18 @@
 package org.mule.functional.junit4.runners;
 
 import static org.mule.runtime.core.util.ClassUtils.withContextClassLoader;
+import org.mule.functional.classloading.isolation.classification.ArtifactUrlClassification;
+import org.mule.functional.classloading.isolation.classification.ClassLoaderTestRunner;
+import org.mule.functional.classloading.isolation.classification.ClassPathClassifier;
+import org.mule.functional.classloading.isolation.classification.DefaultClassPathClassifierContext;
+import org.mule.functional.classloading.isolation.classification.MuleClassPathClassifier;
+import org.mule.functional.classloading.isolation.classloader.MuleClassLoaderRunnerFactory;
+import org.mule.functional.classloading.isolation.classpath.ClassPathURLsProvider;
+import org.mule.functional.classloading.isolation.classpath.DefaultClassPathURLsProvider;
+import org.mule.functional.classloading.isolation.maven.DependencyGraphMavenDependenciesResolver;
+import org.mule.functional.classloading.isolation.maven.MavenDependenciesResolver;
+import org.mule.functional.classloading.isolation.maven.MavenMultiModuleArtifactMapping;
+import org.mule.functional.classloading.isolation.maven.MuleMavenMultiModuleArtifactMapping;
 import org.mule.runtime.module.artifact.classloader.ArtifactClassLoader;
 
 import java.lang.annotation.Annotation;
@@ -29,17 +41,17 @@ import org.junit.runners.model.TestClass;
  * Runner that mimics the class loading model used in a standalone container.
  * In order to detect early issues related to isolation when building plugins these runner allow you to
  * run your functional test cases using an isolated class loader.
- *
+ * <p/>
  * {@link org.mule.functional.junit4.ArtifactFunctionalTestCase} should be extended in order to use this
  * runner, it has already annotated the runner and also has the logic to configure extension into {@link org.mule.runtime.core.api.MuleContext}.
- *
+ * <p/>
  * See {@link RunnerDelegateTo} for those scenarios where another JUnit runner needs to be used but still the test
  * has to be executed within an isolated class loading model.
  * {@link ArtifactClassLoaderRunnerConfig} allows to define the Extensions to be discovered in the classpath, for each
  * Extension a plugin class loader would be created.
  * {@link PluginClassLoadersAware} allows the test to be injected with the list of {@link ClassLoader}s that were created
  * for each plugin, mostly used in {@link org.mule.functional.junit4.ArtifactFunctionalTestCase} in order to register the extensions.
- *
+ * <p/>
  * The class loading model is built by doing a classification of the ClassPath URLs loaded by IDEs and surfire-maven-plugin.
  * The classification bases its logic by reading the dependency tree graph generated with depgraph-maven-plugin.
  * It goes over the tree to select the dependencies and getting the URLs from the Launcher class loader to create the
@@ -106,7 +118,7 @@ public class ArtifactClassloaderTestRunner extends Runner implements Filterable
         ClassPathURLsProvider classPathURLsProvider = new DefaultClassPathURLsProvider();
         MavenDependenciesResolver mavenDependenciesResolver = new DependencyGraphMavenDependenciesResolver();
         MavenMultiModuleArtifactMapping mavenMultiModuleArtifactMapping = new MuleMavenMultiModuleArtifactMapping();
-        ClassLoaderRunnerFactory classLoaderRunnerFactory = new MuleClassLoaderRunnerFactory();
+        MuleClassLoaderRunnerFactory classLoaderRunnerFactory = new MuleClassLoaderRunnerFactory();
         ClassPathClassifier classPathClassifier = new MuleClassPathClassifier();
 
         // Does the classification and creation of the isolated ClassLoader
