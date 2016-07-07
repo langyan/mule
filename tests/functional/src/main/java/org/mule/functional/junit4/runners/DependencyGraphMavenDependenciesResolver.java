@@ -81,6 +81,10 @@ public class DependencyGraphMavenDependenciesResolver implements MavenDependenci
     private File getDependenciesGraphFile()
     {
         URL dependenciesListFileURL = DependencyGraphMavenDependenciesResolver.class.getClassLoader().getResource(DEPENDENCIES_GRAPH_FILE_NAME);
+        if (dependenciesListFileURL == null)
+        {
+            throw new IllegalStateException(DEPENDENCIES_GRAPH_FILE_NAME + " not found, the maven plugin 'depgraph-maven-plugin ' should be executed first.");
+        }
         return new File(dependenciesListFileURL.getFile());
     }
 
