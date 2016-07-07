@@ -9,7 +9,6 @@ package org.mule.functional.junit4.runners;
 
 import java.io.File;
 import java.net.URL;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -42,7 +41,7 @@ public class DefaultMavenArtifactToClassPathURLResolver implements MavenArtifact
         }
     }
 
-    private URL getModuleURL(final MavenArtifact artifact, final Collection<URL> urls, final MavenMultiModuleArtifactMapping mavenMultiModuleMapping)
+    private URL getModuleURL(final MavenArtifact artifact, final List<URL> urls, final MavenMultiModuleArtifactMapping mavenMultiModuleMapping)
     {
         final StringBuilder moduleFolder = new StringBuilder(mavenMultiModuleMapping.mapModuleFolderNameFor(artifact.getArtifactId())).append("target/");
 
@@ -70,7 +69,7 @@ public class DefaultMavenArtifactToClassPathURLResolver implements MavenArtifact
         }).findFirst();
         if (!localFile.isPresent())
         {
-            throw new IllegalArgumentException("Cannot locate artifact as multi-module dependency: '" + artifact + "', on module folder: " + moduleFolder + " using exploded url suffix regex: " + explodedUrlSuffix + " or " + packagedUrlSuffix);
+            throw new IllegalArgumentException("Cannot locate artifact as multi-module dependency: '" + artifact + "', on module folder: " + moduleFolder + " using exploded url suffix regex: " + explodedUrlSuffix + " or " + packagedUrlSuffix + " using classpath: " + urls);
 
         }
         return localFile.get();
