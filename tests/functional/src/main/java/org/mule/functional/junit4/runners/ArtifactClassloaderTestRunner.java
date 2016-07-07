@@ -108,6 +108,8 @@ public class ArtifactClassloaderTestRunner extends Runner implements Filterable
     }
 
     /**
+     * Creates the {@link ClassLoaderTestRunner} with the isolated class loaders.
+     *
      * @param klass
      * @return creates a {@link ClassLoaderTestRunner} that would be used to run the test. This way the test will be isolated and it will behave
      * similar as an application running in a Mule standalone container.
