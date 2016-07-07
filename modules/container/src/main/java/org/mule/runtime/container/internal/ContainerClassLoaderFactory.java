@@ -107,11 +107,11 @@ public class ContainerClassLoaderFactory
     /**
      * Creates the container lookup policy to be used by child class loaders.
      *
-     * @param muleModules
+     * @param muleModules list of modules that would be used to register in the filter based of the class loader.
      * @return a non null {@link ClassLoaderLookupPolicy} that contains the lookup policies for boot, system packages.
      * plus exported packages by the given list of {@link MuleModule}.
      */
-    public ClassLoaderLookupPolicy getContainerClassLoaderLookupPolicy(List<MuleModule> muleModules)
+    protected ClassLoaderLookupPolicy getContainerClassLoaderLookupPolicy(List<MuleModule> muleModules)
     {
         final Set<String> parentOnlyPackages = new HashSet<>(getBootPackages());
         parentOnlyPackages.addAll(SYSTEM_PACKAGES);
@@ -156,6 +156,13 @@ public class ContainerClassLoaderFactory
         this.moduleDiscoverer = moduleDiscoverer;
     }
 
+    /**
+     * Creates a {@link Map<String, ClassLoaderLookupStrategy>} with PARENT_ONLY strategy for the packages
+     * exported by the mule modules.
+     *
+     * @param muleModules to be used for colleting the exported packages
+     * @return a {@link Map<String, ClassLoaderLookupStrategy>} for the exported packages as PARENT_ONLY
+     */
     private Map<String, ClassLoaderLookupStrategy> buildClassLoaderLookupStrategy(List<MuleModule> muleModules)
     {
         final Map<String, ClassLoaderLookupStrategy> result = new HashMap<>();

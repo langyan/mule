@@ -38,7 +38,7 @@ import org.junit.runners.model.RunnerBuilder;
 import org.junit.runners.model.TestClass;
 
 /**
- * Runner that mimics the class loading model used in a standalone container.
+ * A {@link org.junit.runner.Runner} that mimics the class loading model used in a standalone container.
  * In order to detect early issues related to isolation when building plugins these runner allow you to
  * run your functional test cases using an isolated class loader.
  * <p/>
