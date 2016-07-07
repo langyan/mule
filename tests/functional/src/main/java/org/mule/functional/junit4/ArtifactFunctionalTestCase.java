@@ -10,7 +10,7 @@ package org.mule.functional.junit4;
 import static org.mule.functional.util.AnnotationUtils.getAnnotationAttributeFrom;
 import static org.mule.functional.util.AnnotationUtils.getAnnotationAttributeFromHierarchy;
 import org.mule.functional.junit4.runners.ArtifactClassLoaderRunnerConfig;
-import org.mule.functional.junit4.runners.ArtifactClassloaderRunnerContextAware;
+import org.mule.functional.junit4.runners.PluginClassLoadersAware;
 import org.mule.functional.junit4.runners.ArtifactClassloaderTestRunner;
 import org.mule.functional.junit4.runners.ClassLoaderIsolatedExtensionsManagerConfigurationBuilder;
 import org.mule.functional.junit4.runners.RunnerDelegateTo;
@@ -41,7 +41,7 @@ public abstract class ArtifactFunctionalTestCase extends FunctionalTestCase
 {
     protected static List<ArtifactClassLoader> extensionClassLoaders;
 
-    @ArtifactClassloaderRunnerContextAware
+    @PluginClassLoadersAware
     public static void setExtensionClassLoaders(List<ArtifactClassLoader> pluginClassLoaders)
     {
         extensionClassLoaders = pluginClassLoaders;

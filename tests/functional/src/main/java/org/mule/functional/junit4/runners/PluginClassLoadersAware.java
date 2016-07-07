@@ -14,8 +14,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Defines that the test is going to be run with an {@link ArtifactClassloaderTestRunner} and would need
- * the context to register extensions.
+ * Defines that when test is going to be run with an {@link ArtifactClassloaderTestRunner} it would need to get
+ * access to the plugin class loaders in order to load classes using those class loaders.
  *
  * A public static method should be defined and annotated with this annotation in order to be called by the runner
  * so the test later could get access to the plugins/extensions {@link ClassLoader}.
@@ -26,6 +26,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 @Inherited
-public @interface ArtifactClassloaderRunnerContextAware
+public @interface PluginClassLoadersAware
 {
 }

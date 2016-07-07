@@ -30,7 +30,24 @@ import org.junit.runners.model.TestClass;
  * In order to detect early issues related to isolation when building plugins these runner allow you to
  * run your functional test cases using an isolated class loader.
  *
- * TODO
+ * {@link org.mule.functional.junit4.ArtifactFunctionalTestCase} should be extended in order to use this
+ * runner, it has already annotated the runner and also has the logic to configure extension into {@link org.mule.runtime.core.api.MuleContext}.
+ *
+ * See {@link RunnerDelegateTo} for those scenarios where another JUnit runner needs to be used but still the test
+ * has to be executed within an isolated class loading model.
+ * {@link ArtifactClassLoaderRunnerConfig} allows to define the Extensions to be discovered in the classpath, for each
+ * Extension a plugin class loader would be created.
+ * {@link PluginClassLoadersAware} allows the test to be injected with the list of {@link ClassLoader}s that were created
+ * for each plugin, mostly used in {@link org.mule.functional.junit4.ArtifactFunctionalTestCase} in order to register the extensions.
+ *
+ * The class loading model is built by doing a classification of the ClassPath URLs loaded by IDEs and surfire-maven-plugin.
+ * The classification bases its logic by reading the dependency tree graph generated with depgraph-maven-plugin.
+ * It goes over the tree to select the dependencies and getting the URLs from the Launcher class loader to create the
+ * {@link ArtifactClassLoader}s and filters for each one of them.
+ * See {@link ClassPathClassifier} for details about the classification logic. Just for understanding the simple way to
+ * describe the classification is by saying that all the provided dependencies (including its transitives) will go to the container
+ * class loader, for each extension defined it will create a plugin class loader including its compile dependencies (including transitives)
+ * and the rest of the test dependencies (including transitives) will go to the application class loader.
  *
  * @since 4.0
  */
@@ -108,13 +125,13 @@ public class ArtifactClassloaderTestRunner extends Runner implements Filterable
     private static void injectPluginsClassLoaders(ClassLoaderTestRunner classLoaderTestRunner, Class<?> isolatedTestClass) throws Throwable
     {
         TestClass testClass = new TestClass(isolatedTestClass);
-        Class<? extends Annotation> artifactContextAwareAnn = (Class<? extends Annotation>) classLoaderTestRunner.loadClassWithApplicationClassLoader(ArtifactClassloaderRunnerContextAware.class.getName());
+        Class<? extends Annotation> artifactContextAwareAnn = (Class<? extends Annotation>) classLoaderTestRunner.loadClassWithApplicationClassLoader(PluginClassLoadersAware.class.getName());
         List<FrameworkMethod> contextAwareMethods = testClass.getAnnotatedMethods(artifactContextAwareAnn);
         for (FrameworkMethod method : contextAwareMethods)
         {
             if (!method.isStatic() || !method.isPublic())
             {
-                throw new IllegalStateException("Method marked with annotation " + ArtifactClassloaderRunnerContextAware.class.getName() + " should be public static and it should receive a parameter of type List<" + ArtifactClassLoader.class + ">");
+                throw new IllegalStateException("Method marked with annotation " + PluginClassLoadersAware.class.getName() + " should be public static and it should receive a parameter of type List<" + ArtifactClassLoader.class + ">");
             }
             try
             {
@@ -122,7 +139,7 @@ public class ArtifactClassloaderTestRunner extends Runner implements Filterable
             }
             catch (IllegalArgumentException e)
             {
-                throw new IllegalStateException("Method marked with annotation " + ArtifactClassloaderRunnerContextAware.class.getName() + " should receive a parameter of type List<" + ArtifactClassLoader.class + ">");
+                throw new IllegalStateException("Method marked with annotation " + PluginClassLoadersAware.class.getName() + " should receive a parameter of type List<" + ArtifactClassLoader.class + ">");
             }
         }
     }
