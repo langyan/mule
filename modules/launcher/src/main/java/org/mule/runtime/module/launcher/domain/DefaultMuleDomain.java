@@ -6,6 +6,7 @@
  */
 package org.mule.runtime.module.launcher.domain;
 
+import static org.mule.runtime.core.config.bootstrap.ArtifactType.DOMAIN;
 import static org.mule.runtime.core.util.ClassUtils.withContextClassLoader;
 import static org.mule.runtime.core.util.SplashScreen.miniSplash;
 import org.mule.runtime.core.api.MuleContext;
@@ -27,6 +28,7 @@ import org.mule.runtime.module.launcher.application.NullDeploymentListener;
 import org.mule.runtime.module.launcher.artifact.ArtifactMuleContextBuilder;
 import org.mule.runtime.module.launcher.artifact.MuleContextDeploymentListener;
 import org.mule.runtime.module.launcher.descriptor.DomainDescriptor;
+import org.mule.runtime.module.reboot.MuleContainerBootstrapUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -118,9 +120,9 @@ public class DefaultMuleDomain implements Domain
                 ArtifactMuleContextBuilder artifactBuilder = new ArtifactMuleContextBuilder()
                         .setArtifactName(getArtifactName())
                         .setExecutionClassloader(deploymentClassLoader.getClassLoader())
-                        .setArtifactInstallationDirectory(descriptor.getRootFolder())
+                        .setArtifactInstallationDirectory(new File(MuleContainerBootstrapUtils.getMuleDomainsDir(), getArtifactName()))
                         .setConfigurationFiles(new String[]{this.configResourceFile.getAbsolutePath()})
-                        .setArtifactType(ArtifactType.DOMAIN);
+                        .setArtifactType(DOMAIN);
 
                 if (deploymentListener != null)
                 {

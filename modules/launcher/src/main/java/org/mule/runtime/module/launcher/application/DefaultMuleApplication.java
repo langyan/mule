@@ -7,6 +7,8 @@
 package org.mule.runtime.module.launcher.application;
 
 import static java.lang.String.format;
+import static org.mule.runtime.core.config.bootstrap.ArtifactType.APP;
+import static org.mule.runtime.core.config.bootstrap.ArtifactType.DOMAIN;
 import static org.mule.runtime.core.config.i18n.MessageFactory.createStaticMessage;
 import static org.mule.runtime.core.util.ClassUtils.withContextClassLoader;
 import static org.mule.runtime.core.util.SplashScreen.miniSplash;
@@ -174,7 +176,7 @@ public class DefaultMuleApplication implements Application
         {
             ArtifactMuleContextBuilder artifactBuilder = new ArtifactMuleContextBuilder()
                     .setArtifactProperties(descriptor.getAppProperties())
-                    .setArtifactType(ArtifactType.DOMAIN)
+                    .setArtifactType(APP)
                     .setArtifactInstallationDirectory(new File(MuleContainerBootstrapUtils.getMuleAppsDir(), getArtifactName()))
                     .setConfigurationFiles(descriptor.getAbsoluteResourcePaths())
                     .setDefaultEncoding(descriptor.getEncoding())

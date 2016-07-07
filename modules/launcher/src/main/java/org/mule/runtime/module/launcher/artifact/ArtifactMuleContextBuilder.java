@@ -64,6 +64,8 @@ public class ArtifactMuleContextBuilder
      * {@code MuleContext}. For instance {@code ArtifactType.DOMAIN} does not have any service
      * required to execute flows.
      *
+     * By default {@code ArtifactType.APP} will be used, making all services available.
+     *
      * @param artifactType artifact type for which a {@code MuleContext} must be created.
      * @return the builder
      */

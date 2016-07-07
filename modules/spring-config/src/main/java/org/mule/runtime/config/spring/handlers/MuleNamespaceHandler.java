@@ -62,6 +62,7 @@ import org.mule.runtime.config.spring.parsers.specific.MessageFilterDefinitionPa
 import org.mule.runtime.config.spring.parsers.specific.MessageProcessorChainDefinitionParser;
 import org.mule.runtime.config.spring.parsers.specific.MessageProcessorDefinitionParser;
 import org.mule.runtime.config.spring.parsers.specific.MessageProcessorWithDataTypeDefinitionParser;
+import org.mule.runtime.config.spring.parsers.specific.NotificationDefinitionParser;
 import org.mule.runtime.config.spring.parsers.specific.NotificationDisableDefinitionParser;
 import org.mule.runtime.config.spring.parsers.specific.ObjectFactoryDefinitionParser;
 import org.mule.runtime.config.spring.parsers.specific.PoolingProfileDefinitionParser;
@@ -265,6 +266,7 @@ public class MuleNamespaceHandler extends AbstractMuleNamespaceHandler
         registerBeanDefinitionParser("pooling-profile", new PoolingProfileDefinitionParser());
         registerBeanDefinitionParser("queue-profile", new ChildDefinitionParser("queueProfile", QueueProfileFactoryBean.class));
         registerMuleBeanDefinitionParser("notifications", new NamedDefinitionParser(MuleProperties.OBJECT_NOTIFICATION_MANAGER)).addAlias("dynamic", "notificationDynamic");
+        registerBeanDefinitionParser("notification", new NotificationDefinitionParser());
         registerBeanDefinitionParser("disable-notification", new NotificationDisableDefinitionParser());
         registerMuleBeanDefinitionParser("notification-listener", new ChildDefinitionParser("allListenerSubscriptionPair", ListenerSubscriptionPair.class)).addAlias("ref", "listener").addReference("listener");
 

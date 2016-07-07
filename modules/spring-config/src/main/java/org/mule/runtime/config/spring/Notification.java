@@ -51,6 +51,8 @@ import java.util.Optional;
  * for elements that have children of the same type but that must be injected in different collections of the
  * parent object. Ideally this should not be needed or we don't have to support such use case anymore but for
  * previous elements coming from previous mule version we have to keep the XML syntax as it is.
+ *
+ * @since 4.0
  */
 public class Notification
 {

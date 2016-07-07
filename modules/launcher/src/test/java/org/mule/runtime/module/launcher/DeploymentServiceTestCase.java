@@ -178,7 +178,7 @@ public class DeploymentServiceTestCase extends AbstractMuleTestCase
     public DynamicPort httpPort = new DynamicPort("httpPort");
 
     @Before
-    public void doSetUp() throws Exception
+    public void setUp() throws Exception
     {
         //super.doSetUp();
         // set up some mule home structure
@@ -207,7 +207,7 @@ public class DeploymentServiceTestCase extends AbstractMuleTestCase
     }
 
     @After
-    public void doTearDown() throws Exception
+    public void tearDown() throws Exception
     {
         // comment out the deletion to analyze results after test is done
         if (deploymentService != null)

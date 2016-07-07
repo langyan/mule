@@ -72,12 +72,6 @@ public class SpringXmlConfigurationBuilder extends AbstractResourceConfiguration
         this.artifactType = APP;
     }
 
-    protected List<ConfigResource> getConfigResources() throws IOException
-    {
-        List<ConfigResource> allResources = new ArrayList<>();
-        return allResources;
-    }
-
     @Override
     protected void doConfigure(MuleContext muleContext) throws Exception
     {

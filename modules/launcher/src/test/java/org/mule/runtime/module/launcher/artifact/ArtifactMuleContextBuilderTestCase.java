@@ -31,7 +31,6 @@ public class ArtifactMuleContextBuilderTestCase extends AbstractMuleTestCase
     @ClassRule
     public static TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 

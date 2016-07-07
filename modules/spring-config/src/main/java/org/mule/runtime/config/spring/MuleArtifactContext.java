@@ -181,6 +181,7 @@ public class MuleArtifactContext extends AbstractXmlApplicationContext
     private static final ThreadLocal<MuleContext> currentMuleContext = new ThreadLocal<>();
 
     private final ComponentBuildingDefinitionRegistry componentBuildingDefinitionRegistry = new ComponentBuildingDefinitionRegistry();
+    private final SpringMuleContextServiceConfigurator springMuleContextServiceConfigurator = new SpringMuleContextServiceConfigurator();
     private final OptionalObjectsController optionalObjectsController;
     private final Map<String, String> artifactProperties;
     private ApplicationModel applicationModel;
@@ -335,122 +336,6 @@ public class MuleArtifactContext extends AbstractXmlApplicationContext
         beanFactory.registerSingleton(OBJECT_MULE_CONTEXT, muleContext);
     }
 
-    private void createArtifactServices(BeanDefinitionRegistry beanDefinitionRegistry)
-    {
-        boolean lazyInit = false;
-
-        try
-        {
-            createBootstrapBeanDefinitions(beanDefinitionRegistry, lazyInit);
-        }
-        catch (InitialisationException e)
-        {
-            throw new RuntimeException(e);
-        }
-
-        List<Notification> defaultNotifications = new ArrayList<>();
-        defaultNotifications.add(new Notification(MuleContextNotificationListener.class, MuleContextNotification.class));
-        defaultNotifications.add(new Notification(SecurityNotificationListener.class, SecurityNotification.class));
-        defaultNotifications.add(new Notification(ManagementNotificationListener.class, ManagementNotification.class));
-        defaultNotifications.add(new Notification(ConnectionNotificationListener.class, ConnectionNotification.class));
-        defaultNotifications.add(new Notification(RegistryNotificationListener.class, RegistryNotification.class));
-        defaultNotifications.add(new Notification(CustomNotificationListener.class, CustomNotification.class));
-        defaultNotifications.add(new Notification(ExceptionNotificationListener.class, ExceptionNotification.class));
-        defaultNotifications.add(new Notification(TransactionNotificationListener.class, TransactionNotification.class));
-        beanDefinitionRegistry.registerBeanDefinition(OBJECT_NOTIFICATION_MANAGER, getBeanDefinitionBuilder(lazyInit, ServerNotificationManagerConfigurator.class)
-                .addPropertyValue("enabledNotifications", defaultNotifications)
-                .getBeanDefinition());
-        beanDefinitionRegistry.registerBeanDefinition(OBJECT_SERIALIZER, getBeanDefinitionBuilder(lazyInit, DefaultObjectSerializerFactoryBean.class)
-                .addDependsOn(OBJECT_MULE_CONFIGURATION)
-                .getBeanDefinition());
-        beanDefinitionRegistry.registerBeanDefinition(OBJECT_TRANSACTION_MANAGER, getBeanDefinition(lazyInit, TransactionManagerFactoryBean.class));
-        beanDefinitionRegistry.registerBeanDefinition(OBJECT_STORE_DEFAULT_IN_MEMORY_NAME, getBeanDefinitionBuilder(lazyInit, ConstantFactoryBean.class).addConstructorArgReference(OBJECT_LOCAL_STORE_IN_MEMORY).getBeanDefinition());
-        beanDefinitionRegistry.registerBeanDefinition(OBJECT_LOCAL_STORE_IN_MEMORY, getBeanDefinition(lazyInit, DefaultObjectStoreFactoryBean.class, "createDefaultInMemoryObjectStore"));
-        beanDefinitionRegistry.registerBeanDefinition(OBJECT_STORE_DEFAULT_PERSISTENT_NAME, getBeanDefinitionBuilder(lazyInit, ConstantFactoryBean.class).addConstructorArgReference(OBJECT_LOCAL_STORE_PERSISTENT).getBeanDefinition());
-        beanDefinitionRegistry.registerBeanDefinition(OBJECT_LOCAL_STORE_PERSISTENT, getBeanDefinition(lazyInit, DefaultObjectStoreFactoryBean.class, "createDefaultPersistentObjectStore"));
-        beanDefinitionRegistry.registerBeanDefinition(DEFAULT_USER_OBJECT_STORE_NAME, getBeanDefinitionBuilder(lazyInit, ConstantFactoryBean.class).addConstructorArgReference(DEFAULT_LOCAL_USER_OBJECT_STORE_NAME).getBeanDefinition());
-        beanDefinitionRegistry.registerBeanDefinition(DEFAULT_LOCAL_USER_OBJECT_STORE_NAME, getBeanDefinition(lazyInit, DefaultObjectStoreFactoryBean.class, "createDefaultUserObjectStore"));
-        beanDefinitionRegistry.registerBeanDefinition(DEFAULT_USER_TRANSIENT_OBJECT_STORE_NAME, getBeanDefinitionBuilder(lazyInit, ConstantFactoryBean.class).addConstructorArgReference(DEFAULT_LOCAL_TRANSIENT_USER_OBJECT_STORE_NAME).getBeanDefinition());
-        beanDefinitionRegistry.registerBeanDefinition(DEFAULT_LOCAL_TRANSIENT_USER_OBJECT_STORE_NAME, getBeanDefinition(lazyInit, DefaultObjectStoreFactoryBean.class, "createDefaultUserTransientObjectStore"));
-        beanDefinitionRegistry.registerBeanDefinition(OBJECT_QUEUE_MANAGER, getBeanDefinitionBuilder(lazyInit, ConstantFactoryBean.class).addConstructorArgReference(OBJECT_LOCAL_QUEUE_MANAGER).getBeanDefinition());
-        beanDefinitionRegistry.registerBeanDefinition(OBJECT_LOCAL_QUEUE_MANAGER, getBeanDefinition(lazyInit, DelegateQueueManager.class));
-        beanDefinitionRegistry.registerBeanDefinition(OBJECT_STORE_MANAGER, getBeanDefinition(lazyInit, MuleObjectStoreManager.class)); //missing init-method
-        beanDefinitionRegistry.registerAlias(OBJECT_STORE_MANAGER, LOCAL_OBJECT_STORE_MANAGER);
-        beanDefinitionRegistry.registerBeanDefinition(OBJECT_DEFAULT_THREADING_PROFILE, getBeanDefinition(lazyInit, ChainedThreadingProfile.class));
-        //TODO this object should not exists anymrore
-        beanDefinitionRegistry.registerBeanDefinition(OBJECT_DEFAULT_SERVICE_THREADING_PROFILE, getBeanDefinition(lazyInit, ChainedThreadingProfile.class));
-        beanDefinitionRegistry.registerBeanDefinition(OBJECT_DEFAULT_MESSAGE_DISPATCHER_THREADING_PROFILE, getBeanDefinitionBuilder(lazyInit, ChainedThreadingProfile.class).addConstructorArgReference(OBJECT_DEFAULT_THREADING_PROFILE).getBeanDefinition());
-        beanDefinitionRegistry.registerBeanDefinition(OBJECT_DEFAULT_MESSAGE_REQUESTER_THREADING_PROFILE, getBeanDefinitionBuilder(lazyInit, ChainedThreadingProfile.class).addConstructorArgReference(OBJECT_DEFAULT_THREADING_PROFILE).getBeanDefinition());
-        beanDefinitionRegistry.registerBeanDefinition(OBJECT_DEFAULT_MESSAGE_RECEIVER_THREADING_PROFILE, getBeanDefinitionBuilder(lazyInit, ChainedThreadingProfile.class).addConstructorArgReference(OBJECT_DEFAULT_THREADING_PROFILE).getBeanDefinition());
-        beanDefinitionRegistry.registerBeanDefinition(OBJECT_DEFAULT_RETRY_POLICY_TEMPLATE, getBeanDefinition(lazyInit, NoRetryPolicyTemplate.class));
-        beanDefinitionRegistry.registerBeanDefinition(OBJECT_EXPRESSION_LANGUAGE, getBeanDefinition(lazyInit, MVELExpressionLanguageWrapper.class)); //missing muleContext in contrcutor
-        beanDefinitionRegistry.registerBeanDefinition(OBJECT_EXTENSION_MANAGER, getBeanDefinition(lazyInit, ExtensionManagerFactoryBean.class)); //missing muleContext in contrcutor
-        beanDefinitionRegistry.registerBeanDefinition(OBJECT_TIME_SUPPLIER, getBeanDefinition(lazyInit, TimeSupplier.class));
-        beanDefinitionRegistry.registerBeanDefinition(OBJECT_CONNECTION_MANAGER, getBeanDefinition(lazyInit, DefaultConnectionManager.class));
-        beanDefinitionRegistry.registerBeanDefinition(OBJECT_METADATA_MANAGER, getBeanDefinition(lazyInit, MuleMetadataManager.class));
-        beanDefinitionRegistry.registerBeanDefinition(OBJECT_OBJECT_NAME_PROCESSOR, getBeanDefinition(lazyInit, MuleObjectNameProcessor.class));
-        beanDefinitionRegistry.registerBeanDefinition("_muleParentContextPropertyPlaceholderProcessor", getBeanDefinition(lazyInit, ParentContextPropertyPlaceholderProcessor.class));
-
-        HashMap<Object, Object> factories = new HashMap<>();
-        factories.put("hostname", new HostNameFactory());
-        beanDefinitionRegistry.registerBeanDefinition("_mulePropertyPlaceholderProcessor", getBeanDefinitionBuilder(lazyInit, PropertyPlaceholderProcessor.class)
-                .addPropertyValue("factories", factories)
-                .addPropertyValue("ignoreUnresolvablePlaceholders", true)
-                .getBeanDefinition());
-
-        if (artifactType.equals(ArtifactType.APP))
-        {
-            beanDefinitionRegistry.registerBeanDefinition(OBJECT_SECURITY_MANAGER, getBeanDefinition(lazyInit, MuleSecurityManager.class));
-            beanDefinitionRegistry.registerBeanDefinition(OBJECT_DEFAULT_MESSAGE_PROCESSING_MANAGER, getBeanDefinition(lazyInit, MuleMessageProcessingManager.class));
-            beanDefinitionRegistry.registerBeanDefinition(OBJECT_MULE_STREAM_CLOSER_SERVICE, getBeanDefinition(lazyInit, DefaultStreamCloserService.class));
-            beanDefinitionRegistry.registerBeanDefinition(OBJECT_MULE_STREAM_CLOSER_SERVICE, getBeanDefinition(lazyInit, DefaultStreamCloserService.class));
-            beanDefinitionRegistry.registerBeanDefinition(OBJECT_CONVERTER_RESOLVER, getBeanDefinition(lazyInit, DynamicDataTypeConversionResolver.class)); //missing muleContext in contrcutor
-            beanDefinitionRegistry.registerBeanDefinition(OBJECT_LOCK_FACTORY, getBeanDefinition(lazyInit, MuleLockFactory.class));
-            beanDefinitionRegistry.registerBeanDefinition(OBJECT_LOCK_PROVIDER, getBeanDefinition(lazyInit, SingleServerLockProvider.class));
-            beanDefinitionRegistry.registerBeanDefinition(OBJECT_PROCESSING_TIME_WATCHER, getBeanDefinition(lazyInit, DefaultProcessingTimeWatcher.class));
-            beanDefinitionRegistry.registerBeanDefinition(OBJECT_CONNECTOR_MESSAGE_PROCESSOR_LOCATOR, getBeanDefinition(lazyInit, MuleConnectorOperationLocator.class));
-            beanDefinitionRegistry.registerBeanDefinition(OBJECT_EXCEPTION_LOCATION_PROVIDER, getBeanDefinition(lazyInit, MessagingExceptionLocationProvider.class));
-            beanDefinitionRegistry.registerBeanDefinition(OBJECT_MESSAGE_PROCESSING_FLOW_TRACE_MANAGER, getBeanDefinition(lazyInit, MessageProcessingFlowTraceManager.class));
-        }
-
-        try
-        {
-            Class endpointFactoryClass = ClassUtils.loadClass("org.mule.compatibility.core.endpoint.DefaultEndpointFactory", Thread.currentThread().getContextClassLoader());
-            beanDefinitionRegistry.registerBeanDefinition("_muleEndpointFactory", getBeanDefinition(lazyInit, endpointFactoryClass));
-        }
-        catch (ClassNotFoundException e)
-        {
-            //Nothing to do.
-        }
-
-    }
-
-    private void createBootstrapBeanDefinitions(BeanDefinitionRegistry beanDefinitionRegistry, boolean lazyInit) throws InitialisationException
-    {
-        SpringRegistryBootstrap springRegistryBootstrap = new SpringRegistryBootstrap(artifactType, muleContext, optionalObjectsController, beanDefinitionRegistry);
-        springRegistryBootstrap.setLazyInitialization(lazyInit);
-        springRegistryBootstrap.initialise();
-    }
-
-    private AbstractBeanDefinition getBeanDefinition(boolean lazyInit, Class<?> beanType)
-    {
-        return getBeanDefinitionBuilder(lazyInit, beanType)
-                .getBeanDefinition();
-    }
-
-    private BeanDefinitionBuilder getBeanDefinitionBuilder(boolean lazyInit, Class<?> beanType)
-    {
-        return genericBeanDefinition(beanType)
-                .setLazyInit(lazyInit);
-    }
-
-    private AbstractBeanDefinition getBeanDefinition(boolean lazyInit, Class<?> beanType, String factoryMethodName)
-    {
-        return getBeanDefinitionBuilder(lazyInit, beanType)
-                .setFactoryMethod(factoryMethodName)
-                .getBeanDefinition();
-    }
-
     private void registerEditors(ConfigurableListableBeanFactory beanFactory)
     {
         MulePropertyEditorRegistrar registrar = new MulePropertyEditorRegistrar();
@@ -517,7 +402,7 @@ public class MuleArtifactContext extends AbstractXmlApplicationContext
     protected void customizeBeanFactory(DefaultListableBeanFactory beanFactory)
     {
         super.customizeBeanFactory(beanFactory);
-        createArtifactServices(beanFactory);
+        springMuleContextServiceConfigurator.createArtifactServices(beanFactory, muleContext, artifactType, optionalObjectsController);
     }
 
     @Override

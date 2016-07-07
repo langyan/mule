@@ -6,6 +6,8 @@
  */
 package org.mule.runtime.core.config.bootstrap;
 
+import static org.mule.runtime.core.config.bootstrap.ArtifactType.ALL;
+import static org.mule.runtime.core.config.bootstrap.ArtifactType.APP;
 import org.mule.runtime.core.api.MuleContext;
 import org.mule.runtime.core.api.MuleException;
 import org.mule.runtime.core.api.lifecycle.Initialisable;
@@ -84,7 +86,7 @@ public abstract class AbstractRegistryBootstrap implements Initialisable
     public static final String OBJECT_KEY = ".object.";
     public static final String SINGLE_TX = ".singletx.";
 
-    protected ArtifactType artifactType = ArtifactType.APP;
+    protected ArtifactType artifactType = APP;
     protected final transient Logger logger = LoggerFactory.getLogger(getClass());
     protected MuleContext muleContext;
 
@@ -203,7 +205,7 @@ public abstract class AbstractRegistryBootstrap implements Initialisable
         properties.put(MIME_TYPE_PROPERTY, mime);
         properties.put(RETURN_CLASS_PROPERTY, returnClassName);
 
-        return new TransformerBootstrapProperty(bootstrapService, ArtifactType.APP, optional, name, className, returnClassName, mime);
+        return new TransformerBootstrapProperty(bootstrapService, APP, optional, name, className, returnClassName, mime);
     }
 
     private TransactionFactoryBootstrapProperty createTransactionFactoryBootstrapProperty(BootstrapService bootstrapService, Properties bootstrapProperties, String propertyKey, String propertyValue) throws InitialisationException
@@ -225,14 +227,14 @@ public abstract class AbstractRegistryBootstrap implements Initialisable
         }
         final String transactionResourceClassName = (index == -1 ? transactionResourceClassNameProperties : transactionResourceClassNameProperties.substring(0, index));
 
-        return new TransactionFactoryBootstrapProperty(bootstrapService, ArtifactType.APP, optional, propertyValue, transactionResourceClassName);
+        return new TransactionFactoryBootstrapProperty(bootstrapService, APP, optional, propertyValue, transactionResourceClassName);
     }
 
     private ObjectBootstrapProperty createObjectBootstrapProperty(BootstrapService bootstrapService, String propertyKey, String propertyValue)
     {
         boolean optional = false;
         String className;
-        ArtifactType artifactTypeParameterValue = ArtifactType.APP;
+        ArtifactType artifactTypeParameterValue = APP;
 
         final String value = propertyValue;
         int index = value.indexOf(",");
@@ -274,7 +276,7 @@ public abstract class AbstractRegistryBootstrap implements Initialisable
     {
         try
         {
-            if (!bootstrapProperty.getArtifactType().equals(ArtifactType.ALL) && !bootstrapProperty.getArtifactType().equals(artifactType))
+            if (!bootstrapProperty.getArtifactType().equals(ALL) && !bootstrapProperty.getArtifactType().equals(artifactType))
             {
                 return;
             }
