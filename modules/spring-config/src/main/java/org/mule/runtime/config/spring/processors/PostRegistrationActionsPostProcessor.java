@@ -14,20 +14,17 @@ import org.springframework.context.ConfigurableApplicationContext;
 
 /**
  * A {@link BeanPostProcessor} which invokes {@link MuleRegistryHelper#postObjectRegistrationActions(Object)}
- * after spring finishes initialization over each object, only as long as the
- * {@link #applicationContext} is already running
+ * after spring finishes initialization over each object
  *
  * @since 3.7.0
  */
 public class PostRegistrationActionsPostProcessor implements BeanPostProcessor
 {
 
-    private final ConfigurableApplicationContext applicationContext;
     private final MuleRegistryHelper registryHelper;
 
-    public PostRegistrationActionsPostProcessor(ConfigurableApplicationContext applicationContext, MuleRegistryHelper registryHelper)
+    public PostRegistrationActionsPostProcessor(MuleRegistryHelper registryHelper)
     {
-        this.applicationContext = applicationContext;
         this.registryHelper = registryHelper;
     }
 
@@ -40,10 +37,7 @@ public class PostRegistrationActionsPostProcessor implements BeanPostProcessor
     @Override
     public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException
     {
-        if (applicationContext.isRunning())
-        {
-            registryHelper.postObjectRegistrationActions(bean);
-        }
+        registryHelper.postObjectRegistrationActions(bean);
         return bean;
     }
 }
