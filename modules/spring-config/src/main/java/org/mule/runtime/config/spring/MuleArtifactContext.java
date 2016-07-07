@@ -304,7 +304,7 @@ public class MuleArtifactContext extends AbstractXmlApplicationContext
         addBeanPostProcessors(beanFactory,
                               new MuleContextPostProcessor(muleContext),
                               new GlobalNamePostProcessor(),
-                              new PostRegistrationActionsPostProcessor((MuleRegistryHelper) muleContext.getRegistry()),
+                              new PostRegistrationActionsPostProcessor(this, (MuleRegistryHelper) muleContext.getRegistry()),
                               new DiscardedOptionalBeanPostProcessor(optionalObjectsController, (DefaultListableBeanFactory) beanFactory),
                               new LifecycleStatePostProcessor(muleContext.getLifecycleManager().getState())
         );

@@ -44,6 +44,8 @@ import static org.mule.runtime.core.api.config.MuleProperties.OBJECT_STORE_DEFAU
 import static org.mule.runtime.core.api.config.MuleProperties.OBJECT_STORE_MANAGER;
 import static org.mule.runtime.core.api.config.MuleProperties.OBJECT_TIME_SUPPLIER;
 import static org.mule.runtime.core.api.config.MuleProperties.OBJECT_TRANSACTION_MANAGER;
+import static org.mule.runtime.core.api.config.MuleProperties.QUEUE_STORE_DEFAULT_IN_MEMORY_NAME;
+import static org.mule.runtime.core.api.config.MuleProperties.QUEUE_STORE_DEFAULT_PERSISTENT_NAME;
 import static org.springframework.beans.factory.support.BeanDefinitionBuilder.genericBeanDefinition;
 import org.mule.runtime.config.spring.factories.ConstantFactoryBean;
 import org.mule.runtime.config.spring.factories.ExtensionManagerFactoryBean;
@@ -53,6 +55,7 @@ import org.mule.runtime.config.spring.processors.ParentContextPropertyPlaceholde
 import org.mule.runtime.config.spring.processors.PropertyPlaceholderProcessor;
 import org.mule.runtime.core.DynamicDataTypeConversionResolver;
 import org.mule.runtime.core.api.MuleContext;
+import org.mule.runtime.core.api.config.MuleProperties;
 import org.mule.runtime.core.api.context.notification.ConnectionNotificationListener;
 import org.mule.runtime.core.api.context.notification.CustomNotificationListener;
 import org.mule.runtime.core.api.context.notification.ExceptionNotificationListener;
@@ -112,9 +115,11 @@ class SpringMuleContextServiceConfigurator
         createBootstrapBeanDefinitions(beanDefinitionRegistry, lazyInit, muleContext, artifactType, optionalObjectsController);
         createNotificationManager(beanDefinitionRegistry, lazyInit);
         createObjectStoreBeanDefinitions(beanDefinitionRegistry, lazyInit);
+        createQueueStoreBeanDefinitions(beanDefinitionRegistry, lazyInit);
         createQueueManagerBeanDefinitions(beanDefinitionRegistry, lazyInit);
         createThreadingProfileBeanDefinitions(beanDefinitionRegistry, lazyInit);
         createSpringSpecificBeanDefinitions(beanDefinitionRegistry, lazyInit);
+
         beanDefinitionRegistry.registerBeanDefinition(OBJECT_TRANSACTION_MANAGER, getBeanDefinition(lazyInit, TransactionManagerFactoryBean.class));
         beanDefinitionRegistry.registerBeanDefinition(OBJECT_DEFAULT_RETRY_POLICY_TEMPLATE, getBeanDefinition(lazyInit, NoRetryPolicyTemplate.class));
         beanDefinitionRegistry.registerBeanDefinition(OBJECT_EXPRESSION_LANGUAGE, getBeanDefinition(lazyInit, MVELExpressionLanguageWrapper.class)); //missing muleContext in contrcutor
@@ -126,11 +131,21 @@ class SpringMuleContextServiceConfigurator
         beanDefinitionRegistry.registerBeanDefinition(OBJECT_SERIALIZER, getBeanDefinitionBuilder(lazyInit, DefaultObjectSerializerFactoryBean.class)
                 .addDependsOn(OBJECT_MULE_CONFIGURATION)
                 .getBeanDefinition());
+
         if (artifactType.equals(ArtifactType.APP))
         {
             createApplicationServicesBeanDefinitions(beanDefinitionRegistry, lazyInit);
         }
+
         createEndpointFactory(beanDefinitionRegistry, lazyInit);
+    }
+
+    private void createQueueStoreBeanDefinitions(BeanDefinitionRegistry beanDefinitionRegistry, boolean lazyInit)
+    {
+        beanDefinitionRegistry.registerBeanDefinition(QUEUE_STORE_DEFAULT_PERSISTENT_NAME, getBeanDefinition(lazyInit, DefaultObjectStoreFactoryBean.class, "createDefaultPersistentQueueStore"));
+        beanDefinitionRegistry.registerAlias(QUEUE_STORE_DEFAULT_PERSISTENT_NAME, "_fileQueueStore");
+        beanDefinitionRegistry.registerBeanDefinition(QUEUE_STORE_DEFAULT_IN_MEMORY_NAME, getBeanDefinition(lazyInit, DefaultObjectStoreFactoryBean.class, "createDefaultInMemoryQueueStore"));
+        beanDefinitionRegistry.registerAlias(QUEUE_STORE_DEFAULT_IN_MEMORY_NAME, "_simpleMemoryQueueStore");
     }
 
     private void createApplicationServicesBeanDefinitions(BeanDefinitionRegistry beanDefinitionRegistry, boolean lazyInit)
