@@ -44,7 +44,7 @@
 			<groupId>org.mule</groupId>
 			<artifactId>mule-core</artifactId>
 			<version>${project.version}</version>
-			<scope>test</scope>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.mule</groupId>
@@ -70,7 +70,7 @@
 			<artifactId>mule-modules-all</artifactId>
 			<version>${project.version}</version>
 			<type>pom</type>
-			<scope>test</scope>
+			<scope>provided</scope>
 		</dependency>
         <dependency>
             <groupId>org.mule.modules</groupId>
@@ -108,7 +108,7 @@
 			<artifactId>mule-module-cxf</artifactId>
 			<version>${project.version}</version>
 			<classifier>tests</classifier>
-			<scope>test</scope>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.cxf</groupId>
@@ -291,5 +291,11 @@
                 </exclusion>
             </exclusions>
         </dependency>
+		<dependency>
+			<groupId>com.thoughtworks.xstream</groupId>
+			<artifactId>xstream</artifactId>
+			<version>1.4.7</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 </project>
