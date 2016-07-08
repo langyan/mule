@@ -20,9 +20,6 @@ import org.mule.runtime.core.api.lifecycle.Callable;
 import org.mule.tck.junit4.rule.DynamicPort;
 
 import java.io.InputStream;
-import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Rule;
@@ -76,12 +73,11 @@ MuleMessage received = muleContext.getClient().send("http://localhost:" + dynami
     public void testCxfSimpleService() throws Exception
     {
         MuleClient client = muleContext.getClient();
-        Map<String, Serializable> props = new HashMap<>();
-        props.put("Content-Type", "application/soap+xml");
         InputStream xml = getClass().getResourceAsStream("/direct/direct-request.xml");
-        MuleMessage result = client.send("http://localhost:" + dynamicPort.getNumber() + "/echo", MuleMessage.builder
-                ().payload(xml).inboundProperties(props).build(), newOptions().method(POST.name())
-                .disableStatusCodeValidation().build());
+        MuleMessage result = client.send("http://localhost:" + dynamicPort.getNumber() + "/echo", MuleMessage.builder().payload(xml).mediaType(MediaType.parse("application/soap+xml")).build(),
+                newOptions().method(POST.name())
+                            .disableStatusCodeValidation()
+                            .build());
         Assert.assertThat(getPayloadAsString(result), not(containsString("Fault")));
     }
 

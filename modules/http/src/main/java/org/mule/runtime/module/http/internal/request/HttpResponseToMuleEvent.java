@@ -118,7 +118,7 @@ public class HttpResponseToMuleEvent
                                          .rootId(requestMessageRootId)
                                          .inboundProperties(inboundProperties)
                                          .inboundAttachments(inboundAttachments)
-                                         .mediaType(MediaType.parse(responseContentType))
+                                         .mediaType(muleEvent.getMessage().getDataType().getMediaType())
                                          .build();
 
         muleEvent.setMessage(message);
