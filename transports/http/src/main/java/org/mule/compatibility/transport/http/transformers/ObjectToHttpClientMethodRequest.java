@@ -243,7 +243,7 @@ public class ObjectToHttpClientMethodRequest extends AbstractMessageTransformer 
     private void checkForContentType(MuleMessage msg, EntityEnclosingMethod method)
     {
         // if a content type was specified on the endpoint, use it
-        String outgoingContentType = msg.getOutboundProperty(HttpConstants.HEADER_CONTENT_TYPE);
+        String outgoingContentType = msg.getDataType().getMediaType().toRfcString();
         if (outgoingContentType != null)
         {
             method.setRequestHeader(HttpConstants.HEADER_CONTENT_TYPE, outgoingContentType);
@@ -326,7 +326,7 @@ public class ObjectToHttpClientMethodRequest extends AbstractMessageTransformer 
         // This way client calls can control if a POST body is posted explicitly
         if (!(msg.getPayload() instanceof NullPayload))
         {
-            String outboundMimeType = (String) msg.getOutboundProperty(HttpConstants.HEADER_CONTENT_TYPE);
+            String outboundMimeType = msg.getDataType().getMediaType().toRfcString();
             if (outboundMimeType == null)
             {
                 outboundMimeType = (getEndpoint() != null && getEndpoint().getMimeType() != null ? getEndpoint().getMimeType().toRfcString() : null);

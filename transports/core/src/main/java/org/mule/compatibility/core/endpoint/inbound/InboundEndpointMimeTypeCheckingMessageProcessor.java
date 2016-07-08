@@ -43,7 +43,7 @@ public class InboundEndpointMimeTypeCheckingMessageProcessor implements MessageP
             }
             else
             {
-                if (!dataType.getMediaType().equals(endpointMimeType))
+                if (!dataType.getMediaType().matches(endpointMimeType))
                 {
                     throw new MessagingException(
                             CoreMessages.unexpectedMIMEType(dataType.getMediaType().toRfcString(), endpointMimeType.toRfcString()), event, this);

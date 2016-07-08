@@ -206,7 +206,7 @@ public class MuleMessageToHttpResponse extends AbstractMessageTransformer
             version = HttpConstants.HTTP11;
         }
 
-        String contentType = msg.getInboundProperty(HttpConstants.HEADER_CONTENT_TYPE);
+        String contentType = msg.getDataType().getMediaType().toRfcString();
         if (contentType == null)
         {
             DataType dataType = msg.getDataType();

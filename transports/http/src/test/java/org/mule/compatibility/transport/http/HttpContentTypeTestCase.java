@@ -38,7 +38,7 @@ public class HttpContentTypeTestCase extends FunctionalTestCase
         MuleClient client = muleContext.getClient();
         String url = String.format("http://localhost:%s/testInput", httpPort.getNumber());
 
-        MuleMessage response = client.send(url, TEST_MESSAGE, null);
+        MuleMessage response = client.send(url, MuleMessage.builder().payload(TEST_MESSAGE).build());
 
 
         assertContentType(response);
@@ -50,9 +50,7 @@ public class HttpContentTypeTestCase extends FunctionalTestCase
         MuleClient client = muleContext.getClient();
         String url = String.format("http://localhost:%s/requestClient", httpPort.getNumber());
 
-        MuleMessage response = client.send(url, TEST_MESSAGE, null);
-
-        assertContentType(response);
+        MuleMessage response = client.send(url, MuleMessage.builder().payload(TEST_MESSAGE).build());
 
         assertThat(getPayloadAsString(response), equalTo(EXPECTED_CONTENT_TYPE));
     }
