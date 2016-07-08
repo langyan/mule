@@ -59,12 +59,12 @@ public class DependencyResolverTest
                                              .selectDependencies(
                                                      new DependenciesFilterBuilder()
                                                              .match(dependency -> dependency.isProvidedScope())
-                                                             .doNotIncludeInResult()
+                                                             .onlyCollectTransitiveDependencies()
                                              )
                                              .collectTransitiveDependencies(
                                                      new TransitiveDependenciesFilterBuilder()
                                                              .match(dependency -> dependency.isTestScope())
-                                                             .includeTransitiveDependenciesFromFiltered()
+                                                             .traverseWhenNoMatch()
                                              )
         );
 
@@ -78,7 +78,7 @@ public class DependencyResolverTest
 
         builder = new DependencyResolver(new ConfigurationBuilder()
                                                  .setMavenDependencyGraph(buildDefaultDependencies())
-                                                 .includeRootArtifactInResults(artifact -> artifact.getArtifactId().equals(selectedRootArtifactHolder.get().getArtifactId()))
+                                                 .includeRootArtifact(artifact -> artifact.getArtifactId().equals(selectedRootArtifactHolder.get().getArtifactId()))
                                                  .selectDependencies(
                                                          new DependenciesFilterBuilder()
                                                                  .match(dependency -> dependency.getArtifactId().equals(selectedRootArtifactHolder.get().getArtifactId())
@@ -115,7 +115,7 @@ public class DependencyResolverTest
                                                      .setMavenDependencyGraph(buildDefaultDependencies())
                                                      .selectDependencies(
                                                              new DependenciesFilterBuilder()
-                                                                     .doNotIncludeInResult()
+                                                                     .onlyCollectTransitiveDependencies()
                                                      )
                                                      .collectTransitiveDependencies(
                                                              new TransitiveDependenciesFilterBuilder()
@@ -142,7 +142,7 @@ public class DependencyResolverTest
                                                      .collectTransitiveDependencies(
                                                              new TransitiveDependenciesFilterBuilder()
                                                                      .match(dependency -> dependency.isProvidedScope())
-                                                                     .includeTransitiveDependenciesFromFiltered()
+                                                                     .traverseWhenNoMatch()
                                                      )
         );
 
@@ -159,7 +159,7 @@ public class DependencyResolverTest
     {
         builder = new DependencyResolver(new ConfigurationBuilder()
                                                      .setMavenDependencyGraph(buildDefaultDependencies())
-                                                     .includeRootArtifactInResults()
+                                                     .includeRootArtifact()
                                                      .selectDependencies(
                                                              new DependenciesFilterBuilder()
                                                                      .match(dependency -> dependency.isProvidedScope())
@@ -186,7 +186,7 @@ public class DependencyResolverTest
                                                      .collectTransitiveDependencies(
                                                              new TransitiveDependenciesFilterBuilder()
                                                                      .match(dependency -> dependency.isCompileScope())
-                                                                     .includeTransitiveDependenciesFromFiltered()
+                                                                     .traverseWhenNoMatch()
                                                      )
         );
 
@@ -203,7 +203,7 @@ public class DependencyResolverTest
     {
         builder = new DependencyResolver(new ConfigurationBuilder()
                                                      .setMavenDependencyGraph(buildDefaultDependencies())
-                                                     .includeRootArtifactInResults()
+                                                     .includeRootArtifact()
                                                      .selectDependencies(
                                                              new DependenciesFilterBuilder()
                                                                      .match(dependency -> dependency.isCompileScope())
@@ -211,7 +211,7 @@ public class DependencyResolverTest
                                                      .collectTransitiveDependencies(
                                                              new TransitiveDependenciesFilterBuilder()
                                                                      .match(dependency -> dependency.isCompileScope())
-                                                                     .includeTransitiveDependenciesFromFiltered()
+                                                                     .traverseWhenNoMatch()
                                                      )
         );
 
@@ -245,12 +245,12 @@ public class DependencyResolverTest
                                                      .setMavenDependencyGraph(dependencies)
                                                      .selectDependencies(
                                                              new DependenciesFilterBuilder()
-                                                                     .doNotIncludeInResult()
+                                                                     .onlyCollectTransitiveDependencies()
                                                      )
                                                      .collectTransitiveDependencies(
                                                              new TransitiveDependenciesFilterBuilder()
                                                                      .match(dependency -> dependency.isCompileScope())
-                                                                     .includeTransitiveDependenciesFromFiltered()
+                                                                     .traverseWhenNoMatch()
                                                      )
         );
 

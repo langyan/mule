@@ -20,17 +20,32 @@ import java.util.function.Predicate;
 public final class TransitiveDependenciesFilterBuilder
 {
     private Predicate<MavenArtifact> predicate = new TruePredicate<>();
-    private boolean includeTransitiveFromFiltered = false;
+    private boolean traverseWhenNoMatch = false;
 
+    /**
+     * Creates a new instance, only visible to package scope so the {@link ConfigurationBuilder} is the only one
+     * that should call this constructor.
+     *
+     * @param predicate
+     */
     TransitiveDependenciesFilterBuilder(Predicate<MavenArtifact> predicate)
     {
         this.predicate = predicate;
     }
 
+    /**
+     * Public constructor, accessible by clients of this API.
+     */
     public TransitiveDependenciesFilterBuilder()
     {
     }
 
+    /**
+     * {@link Predicate<MavenArtifact>} to be used to filter which transitive dependencies should be included.
+     *
+     * @param predicate
+     * @return this
+     */
     public TransitiveDependenciesFilterBuilder match(Predicate<MavenArtifact> predicate)
     {
         this.predicate = predicate;
@@ -38,9 +53,18 @@ public final class TransitiveDependenciesFilterBuilder
 
     }
 
-    public TransitiveDependenciesFilterBuilder includeTransitiveDependenciesFromFiltered()
+    /**
+     * Defines that if a transitive dependency does not match the predicate, it should not be included but
+     * its dependencies should be considered to be evaluated by the predicate in order to know if they should be included
+     * or not. In other words, it means that the dependency tree should continue with the next child dependencies of the
+     * current being evaluated instead of stop at this point. By default, if the transitive dependency does not match
+     * their dependencies will not be evaluated, therefore they process will not go deeper on this path.
+     *
+     * @return this
+     */
+    public TransitiveDependenciesFilterBuilder traverseWhenNoMatch()
     {
-        this.includeTransitiveFromFiltered = true;
+        this.traverseWhenNoMatch = true;
         return this;
     }
 
@@ -49,9 +73,9 @@ public final class TransitiveDependenciesFilterBuilder
         return predicate;
     }
 
-    boolean isIncludeTransitiveFromFiltered()
+    boolean isTraverseWhenNoMatch()
     {
-        return this.includeTransitiveFromFiltered;
+        return this.traverseWhenNoMatch;
     }
 
 }

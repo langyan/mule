@@ -32,6 +32,11 @@ public class DependencyResolver
 
     private ConfigurationBuilder configurationBuilder;
 
+    /**
+     * Creates a dependency resolver with the given configuration builder that defines the resolution strategy.
+     *
+     * @param configurationBuilder
+     */
     public DependencyResolver(ConfigurationBuilder configurationBuilder)
     {
         this.configurationBuilder = configurationBuilder;
@@ -53,17 +58,18 @@ public class DependencyResolver
                 .stream().filter(key -> configurationBuilder.getDependenciesFilterBuilder().getPredicate().test(key)).collect(Collectors.toSet());
 
         Set<MavenArtifact> resolvedDependencies = new HashSet<>();
-        if (configurationBuilder.getDependenciesFilterBuilder().isIncludeInResult())
+        if (!configurationBuilder.getDependenciesFilterBuilder().isOnlyCollectTransitiveDependencies())
         {
             resolvedDependencies.addAll(dependencies);
         }
 
-        dependencies.stream().map(artifact -> getTransitiveDependencies(artifact, configurationBuilder.getTransitiveDependencyFilterBuilder().getPredicate(),
-                                                                        configurationBuilder.getTransitiveDependencyFilterBuilder().isIncludeTransitiveFromFiltered()))
+        dependencies.stream().map(artifact -> collectTransitiveDependencies(artifact, configurationBuilder.getTransitiveDependencyFilterBuilder().getPredicate(),
+                                                                            configurationBuilder.getTransitiveDependencyFilterBuilder().isTraverseWhenNoMatch()))
                 .forEach(resolvedDependencies::addAll);
 
-        if ((configurationBuilder.getRootArtifactPredicate() != null && configurationBuilder.getRootArtifactPredicate().test(rootMavenArtifact)) ||
-            configurationBuilder.isRootArtifactIncludedInResults())
+        Predicate<MavenArtifact> includeRootArtifactPredicate = configurationBuilder.getIncludeRootArtifactPredicate();
+        if ((includeRootArtifactPredicate != null && includeRootArtifactPredicate.test(rootMavenArtifact)) ||
+            configurationBuilder.isRootArtifactIncluded())
         {
             resolvedDependencies.add(rootMavenArtifact);
         }
@@ -76,10 +82,10 @@ public class DependencyResolver
      *
      * @param dependency a {@link MavenArtifact} for which we want to know its dependencies.
      * @param predicate a filter to be applied for each transitive dependency, if the filter passes the dependency is added and recursively collected its dependencies using the same filter.
-     * @param shouldAddTransitiveDepFromExcluded if true does not stop when a dependency does not match the filter and collects it dependencies too.
+     * @param traverseWhenNoMatch if true does not stop when a dependency does not match the filter and moves on with its dependencies.
      * @return recursively gets the dependencies for the given artifact.
      */
-    private Set<MavenArtifact> getTransitiveDependencies(final MavenArtifact dependency, final Predicate<MavenArtifact> predicate, final boolean shouldAddTransitiveDepFromExcluded)
+    private Set<MavenArtifact> collectTransitiveDependencies(final MavenArtifact dependency, final Predicate<MavenArtifact> predicate, final boolean traverseWhenNoMatch)
     {
         Set<MavenArtifact> transitiveDependencies = new HashSet<>();
 
@@ -89,14 +95,14 @@ public class DependencyResolver
                 if (predicate.test(transitiveDependency))
                 {
                     transitiveDependencies.add(transitiveDependency);
-                    transitiveDependencies.addAll(getTransitiveDependencies(transitiveDependency, predicate, shouldAddTransitiveDepFromExcluded));
+                    transitiveDependencies.addAll(collectTransitiveDependencies(transitiveDependency, predicate, traverseWhenNoMatch));
                 }
                 else
                 {
                     // Just the case for getting all their dependencies from an excluded dependencies (case of org.mule:core for instance, we also need their transitive dependencies)
-                    if (shouldAddTransitiveDepFromExcluded)
+                    if (traverseWhenNoMatch)
                     {
-                        transitiveDependencies.addAll(getTransitiveDependencies(transitiveDependency, predicate, shouldAddTransitiveDepFromExcluded));
+                        transitiveDependencies.addAll(collectTransitiveDependencies(transitiveDependency, predicate, traverseWhenNoMatch));
                     }
                 }
             });

@@ -20,17 +20,33 @@ import java.util.function.Predicate;
 public final class DependenciesFilterBuilder
 {
     private Predicate<MavenArtifact> predicate = new TruePredicate<>();
-    private boolean includeInResult = true;
+    private boolean onlyCollectTransitiveDependencies = false;
 
+    /**
+     * {@link Predicate<MavenArtifact>} to be used to filter which dependencies should be included and used
+     * to traverse the tree in order to collect their transitive dependencies.
+     *
+     * @param predicate
+     * @return this
+     */
     public DependenciesFilterBuilder match(Predicate<MavenArtifact> predicate)
     {
         this.predicate = predicate;
         return this;
     }
 
-    public DependenciesFilterBuilder doNotIncludeInResult()
+    /**
+     * Sets the filter strategy to not include as part of the dependencies list resolved those dependencies
+     * that do match with the filter defined here, but these dependencies should be used still to traverse the tree
+     * in order to collect their transitive dependencies
+     * A frequently use case for this is, I would like to get all the transitive dependencies of one of my dependencies
+     * but I don't want the dependency as part of the result.
+     *
+     * @return
+     */
+    public DependenciesFilterBuilder onlyCollectTransitiveDependencies()
     {
-        this.includeInResult = false;
+        this.onlyCollectTransitiveDependencies = true;
         return this;
     }
 
@@ -39,9 +55,9 @@ public final class DependenciesFilterBuilder
         return predicate;
     }
 
-    boolean isIncludeInResult()
+    boolean isOnlyCollectTransitiveDependencies()
     {
-        return includeInResult;
+        return onlyCollectTransitiveDependencies;
     }
 
 }

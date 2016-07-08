@@ -107,7 +107,7 @@ public class MuleClassPathClassifier implements ClassPathClassifier
                                                           .collectTransitiveDependencies(
                                                                   new TransitiveDependenciesFilterBuilder()
                                                                           .match(transitiveDependency -> transitiveDependency.isTestScope() && !exclusion.test(transitiveDependency))
-                                                                          .includeTransitiveDependenciesFromFiltered()
+                                                                          .traverseWhenNoMatch()
                                                           )).resolveDependencies().stream().filter(d -> !d.isPomType()).map(dependency -> artifactToClassPathURLResolver.resolveURL(dependency, context.getClassPathURLs())).collect(Collectors.toSet());
         // Plus the target/test-classes of the current compiled artifact
         appURLs.addAll(context.getClassPathURLs().stream().filter(url -> url.getFile().trim().equals(targetTestClassesFolder.getAbsolutePath() + File.separator)).collect(Collectors.toSet()));
@@ -130,7 +130,7 @@ public class MuleClassPathClassifier implements ClassPathClassifier
                                        .collectTransitiveDependencies(
                                                new TransitiveDependenciesFilterBuilder()
                                                        .match(transitiveDependency -> transitiveDependency.isProvidedScope() || transitiveDependency.isCompileScope())
-                                                       .includeTransitiveDependenciesFromFiltered()
+                                                       .traverseWhenNoMatch()
                                        )).resolveDependencies().stream().filter(d -> !d.isPomType()).map(dependency -> artifactToClassPathURLResolver.resolveURL(dependency, context.getClassPathURLs())).forEach(containerURLs::add);
 
         return newArrayList(containerURLs);
@@ -222,7 +222,7 @@ public class MuleClassPathClassifier implements ClassPathClassifier
 
         new DependencyResolver(new ConfigurationBuilder()
                                        .setMavenDependencyGraph(allDependencies)
-                                       .includeRootArtifactInResults(rootArtifact -> rootArtifact.getArtifactId().equals(extensionMavenArtifactId.toString()))
+                                       .includeRootArtifact(rootArtifact -> rootArtifact.getArtifactId().equals(extensionMavenArtifactId.toString()))
                                        .selectDependencies(
                                                new DependenciesFilterBuilder()
                                                        .match(dependency -> dependency.getArtifactId().equals(extensionMavenArtifactId.toString())
