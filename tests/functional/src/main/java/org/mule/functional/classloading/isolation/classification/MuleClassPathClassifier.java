@@ -141,13 +141,11 @@ public class MuleClassPathClassifier implements ClassPathClassifier
         List<PluginUrlClassification> pluginClassifications = new ArrayList<>();
         List<String[]> extensionsAnnotatedClasses = getAnnotationAttributeFromHierarchy(context.getTestClass(), ArtifactClassLoaderRunnerConfig.class, "extensions");
 
-        final ExtensionManagerAdapter extensionManager = createExtensionMananger();
-
         if (!extensionsAnnotatedClasses.isEmpty())
         {
             Set<String> extensionsAnnotatedClassesNoDups = extensionsAnnotatedClasses.stream().flatMap(Arrays::stream).collect(Collectors.toSet());
             extensionsAnnotatedClassesNoDups.forEach(extensionClass ->
-                pluginClassifications.add(extensionClassPathClassification(extensionClass, extensionManager, exclusion, context.getMavenMultiModuleArtifactMapping(), artifactToClassPathURLResolver, context.getMavenDependencies(), compileArtifact, targetTestClassesFolder, context.getClassPathURLs()))
+                pluginClassifications.add(extensionClassPathClassification(extensionClass, exclusion, context.getMavenMultiModuleArtifactMapping(), artifactToClassPathURLResolver, context.getMavenDependencies(), compileArtifact, targetTestClassesFolder, context.getClassPathURLs()))
             );
         }
         return pluginClassifications;
@@ -178,7 +176,7 @@ public class MuleClassPathClassifier implements ClassPathClassifier
         return extensionManager;
     }
 
-    private PluginUrlClassification extensionClassPathClassification(final String extensionClassName, ExtensionManagerAdapter extensionManager, final Predicate<MavenArtifact> exclusion, final MavenMultiModuleArtifactMapping mavenMultiModuleMapping, final MavenArtifactToClassPathURLResolver artifactToClassPathURLResolver, final LinkedHashMap<MavenArtifact, Set<MavenArtifact>> allDependencies, final MavenArtifact compileArtifact, final File targetTestClassesFolder, final List<URL> classPathURLs)
+    private PluginUrlClassification extensionClassPathClassification(final String extensionClassName, final Predicate<MavenArtifact> exclusion, final MavenMultiModuleArtifactMapping mavenMultiModuleMapping, final MavenArtifactToClassPathURLResolver artifactToClassPathURLResolver, final LinkedHashMap<MavenArtifact, Set<MavenArtifact>> allDependencies, final MavenArtifact compileArtifact, final File targetTestClassesFolder, final List<URL> classPathURLs)
     {
         logger.debug("Classifying classpath for extension class: " + extensionClassName);
         Set<URL> extensionURLs = new LinkedHashSet<>();
@@ -208,7 +206,7 @@ public class MuleClassPathClassifier implements ClassPathClassifier
         // First we need to add META-INF folder for generated resources due to they may be already created by another mvn install goal by the extension maven plugin
         File generatedResourcesDirectory = new File(targetTestClassesFolder.getParent(), GENERATED_TEST_SOURCES + File.separator + extensionMavenArtifactId + File.separator + "META-INF");
         generatedResourcesDirectory.mkdirs();
-        ExtensionsTestInfrastructureDiscoverer extensionDiscoverer = new ExtensionsTestInfrastructureDiscoverer(extensionManager, generatedResourcesDirectory);
+        ExtensionsTestInfrastructureDiscoverer extensionDiscoverer = new ExtensionsTestInfrastructureDiscoverer(createExtensionMananger(), generatedResourcesDirectory);
         extensionDiscoverer.discoverExtensions(new Describer[0], new Class[] {extension});
         try
         {
