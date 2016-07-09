@@ -5,7 +5,7 @@
  * LICENSE.txt file.
  */
 
-package org.mule.functional.junit4.runners;
+package org.mule.functional.classloading.isolation.classpath;
 
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertThat;
@@ -14,7 +14,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
-import org.mule.functional.classloading.isolation.classpath.DefaultMavenArtifactToClassPathURLResolver;
 import org.mule.functional.classloading.isolation.maven.MavenArtifact;
 import org.mule.functional.classloading.isolation.maven.MavenArtifactToClassPathURLResolver;
 import org.mule.functional.classloading.isolation.maven.MavenMultiModuleArtifactMapping;

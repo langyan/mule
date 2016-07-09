@@ -13,7 +13,7 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -36,7 +36,7 @@ public class DefaultClassPathURLsProvider implements ClassPathURLsProvider
     @Override
     public List<URL> getURLs()
     {
-        final Set<URL> urls = new HashSet<>();
+        final Set<URL> urls = new LinkedHashSet<>();
         addUrlsFromSystemProperty(urls, "java.class.path");
         addUrlsFromSystemProperty(urls, "sun.boot.class.path");
 

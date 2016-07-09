@@ -5,12 +5,10 @@
  * LICENSE.txt file.
  */
 
-package org.mule.functional.junit4.runners;
+package org.mule.functional.classloading.isolation.maven;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import org.mule.functional.classloading.isolation.maven.MavenArtifact;
-import org.mule.functional.classloading.isolation.maven.MavenArtifactMatcherPredicate;
 import org.mule.tck.size.SmallTest;
 
 import java.util.function.Predicate;
