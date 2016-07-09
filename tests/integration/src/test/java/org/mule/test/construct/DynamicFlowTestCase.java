@@ -10,7 +10,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import org.mule.test.AbstractIntegrationTestCase;
-import org.mule.runtime.core.DefaultMuleMessage;
 import org.mule.runtime.core.api.MuleContext;
 import org.mule.runtime.core.api.MuleEvent;
 import org.mule.runtime.core.api.MuleEventContext;
