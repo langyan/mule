@@ -7,6 +7,7 @@
 package org.mule.compatibility.transport.http.components;
 
 import static org.mule.compatibility.transport.http.HttpConnector.HTTP_METHOD_PROPERTY;
+import static org.mule.compatibility.transport.http.HttpConstants.FORM_URLENCODED_CONTENT_TYPE;
 import static org.mule.compatibility.transport.http.HttpConstants.HEADER_CONTENT_TYPE;
 import static org.mule.runtime.core.MessageExchangePattern.REQUEST_RESPONSE;
 
@@ -46,7 +47,7 @@ public class RestServiceWrapper extends AbstractComponent
 {
     public static final String DELETE = HttpConstants.METHOD_DELETE;
     public static final String GET = HttpConstants.METHOD_GET;
-    public static final String CONTENT_TYPE_VALUE = "application/x-www-form-urlencoded";
+    public static final String CONTENT_TYPE_VALUE = FORM_URLENCODED_CONTENT_TYPE;
     public static final String HTTP_METHOD = "http.method";
 
     /**

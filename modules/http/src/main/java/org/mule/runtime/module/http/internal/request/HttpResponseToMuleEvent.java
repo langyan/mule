@@ -102,7 +102,7 @@ public class HttpResponseToMuleEvent
                     throw new MessagingException(muleEvent, e);
                 }
             }
-            else if (responseContentType.startsWith(APPLICATION_X_WWW_FORM_URLENCODED.toString()))
+            else if (responseContentType.startsWith(APPLICATION_X_WWW_FORM_URLENCODED.toRfcString()))
             {
                 payload = HttpParser.decodeString(IOUtils.toString(responseInputStream), encoding);
             }

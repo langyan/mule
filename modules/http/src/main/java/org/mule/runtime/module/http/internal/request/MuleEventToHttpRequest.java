@@ -236,12 +236,12 @@ public class MuleEventToHttpRequest
         {
             String contentType = requestBuilder.getHeaders().get(CONTENT_TYPE);
 
-            if (contentType == null || contentType.equals(APPLICATION_X_WWW_FORM_URLENCODED.toString()))
+            if (contentType == null || contentType.equals(APPLICATION_X_WWW_FORM_URLENCODED.toRfcString()))
             {
                 if (muleEvent.getMessage().getPayload() instanceof Map)
                 {
                     String body = HttpParser.encodeString(muleEvent.getMessage().getDataType().getMediaType().getCharset().orElse(getDefaultEncoding(muleContext)), (Map) payload);
-                    requestBuilder.addHeader(CONTENT_TYPE, APPLICATION_X_WWW_FORM_URLENCODED.toString());
+                    requestBuilder.addHeader(CONTENT_TYPE, APPLICATION_X_WWW_FORM_URLENCODED.toRfcString());
                     return new ByteArrayHttpEntity(body.getBytes());
                 }
             }
