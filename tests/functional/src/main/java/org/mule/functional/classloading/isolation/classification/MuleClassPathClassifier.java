@@ -110,7 +110,7 @@ public class MuleClassPathClassifier implements ClassPathClassifier
                                                                           .traverseWhenNoMatch()
                                                           )).resolveDependencies().stream().filter(d -> !d.isPomType()).map(dependency -> artifactToClassPathURLResolver.resolveURL(dependency, context.getClassPathURLs())).collect(Collectors.toSet());
         // Plus the target/test-classes of the current compiled artifact
-        appURLs.addAll(context.getClassPathURLs().stream().filter(url -> url.getFile().trim().equals(targetTestClassesFolder.getAbsolutePath() + File.separator)).collect(Collectors.toSet()));
+        appURLs.addAll(context.getClassPathURLs().stream().filter(url -> url.getFile().equals(targetTestClassesFolder.getAbsolutePath() + File.separator)).collect(Collectors.toSet()));
         return Lists.newArrayList(appURLs);
     }
 

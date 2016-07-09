@@ -63,7 +63,7 @@ public class DefaultMavenArtifactToClassPathURLResolver implements MavenArtifact
             packagedUrlSuffix.append("^(?!.*?(?:-tests.jar)).*.jar");
         }
         final Optional<URL> localFile = urls.stream().filter(url -> {
-            String path = url.toString();
+            String path = url.getFile();
             if (path.contains(moduleFolder))
             {
                 String pathSuffix = path.substring(path.lastIndexOf(moduleFolder.toString()) + moduleFolder.length(), path.length());
