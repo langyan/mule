@@ -118,7 +118,7 @@ public class HttpResponseToMuleEvent
                                          .rootId(requestMessageRootId)
                                          .inboundProperties(inboundProperties)
                                          .inboundAttachments(inboundAttachments)
-                                         .mediaType(muleEvent.getMessage().getDataType().getMediaType())
+                                         .mediaType(MediaType.parse(responseContentType))
                                          .build();
 
         muleEvent.setMessage(message);
@@ -137,7 +137,11 @@ public class HttpResponseToMuleEvent
 
         for (String headerName : response.getHeaderNames())
         {
-            properties.put(headerName, getHeaderValueToProperty(response, headerName));
+            // Content-Type was already processed
+            if (!CONTENT_TYPE.equals(headerName))
+            {
+                properties.put(headerName, getHeaderValueToProperty(response, headerName));
+            }
         }
 
         properties.put(HTTP_STATUS_PROPERTY, response.getStatusCode());

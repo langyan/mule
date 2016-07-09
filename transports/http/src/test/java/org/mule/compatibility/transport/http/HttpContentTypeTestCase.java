@@ -40,7 +40,6 @@ public class HttpContentTypeTestCase extends FunctionalTestCase
 
         MuleMessage response = client.send(url, MuleMessage.builder().payload(TEST_MESSAGE).build());
 
-
         assertContentType(response);
     }
 
