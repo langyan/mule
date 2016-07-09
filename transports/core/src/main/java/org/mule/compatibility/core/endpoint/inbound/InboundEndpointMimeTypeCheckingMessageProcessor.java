@@ -35,9 +35,8 @@ public class InboundEndpointMimeTypeCheckingMessageProcessor implements MessageP
         if (endpointMimeType != null)
         {
             MuleMessage message = event.getMessage();
-
             final DataType dataType = message.getDataType();
-            if (DataType.OBJECT.equals(dataType))
+            if (DataType.OBJECT.getMediaType().matches(dataType.getMediaType()))
             {
                 event.setMessage(MuleMessage.builder(event.getMessage()).mediaType(endpointMimeType).build());
             }

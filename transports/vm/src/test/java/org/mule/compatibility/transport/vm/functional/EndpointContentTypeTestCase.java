@@ -20,10 +20,13 @@ import org.mule.runtime.core.api.MuleMessage;
 import org.mule.runtime.core.api.client.MuleClient;
 import org.mule.runtime.core.api.lifecycle.Callable;
 
+import org.junit.Before;
 import org.junit.Test;
 
 public class EndpointContentTypeTestCase extends FunctionalTestCase
 {
+
+    private MuleClient client;
 
     @Override
     protected String getConfigFile()
@@ -31,29 +34,45 @@ public class EndpointContentTypeTestCase extends FunctionalTestCase
         return "org/mule/test/config/content-type-setting-endpoint-configs-flow.xml";
     }
 
-    @Test
-    public void testContentTypes() throws Exception
+    @Before
+    public void before()
     {
-        MuleMessage response;
-        MuleClient client = muleContext.getClient();
+        client = muleContext.getClient();
+    }
+
+    @Test
+    public void testXmlContentType() throws Exception
+    {
         MuleMessage result = client.send("vm://in1?connector=vm-in1", MuleMessage.builder().payload("<OK/>").mediaType(MediaType.XML).build());
         assertNotNull(result.getExceptionPayload());
         assertTrue(result.getExceptionPayload().getException() instanceof MessagingException);
+    }
 
+    @Test
+    public void testPlainContentType() throws Exception
+    {
         EchoComponent.setExpectedContentType("text/plain");
-        response = client.send("vm://in1?connector=vm-in1", MuleMessage.builder().payload("OK").mediaType(MediaType.TEXT).build());
+        MuleMessage response = client.send("vm://in1?connector=vm-in1", MuleMessage.builder().payload("OK").mediaType(MediaType.TEXT).build());
         assertNotNull(response);
         assertEquals("OK", response.getPayload());
+    }
 
+    @Test
+    public void testDefaultContentType() throws Exception
+    {
         EchoComponent.setExpectedContentType("text/plain");
-        response = client.send("vm://in1?connector=vm-in1", MuleMessage.builder().payload("OK").build());
+        MuleMessage response = client.send("vm://in1?connector=vm-in1", MuleMessage.builder().payload("OK").build());
         assertNotNull(response);
         assertEquals("OK", response.getPayload());
+    }
 
+    @Test
+    public void testXmlContentTypePlainPayload() throws Exception
+    {
         EchoComponent.setExpectedContentType("text/xml");
-        response = client.send("vm://in2?connector=vm-in2", MuleMessage.builder().payload("OK").mediaType(MediaType.XML).build());
-        assertNotNull(response);
-        assertEquals("OK", response.getPayload());
+        MuleMessage result = client.send("vm://in2?connector=vm-in2", MuleMessage.builder().payload("OK").mediaType(MediaType.TEXT).build());
+        assertNotNull(result.getExceptionPayload());
+        assertTrue(result.getExceptionPayload().getException() instanceof MessagingException);
     }
 
     public static class EchoComponent implements Callable

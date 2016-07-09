@@ -36,8 +36,7 @@ public class OutboundEndpointMimeTypeCheckingMessageProcessor implements Message
         {
             MuleMessage message = event.getMessage();
             final DataType dataType = message.getDataType();
-
-            if (DataType.OBJECT.equals(dataType))
+            if (DataType.OBJECT.getMediaType().matches(dataType.getMediaType()))
             {
                 event.setMessage(MuleMessage.builder(event.getMessage())
                                             .mediaType(dataType.getMediaType())
