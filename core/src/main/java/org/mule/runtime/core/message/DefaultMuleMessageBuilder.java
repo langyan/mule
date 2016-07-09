@@ -36,6 +36,7 @@ import org.mule.runtime.core.api.MuleException;
 import org.mule.runtime.core.api.MuleMessage;
 import org.mule.runtime.core.api.MuleMessage.Builder;
 import org.mule.runtime.core.api.MuleMessage.CollectionBuilder;
+import org.mule.runtime.core.api.config.MuleProperties;
 import org.mule.runtime.core.api.transformer.Transformer;
 import org.mule.runtime.core.api.transformer.TransformerException;
 import org.mule.runtime.core.config.i18n.CoreMessages;
@@ -389,6 +390,14 @@ public class DefaultMuleMessageBuilder implements MuleMessage.Builder, MuleMessa
     @Deprecated
     private void updateDataTypeWithProperty(String key, Object value)
     {
+        if (MuleProperties.MULE_ENCODING_PROPERTY.equals(key))
+        {
+            throw new IllegalArgumentException("Magic Property! " + key);
+        }
+        else if ("Content-Type".equalsIgnoreCase(key))
+        {
+            throw new IllegalArgumentException("Magic Property! " + key);
+        }
         // // updates dataType when encoding is updated using a property instead of using #setEncoding
         // if (MULE_ENCODING_PROPERTY.equals(key))
         // {
@@ -983,24 +992,56 @@ public class DefaultMuleMessageBuilder implements MuleMessage.Builder, MuleMessa
             @Override
             public <T extends Serializable> T getInboundProperty(String name)
             {
+                if (MuleProperties.MULE_ENCODING_PROPERTY.equals(name))
+                {
+                    throw new IllegalArgumentException("Magic Property! " + name);
+                }
+                else if ("Content-Type".equalsIgnoreCase(name))
+                {
+                    throw new IllegalArgumentException("Magic Property! " + name);
+                }
                 return getInboundProperty(name, null);
             }
 
             @Override
             public <T extends Serializable> T getInboundProperty(String name, T defaultValue)
             {
+                if (MuleProperties.MULE_ENCODING_PROPERTY.equals(name))
+                {
+                    throw new IllegalArgumentException("Magic Property! " + name);
+                }
+                else if ("Content-Type".equalsIgnoreCase(name))
+                {
+                    throw new IllegalArgumentException("Magic Property! " + name);
+                }
                 return getValueOrDefault((TypedValue<T>) inboundMap.get(name), defaultValue);
             }
 
             @Override
             public <T extends Serializable> T getOutboundProperty(String name)
             {
+                if (MuleProperties.MULE_ENCODING_PROPERTY.equals(name))
+                {
+                    throw new IllegalArgumentException("Magic Property! " + name);
+                }
+                else if ("Content-Type".equalsIgnoreCase(name))
+                {
+                    throw new IllegalArgumentException("Magic Property! " + name);
+                }
                 return getOutboundProperty(name, null);
             }
 
             @Override
             public <T extends Serializable> T getOutboundProperty(String name, T defaultValue)
             {
+                if (MuleProperties.MULE_ENCODING_PROPERTY.equals(name))
+                {
+                    throw new IllegalArgumentException("Magic Property! " + name);
+                }
+                else if ("Content-Type".equalsIgnoreCase(name))
+                {
+                    throw new IllegalArgumentException("Magic Property! " + name);
+                }
                 return getValueOrDefault((TypedValue<T>) outboundMap.get(name), defaultValue);
             }
 

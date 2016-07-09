@@ -6,11 +6,12 @@
  */
 package org.mule.runtime.module.cxf.support;
 
-import static com.google.common.net.HttpHeaders.CONTENT_TYPE;
 import static org.apache.cxf.message.Message.PROTOCOL_HEADERS;
 import static org.mule.runtime.module.http.api.HttpConstants.Methods.POST;
 import static org.mule.runtime.module.http.api.HttpConstants.RequestProperties.HTTP_METHOD_PROPERTY;
 import static org.mule.runtime.module.http.api.HttpConstants.ResponseProperties.HTTP_STATUS_PROPERTY;
+
+import org.mule.runtime.api.metadata.MediaType;
 import org.mule.runtime.core.NonBlockingVoidMuleEvent;
 import org.mule.runtime.core.api.MuleEvent;
 import org.mule.runtime.core.api.MuleMessage;
@@ -42,6 +43,7 @@ public class MuleProtocolHeadersOutInterceptor
         getAfter().add(AttachmentOutInterceptor.class.getName());
     }
 
+    @Override
     public void handleMessage(Message message) throws Fault
     {
         MuleEvent event = (MuleEvent) message.getExchange().get(CxfConstants.MULE_EVENT);
@@ -109,7 +111,7 @@ public class MuleProtocolHeadersOutInterceptor
             {
                 ct = ct + "; charset=" + encoding;
             }
-            builder.addOutboundProperty(CONTENT_TYPE, ct);
+            builder.mediaType(MediaType.parse(ct));
         }
     }
 

@@ -104,13 +104,10 @@ public class HttpResponseBuilder extends HttpMessageBuilder implements Initialis
             }
         }
 
-        if (!event.getMessage().getDataType().getMediaType().getCharset().isPresent())
+        DataType dataType = event.getMessage().getDataType();
+        if (!MediaType.ANY.matches(dataType.getMediaType()))
         {
-            DataType dataType = event.getMessage().getDataType();
-            if (!MediaType.ANY.matches(dataType.getMediaType()))
-            {
-                httpResponseHeaderBuilder.addHeader(CONTENT_TYPE, dataType.getMediaType().toRfcString());
-            }
+            httpResponseHeaderBuilder.addHeader(CONTENT_TYPE, dataType.getMediaType().toRfcString());
         }
 
         ParameterMap resolvedHeaders = resolveParams(event, HttpParamType.HEADER);

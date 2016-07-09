@@ -6,7 +6,6 @@
  */
 package org.mule.runtime.module.cxf;
 
-import static com.google.common.net.HttpHeaders.CONTENT_TYPE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -72,7 +71,7 @@ public class CxfBackToBlockingTestCase extends FunctionalTestCase
         MuleMessage result = client.send("http://localhost:" + dynamicPort.getNumber() + "/services/Echo",
                 MuleMessage.builder().payload(xml).mediaType(MediaType.parse("application/soap+xml")).build(), HTTP_REQUEST_OPTIONS);
         assertTrue(getPayloadAsString(result).contains("Hello!"));
-        String ct = result.getInboundProperty(CONTENT_TYPE, "");
+        String ct = result.getDataType().getMediaType().toRfcString();
         assertEquals("text/xml; charset=UTF-8", ct);
         muleContext.getRegistry().lookupObject(SensingNullRequestResponseMessageProcessor.class).assertRequestResponseThreadsSame();
     }
