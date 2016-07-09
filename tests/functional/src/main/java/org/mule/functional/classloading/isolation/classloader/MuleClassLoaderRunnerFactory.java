@@ -76,47 +76,90 @@ public class MuleClassLoaderRunnerFactory
      */
     public ClassLoaderTestRunner createClassLoader(Class<?> klass, ArtifactUrlClassification artifactUrlClassification)
     {
-        // Container classLoader
-        logClassLoaderUrls("CONTAINER", artifactUrlClassification.getContainerURLs());
         final TestContainerClassLoaderFactory testContainerClassLoaderFactory = new TestContainerClassLoaderFactory(getExtraBootPackages(klass), artifactUrlClassification.getContainerURLs().toArray(new URL[0]));
 
-        MuleArtifactClassLoader launcherArtifact = new MuleArtifactClassLoader("launcher", new URL[0],
-                                                                               MuleClassLoaderRunnerFactory.class.getClassLoader(), new MuleClassLoaderLookupPolicy(Collections.emptyMap(), Collections.<String>emptySet()));
-        ClassLoaderFilter filteredClassLoaderLauncher = new ContainerClassLoaderFilterFactory().create(testContainerClassLoaderFactory.getBootPackages(), Collections.<MuleModule>emptyList());
-
-        ArtifactClassLoader containerClassLoader = testContainerClassLoaderFactory.createContainerClassLoader(new FilteringArtifactClassLoader(launcherArtifact, filteredClassLoaderLauncher));
+        ArtifactClassLoader containerClassLoader = createContainerArtifactClassLoader(testContainerClassLoaderFactory, artifactUrlClassification);
         ClassLoader classLoader = containerClassLoader.getClassLoader();
 
         ClassLoaderLookupPolicy childClassLoaderLookupPolicy = testContainerClassLoaderFactory.getContainerClassLoaderLookupPolicy();
 
         List<ArtifactClassLoader> pluginsArtifactClassLoaders = new ArrayList<>();
-        // Plugin classloaders
         if (!artifactUrlClassification.getPluginClassificationURLs().isEmpty())
         {
-            final List<ClassLoader> pluginClassLoaders = new ArrayList<>();
-            pluginClassLoaders.add(new MuleArtifactClassLoader("sharedLibs", new URL[0], classLoader, childClassLoaderLookupPolicy));
-
-            for (PluginUrlClassification pluginUrlClassification : artifactUrlClassification.getPluginClassificationURLs())
-            {
-                // Plugin classLoader
-                logClassLoaderUrls("PLUGIN (" + pluginUrlClassification.getExtension().getName() + ")", pluginUrlClassification.getUrls());
-                MuleArtifactClassLoader pluginCL = new MuleArtifactClassLoader(pluginUrlClassification.getExtension().getName(), pluginUrlClassification.getUrls().toArray(new URL[0]), classLoader, childClassLoaderLookupPolicy);
-                pluginsArtifactClassLoaders.add(pluginCL);
-
-                URL manifestUrl = pluginCL.findResource("META-INF/" + EXTENSION_MANIFEST_FILE_NAME);
-                ExtensionManifest extensionManifest = extensionManager.parseExtensionManifestXml(manifestUrl);
-                ArtifactClassLoaderFilter filter = artifactClassLoaderFilterFactory.create(extensionManifest.getExportedPackages().stream().collect(Collectors.joining(", ")),
-                                                                                           extensionManifest.getExportedResources().stream().collect(Collectors.joining(", ")));
-                pluginClassLoaders.add(new FilteringArtifactClassLoader(pluginCL, filter));
-            }
-            classLoader = new CompositeClassLoader(classLoader, pluginClassLoaders, childClassLoaderLookupPolicy);
+            classLoader = createPluginClassLoaders(classLoader, childClassLoaderLookupPolicy, artifactUrlClassification, pluginsArtifactClassLoaders);
         }
 
-        // Application classLoader
-        logClassLoaderUrls("APP", artifactUrlClassification.getApplicationURLs());
-        ArtifactClassLoader appClassLoader = new MuleArtifactClassLoader("app", artifactUrlClassification.getApplicationURLs().toArray(new URL[0]), classLoader, childClassLoaderLookupPolicy);
+        ArtifactClassLoader appClassLoader = createApplicationArtifactClassLoader(classLoader, childClassLoaderLookupPolicy, artifactUrlClassification);
 
         return new ClassLoaderTestRunner(containerClassLoader, pluginsArtifactClassLoaders, appClassLoader);
+    }
+
+    /**
+     * Creates an {@link ArtifactClassLoader} for the container. As difference from a mule container this one has to be aware that the parent class loader
+     * has all the URLs loaded in launcher app class loader so it has to create a particular look policy to resolve classes as CHILD_FIRST.
+     * In order to do that a {@link FilteringArtifactClassLoader} is created to similates the launcher class loader to resolve only classes from the URLs defined
+     * to be in the container.
+     *
+     * @param testContainerClassLoaderFactory {@link TestContainerClassLoaderFactory} that has the logic to create a container class loader
+     * @param artifactUrlClassification the url classifications to get plugins urls
+     * @return an {@link ArtifactClassLoader} for the container.
+     */
+    private ArtifactClassLoader createContainerArtifactClassLoader(TestContainerClassLoaderFactory testContainerClassLoaderFactory, ArtifactUrlClassification artifactUrlClassification)
+    {
+        logClassLoaderUrls("CONTAINER", artifactUrlClassification.getContainerURLs());
+        MuleArtifactClassLoader launcherArtifact = new MuleArtifactClassLoader("launcher", new URL[0],
+                                                                               MuleClassLoaderRunnerFactory.class.getClassLoader(), new MuleClassLoaderLookupPolicy(Collections.emptyMap(), Collections.<String>emptySet()));
+        ClassLoaderFilter filteredClassLoaderLauncher = new ContainerClassLoaderFilterFactory().create(testContainerClassLoaderFactory.getBootPackages(), Collections.<MuleModule>emptyList());
+
+        return testContainerClassLoaderFactory.createContainerClassLoader(new FilteringArtifactClassLoader(launcherArtifact, filteredClassLoaderLauncher));
+    }
+
+    /**
+     * For each plugin defined in the classification it will create an {@link ArtifactClassLoader} that has as name the extension class name.
+     * For extension plugins it also creates the filter based on the extension manifest file.
+     * <pr/>
+     * It also initially creates a sharedLibs plugin without any library so far, in order to be a similar representation as mule's container has.
+     * <pr/>
+     * With the given list of created class loader plugins it will finally create a {@link CompositeClassLoader} and return it.
+     *
+     * @param parent the parent class loader to be assigned to the new one created here
+     * @param childClassLoaderLookupPolicy look policy to be used
+     * @param artifactUrlClassification the url classifications to get plugins urls
+     * @param pluginsArtifactClassLoaders a list where it would append each {@link ArtifactClassLoader} create for plugins in order to allow access them later
+     * @return a {@link CompositeClassLoader} that represents the plugin class loaders.
+     */
+    private ClassLoader createPluginClassLoaders(ClassLoader parent, ClassLoaderLookupPolicy childClassLoaderLookupPolicy, ArtifactUrlClassification artifactUrlClassification, List<ArtifactClassLoader> pluginsArtifactClassLoaders)
+    {
+        final List<ClassLoader> pluginClassLoaders = new ArrayList<>();
+        pluginClassLoaders.add(new MuleArtifactClassLoader("sharedLibs", new URL[0], parent, childClassLoaderLookupPolicy));
+
+        for (PluginUrlClassification pluginUrlClassification : artifactUrlClassification.getPluginClassificationURLs())
+        {
+            logClassLoaderUrls("PLUGIN (" + pluginUrlClassification.getExtension().getName() + ")", pluginUrlClassification.getUrls());
+            MuleArtifactClassLoader pluginCL = new MuleArtifactClassLoader(pluginUrlClassification.getExtension().getName(), pluginUrlClassification.getUrls().toArray(new URL[0]), parent, childClassLoaderLookupPolicy);
+            pluginsArtifactClassLoaders.add(pluginCL);
+
+            URL manifestUrl = pluginCL.findResource("META-INF/" + EXTENSION_MANIFEST_FILE_NAME);
+            ExtensionManifest extensionManifest = extensionManager.parseExtensionManifestXml(manifestUrl);
+            ArtifactClassLoaderFilter filter = artifactClassLoaderFilterFactory.create(extensionManifest.getExportedPackages().stream().collect(Collectors.joining(", ")),
+                                                                                       extensionManifest.getExportedResources().stream().collect(Collectors.joining(", ")));
+            pluginClassLoaders.add(new FilteringArtifactClassLoader(pluginCL, filter));
+        }
+        return new CompositeClassLoader(parent, pluginClassLoaders, childClassLoaderLookupPolicy);
+    }
+
+    /**
+     * Creates an {@link ArtifactClassLoader} for the application.
+     *
+     * @param parent the parent class loader to be assigned to the new one created here
+     * @param childClassLoaderLookupPolicy look policy to be used
+     * @param artifactUrlClassification the url classifications to get plugins urls
+     * @return the {@link ArtifactClassLoader} to be used for test runner as in TCCL.
+     */
+    private ArtifactClassLoader createApplicationArtifactClassLoader(ClassLoader parent, ClassLoaderLookupPolicy childClassLoaderLookupPolicy, ArtifactUrlClassification artifactUrlClassification)
+    {
+        logClassLoaderUrls("APP", artifactUrlClassification.getApplicationURLs());
+        return new MuleArtifactClassLoader("app", artifactUrlClassification.getApplicationURLs().toArray(new URL[0]), parent, childClassLoaderLookupPolicy);
     }
 
     private void logClassLoaderUrls(final String classLoaderName, final List<URL> urls)
