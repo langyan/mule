@@ -9,6 +9,7 @@ package org.mule.functional.classloading.isolation.classification;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static java.lang.Class.forName;
+import static org.mule.functional.classloading.isolation.utils.RunnerModuleUtils.getExcludedProperties;
 import static org.mule.functional.util.AnnotationUtils.getAnnotationAttributeFrom;
 import static org.mule.functional.util.AnnotationUtils.getAnnotationAttributeFromHierarchy;
 import org.mule.functional.classloading.isolation.classpath.DefaultMavenArtifactToClassPathURLResolver;
@@ -20,9 +21,9 @@ import org.mule.functional.classloading.isolation.maven.dependencies.Configurati
 import org.mule.functional.classloading.isolation.maven.dependencies.DependenciesFilterBuilder;
 import org.mule.functional.classloading.isolation.maven.dependencies.DependencyResolver;
 import org.mule.functional.classloading.isolation.maven.dependencies.TransitiveDependenciesFilterBuilder;
-import org.mule.functional.classloading.isolation.utils.RunnerModuleUtils;
 import org.mule.functional.junit4.ExtensionsTestInfrastructureDiscoverer;
 import org.mule.functional.junit4.runners.ArtifactClassLoaderRunnerConfig;
+import org.mule.functional.util.TruePredicate;
 import org.mule.runtime.core.DefaultMuleContext;
 import org.mule.runtime.core.api.lifecycle.InitialisationException;
 import org.mule.runtime.core.api.registry.MuleRegistry;
@@ -339,7 +340,7 @@ public class MuleClassPathClassifier implements ClassPathClassifier
         Predicate<MavenArtifact> exclusionPredicate = null;
         try
         {
-            Properties excludedProperties = RunnerModuleUtils.getExcludedProperties();
+            Properties excludedProperties = getExcludedProperties();
             String excludedModules = excludedProperties.getProperty("excluded.modules");
             if (excludedModules != null)
             {
@@ -363,7 +364,8 @@ public class MuleClassPathClassifier implements ClassPathClassifier
             }
         }
 
-        return exclusionPredicate;
+        // If no exclusion is defined the predicate should always return false to any artifact due to none is excluded
+        return exclusionPredicate == null ? new TruePredicate<MavenArtifact>().negate() : exclusionPredicate;
     }
 
     private Predicate<MavenArtifact> createPredicate(final Predicate<MavenArtifact> exclusionPredicate, final String exclusions)
