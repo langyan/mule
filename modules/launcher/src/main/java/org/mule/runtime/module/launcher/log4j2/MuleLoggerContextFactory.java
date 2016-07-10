@@ -19,6 +19,7 @@ import org.mule.runtime.module.launcher.ApplicationDescriptorFactory;
 import org.mule.runtime.module.launcher.descriptor.ApplicationDescriptor;
 import org.mule.runtime.module.launcher.plugin.ApplicationPluginDescriptor;
 import org.mule.runtime.module.launcher.plugin.ApplicationPluginDescriptorFactory;
+import org.mule.runtime.module.launcher.plugin.ApplicationPluginLoader;
 import org.mule.runtime.module.launcher.plugin.ApplicationPluginRepository;
 import org.mule.runtime.module.reboot.MuleContainerBootstrapUtils;
 
@@ -187,7 +188,8 @@ public class MuleLoggerContextFactory
     public ApplicationDescriptor fetchApplicationDescriptor(ArtifactClassLoader muleCL) throws IOException
     {
         //TODO(pablo.kraan): MULE-9778 - MuleLoggerContextFactory should not create artifact descriptors
-        ArtifactDescriptorFactory<ApplicationDescriptor> applicationDescriptorFactory = new ApplicationDescriptorFactory(new ApplicationPluginDescriptorFactory(new DefaultArtifactClassLoaderFilterFactory()), new ApplicationPluginRepository()
+        ApplicationPluginLoader applicationPluginLoader = new ApplicationPluginLoader(new ApplicationPluginDescriptorFactory(new DefaultArtifactClassLoaderFilterFactory()));
+        ArtifactDescriptorFactory<ApplicationDescriptor> applicationDescriptorFactory = new ApplicationDescriptorFactory(applicationPluginLoader, new ApplicationPluginRepository()
         {
             @Override
             public List<ApplicationPluginDescriptor> getContainerApplicationPluginDescriptors()

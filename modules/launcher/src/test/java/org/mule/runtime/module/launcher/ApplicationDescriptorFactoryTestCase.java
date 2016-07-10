@@ -29,6 +29,7 @@ import org.mule.runtime.module.launcher.builder.ApplicationPluginFileBuilder;
 import org.mule.runtime.module.launcher.descriptor.ApplicationDescriptor;
 import org.mule.runtime.module.launcher.plugin.ApplicationPluginDescriptor;
 import org.mule.runtime.module.launcher.plugin.ApplicationPluginDescriptorFactory;
+import org.mule.runtime.module.launcher.plugin.ApplicationPluginLoader;
 import org.mule.runtime.module.launcher.plugin.ApplicationPluginRepository;
 import org.mule.tck.junit4.AbstractMuleTestCase;
 import org.mule.tck.junit4.rule.SystemPropertyTemporaryFolder;
@@ -76,7 +77,7 @@ public class ApplicationDescriptorFactoryTestCase extends AbstractMuleTestCase
 
         final ApplicationPluginDescriptorFactory pluginDescriptorFactory = mock(ApplicationPluginDescriptorFactory.class);
 
-        final ApplicationDescriptorFactory applicationDescriptorFactory = new ApplicationDescriptorFactory(pluginDescriptorFactory, applicationPluginRepository);
+        final ApplicationDescriptorFactory applicationDescriptorFactory = new ApplicationDescriptorFactory(new ApplicationPluginLoader(pluginDescriptorFactory), applicationPluginRepository);
         final ApplicationPluginDescriptor expectedPluginDescriptor1 = mock(ApplicationPluginDescriptor.class);
         when(expectedPluginDescriptor1.getName()).thenReturn("plugin1");
         when(expectedPluginDescriptor1.getClassLoaderFilter()).thenReturn(ArtifactClassLoaderFilter.NULL_CLASSLOADER_FILTER);
@@ -100,7 +101,7 @@ public class ApplicationDescriptorFactoryTestCase extends AbstractMuleTestCase
         pluginLibDir.mkdirs();
 
         copyResourceAs("test-jar-with-resources.jar", pluginLibDir, JAR_FILE_NAME);
-        ApplicationDescriptor desc = new ApplicationDescriptorFactory(new ApplicationPluginDescriptorFactory(new DefaultArtifactClassLoaderFilterFactory()), applicationPluginRepository).create(getAppFolder(APP_NAME));
+        ApplicationDescriptor desc = new ApplicationDescriptorFactory(new ApplicationPluginLoader(new ApplicationPluginDescriptorFactory(new DefaultArtifactClassLoaderFilterFactory())), applicationPluginRepository).create(getAppFolder(APP_NAME));
 
         URL[] sharedPluginLibs = desc.getSharedPluginLibs();
 
@@ -149,7 +150,7 @@ public class ApplicationDescriptorFactoryTestCase extends AbstractMuleTestCase
     private void doPackageValidationTest(ApplicationPluginRepository applicationPluginRepository)
     {
         final ApplicationPluginDescriptorFactory pluginDescriptorFactory = new ApplicationPluginDescriptorFactory(new DefaultArtifactClassLoaderFilterFactory());
-        final ApplicationDescriptorFactory applicationDescriptorFactory = new ApplicationDescriptorFactory(pluginDescriptorFactory, applicationPluginRepository);
+        final ApplicationDescriptorFactory applicationDescriptorFactory = new ApplicationDescriptorFactory(new ApplicationPluginLoader(pluginDescriptorFactory), applicationPluginRepository);
 
         try
         {

@@ -11,6 +11,8 @@ import static org.mule.runtime.core.api.config.MuleProperties.OBJECT_POLLING_CON
 import static org.mule.runtime.core.api.config.MuleProperties.OBJECT_TRANSACTION_MANAGER;
 import static org.mule.runtime.core.api.lifecycle.LifecycleUtils.startIfNeeded;
 import static org.mule.runtime.core.api.lifecycle.LifecycleUtils.stopIfNeeded;
+import org.mule.runtime.config.spring.DefaultCustomizationService;
+import org.mule.runtime.core.api.CustomizationService;
 import org.mule.runtime.core.api.Injector;
 import org.mule.runtime.core.api.MuleContext;
 import org.mule.runtime.core.api.MuleException;
@@ -109,6 +111,8 @@ public class DefaultMuleContext implements MuleContext
      * logger used by this class
      */
     private transient Logger logger = LoggerFactory.getLogger(DefaultMuleContext.class);
+
+    private CustomizationService customizationService = new DefaultCustomizationService();
 
     /**
      * Internal registry facade which delegates to other registries.
@@ -1183,6 +1187,12 @@ public class DefaultMuleContext implements MuleContext
     public BootstrapServiceDiscoverer getRegistryBootstrapServiceDiscoverer()
     {
         return bootstrapServiceDiscoverer;
+    }
+
+    @Override
+    public CustomizationService getCustomizationService()
+    {
+        return customizationService;
     }
 
     public void setBootstrapServiceDiscoverer(BootstrapServiceDiscoverer bootstrapServiceDiscoverer)

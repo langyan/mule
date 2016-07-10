@@ -403,5 +403,7 @@ public interface MuleContext extends Lifecycle
      */
     //TODO(pablo.kraan): remove this reference and use dependency injection (MULE-9157)
     BootstrapServiceDiscoverer getRegistryBootstrapServiceDiscoverer();
+
+    CustomizationService getCustomizationService();
 }
 

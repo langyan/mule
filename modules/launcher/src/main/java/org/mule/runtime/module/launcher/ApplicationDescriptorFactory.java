@@ -14,7 +14,6 @@ import static org.mule.runtime.module.launcher.artifact.ArtifactFactoryUtils.get
 import static org.mule.runtime.module.launcher.descriptor.ApplicationDescriptor.DEFAULT_APP_PROPERTIES_RESOURCE;
 import org.mule.runtime.core.util.FileUtils;
 import org.mule.runtime.core.util.PropertiesUtils;
-import org.mule.runtime.core.util.StringUtils;
 import org.mule.runtime.module.artifact.descriptor.ArtifactDescriptorCreateException;
 import org.mule.runtime.module.artifact.descriptor.ArtifactDescriptorFactory;
 import org.mule.runtime.module.launcher.descriptor.ApplicationDescriptor;
@@ -23,6 +22,7 @@ import org.mule.runtime.module.launcher.descriptor.PropertiesDescriptorParser;
 import org.mule.runtime.module.launcher.plugin.ApplicationPluginDescriptor;
 import org.mule.runtime.module.launcher.plugin.ApplicationPluginDescriptorFactory;
 import org.mule.runtime.module.launcher.plugin.ApplicationPluginRepository;
+import org.mule.runtime.module.launcher.plugin.ApplicationPluginLoader;
 import org.mule.runtime.module.reboot.MuleContainerBootstrapUtils;
 
 import java.io.File;
@@ -51,15 +51,15 @@ public class ApplicationDescriptorFactory implements ArtifactDescriptorFactory<A
 
     public static final String SYSTEM_PROPERTY_OVERRIDE = "-O";
 
-    private final ApplicationPluginDescriptorFactory pluginDescriptorFactory;
     private final ApplicationPluginRepository applicationPluginRepository;
+    private final ApplicationPluginLoader applicationPluginLoader;
 
-    public ApplicationDescriptorFactory(ApplicationPluginDescriptorFactory applicationPluginDescriptorFactory, ApplicationPluginRepository applicationPluginRepository)
+    public ApplicationDescriptorFactory(ApplicationPluginLoader applicationPluginLoader, ApplicationPluginRepository applicationPluginRepository)
     {
-        checkArgument(applicationPluginDescriptorFactory != null, "ApplicationPluginDescriptorFactory cannot be null");
+        checkArgument(applicationPluginLoader != null, "ApplicationPluginDescriptorFactory cannot be null");
         checkArgument(applicationPluginRepository  != null, "ApplicationPluginRepository cannot be null");
         this.applicationPluginRepository = applicationPluginRepository;
-        this.pluginDescriptorFactory = applicationPluginDescriptorFactory;
+        this.applicationPluginLoader = applicationPluginLoader;
     }
 
     public ApplicationDescriptor create(File artifactFolder) throws ArtifactDescriptorCreateException
@@ -163,16 +163,11 @@ public class ApplicationDescriptorFactory implements ArtifactDescriptorFactory<A
 
         for (String pluginZip : pluginZips)
         {
-            final String pluginName = StringUtils.removeEnd(pluginZip, ".zip");
-            // must unpack as there's no straightforward way for a ClassLoader to use a jar within another jar/zip
-            final File tmpDir = new File(MuleContainerBootstrapUtils.getMuleTmpDir(),
-                                         appDescriptor.getName() + separator + PLUGINS_FOLDER + separator + pluginName);
-            FileUtils.unzip(new File(pluginsDir, pluginZip), tmpDir);
-            final ApplicationPluginDescriptor pd = pluginDescriptorFactory.create(tmpDir);
-
-            pds.add(pd);
+            String unpackDestinationFolder = appDescriptor.getName() + separator + PLUGINS_FOLDER + separator;
+            File pluginZipFile = new File(pluginsDir, pluginZip);
+            pds.add(applicationPluginLoader.load(pluginZipFile, new File(MuleContainerBootstrapUtils.getMuleTmpDir(),
+                                                                         unpackDestinationFolder)));
         }
-
         return pds;
     }
 

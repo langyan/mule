@@ -28,6 +28,7 @@ import org.mule.runtime.module.launcher.domain.DomainFactory;
 import org.mule.runtime.module.launcher.domain.DomainManager;
 import org.mule.runtime.module.launcher.nativelib.DefaultNativeLibraryFinderFactory;
 import org.mule.runtime.module.launcher.plugin.ApplicationPluginDescriptorFactory;
+import org.mule.runtime.module.launcher.plugin.ApplicationPluginLoader;
 import org.mule.runtime.module.launcher.plugin.ApplicationPluginRepository;
 import org.mule.runtime.module.launcher.plugin.DefaultApplicationPluginRepository;
 import org.mule.runtime.module.launcher.util.DebuggableReentrantLock;
@@ -89,7 +90,7 @@ public class MuleDeploymentService implements DeploymentService
         final ApplicationPluginDescriptorFactory applicationPluginDescriptorFactory = new ApplicationPluginDescriptorFactory(new DefaultArtifactClassLoaderFilterFactory());
         applicationPluginRepository = new DefaultApplicationPluginRepository(applicationPluginDescriptorFactory);
 
-        final ApplicationDescriptorFactory applicationDescriptorFactory = new ApplicationDescriptorFactory(applicationPluginDescriptorFactory, applicationPluginRepository);
+        final ApplicationDescriptorFactory applicationDescriptorFactory = new ApplicationDescriptorFactory(new ApplicationPluginLoader(applicationPluginDescriptorFactory), applicationPluginRepository);
 
         DefaultApplicationFactory applicationFactory = new DefaultApplicationFactory(applicationClassLoaderFactory, applicationDescriptorFactory, applicationPluginFactory, domainManager, applicationPluginRepository);
         applicationFactory.setDeploymentListener(applicationDeploymentListener);

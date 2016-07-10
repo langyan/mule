@@ -45,6 +45,7 @@
         <module>tomcat</module>
         <module>ws</module>
         <module>xml</module>
+        <module>tooling</module>
     </modules>
 
     <build>

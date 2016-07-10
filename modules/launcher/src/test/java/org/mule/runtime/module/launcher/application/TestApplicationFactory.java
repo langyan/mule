@@ -12,6 +12,7 @@ import org.mule.runtime.module.launcher.ApplicationDescriptorFactory;
 import org.mule.runtime.module.launcher.domain.DomainManager;
 import org.mule.runtime.module.launcher.plugin.ApplicationPluginDescriptor;
 import org.mule.runtime.module.launcher.plugin.ApplicationPluginDescriptorFactory;
+import org.mule.runtime.module.launcher.plugin.ApplicationPluginLoader;
 import org.mule.runtime.module.launcher.plugin.ApplicationPluginRepository;
 
 import java.io.IOException;
@@ -30,7 +31,7 @@ public class TestApplicationFactory extends DefaultApplicationFactory
 
     public TestApplicationFactory(ArtifactClassLoaderFactory applicationClassLoaderFactory, DomainManager domainManager)
     {
-        super(applicationClassLoaderFactory, new ApplicationDescriptorFactory(new ApplicationPluginDescriptorFactory(new DefaultArtifactClassLoaderFilterFactory()), new TestEmptyApplicationPluginRepository()), new DefaultApplicationPluginFactory(new ApplicationPluginClassLoaderFactory()), domainManager, new TestEmptyApplicationPluginRepository());
+        super(applicationClassLoaderFactory, new ApplicationDescriptorFactory(new ApplicationPluginLoader(new ApplicationPluginDescriptorFactory(new DefaultArtifactClassLoaderFilterFactory())), new TestEmptyApplicationPluginRepository()), new DefaultApplicationPluginFactory(new ApplicationPluginClassLoaderFactory()), domainManager, new TestEmptyApplicationPluginRepository());
     }
 
     @Override
