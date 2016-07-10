@@ -234,6 +234,7 @@ public class MuleMessageToHttpResponse extends AbstractMessageTransformer
         Collection<String> headerNames = new LinkedList<>();
         headerNames.addAll(HttpConstants.RESPONSE_HEADER_NAMES.values());
         headerNames.addAll(HttpConstants.GENERAL_AND_ENTITY_HEADER_NAMES.values());
+        headerNames.remove(HttpConstants.HEADER_CONTENT_TYPE);
 
         for (String headerName : headerNames)
         {

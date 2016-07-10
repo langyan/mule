@@ -48,16 +48,19 @@ public class OutboundEndpointPropertyMessageProcessor implements MessageProcesso
             {
                 String prop = (String) name;
                 Serializable value = endpoint.getProperties().get(prop);
-                // don't overwrite property on the message
-                if (!ignoreProperty(event.getMessage(), prop))
-                {
-                    // inbound endpoint properties are in the invocation scope
-                    messageBuilder.addOutboundProperty(prop, value);
-                }
 
-                if ("Content-Type".equals(prop))
+                if ("Content-Type".equalsIgnoreCase(prop))
                 {
                     messageBuilder.mediaType(MediaType.parse(value.toString()));
+                }
+                else
+                {
+                    // don't overwrite property on the message
+                    if (!ignoreProperty(event.getMessage(), prop))
+                    {
+                        // inbound endpoint properties are in the invocation scope
+                        messageBuilder.addOutboundProperty(prop, value);
+                    }
                 }
             }
         }
