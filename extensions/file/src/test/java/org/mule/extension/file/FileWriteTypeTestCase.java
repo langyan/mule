@@ -8,7 +8,6 @@ package org.mule.extension.file;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
-import org.mule.functional.junit4.runners.RunnerDelegateTo;
 import org.mule.runtime.core.api.MuleEvent;
 import org.mule.runtime.core.message.OutputHandler;
 import org.mule.runtime.core.util.IOUtils;
@@ -20,10 +19,11 @@ import java.io.OutputStream;
 import java.util.Arrays;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
-@RunnerDelegateTo(Parameterized.class)
+@RunWith(Parameterized.class)
 public class FileWriteTypeTestCase extends FileConnectorTestCase
 {
 
