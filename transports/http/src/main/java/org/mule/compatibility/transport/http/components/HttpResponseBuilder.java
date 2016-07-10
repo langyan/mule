@@ -18,6 +18,7 @@ import org.mule.compatibility.transport.http.CookieWrapper;
 import org.mule.compatibility.transport.http.HttpConnector;
 import org.mule.compatibility.transport.http.HttpConstants;
 import org.mule.compatibility.transport.http.HttpResponse;
+import org.mule.runtime.api.metadata.MediaType;
 import org.mule.runtime.core.api.DefaultMuleException;
 import org.mule.runtime.core.api.MuleEvent;
 import org.mule.runtime.core.api.MuleException;
@@ -357,10 +358,15 @@ public class HttpResponseBuilder extends AbstractMessageProcessorOwner
 
     private String getDefaultContentType(MuleMessage message)
     {
-        String contentType = message.getInboundProperty(HttpConstants.HEADER_CONTENT_TYPE);
-        if(contentType == null)
+        final MediaType mediaType = message.getDataType().getMediaType();
+        String contentType;
+        if (MediaType.ANY.matches(mediaType))
         {
             contentType = HttpConstants.DEFAULT_CONTENT_TYPE;
+        }
+        else
+        {
+            contentType = mediaType.toRfcString();
         }
         return contentType;
     }

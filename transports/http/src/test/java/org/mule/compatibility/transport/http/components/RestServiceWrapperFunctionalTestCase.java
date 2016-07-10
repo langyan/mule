@@ -9,7 +9,6 @@ package org.mule.compatibility.transport.http.components;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import org.mule.compatibility.transport.http.HttpConstants;
 import org.mule.functional.junit4.FunctionalTestCase;
 import org.mule.runtime.api.message.NullPayload;
 import org.mule.runtime.core.api.MuleEventContext;
@@ -113,7 +112,7 @@ public class RestServiceWrapperFunctionalTestCase extends FunctionalTestCase
         @Override
         public Object onCall(MuleEventContext eventContext) throws Exception
         {
-            return eventContext.getMessage().getInboundProperty(HttpConstants.HEADER_CONTENT_TYPE);
+            return eventContext.getMessage().getDataType().getMediaType().toRfcString();
         }
     }
 }

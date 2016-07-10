@@ -16,6 +16,7 @@ import static org.junit.Assert.assertThat;
 
 import org.mule.compatibility.transport.http.HttpConnector;
 import org.mule.compatibility.transport.http.HttpConstants;
+import org.mule.runtime.api.metadata.MediaType;
 import org.mule.runtime.core.api.MuleMessage;
 import org.mule.runtime.core.api.client.MuleClient;
 
@@ -49,10 +50,7 @@ public class HttpEncodingFunctionalTestCase extends HttpFunctionalTestCase
     {
         MuleClient client = muleContext.getClient();
 
-        Map<String, Serializable> messageProperties = new HashMap<>();
-        messageProperties.put(HttpConstants.HEADER_CONTENT_TYPE, getSendEncoding());
-
-        MuleMessage reply = client.send("clientEndpoint", TEST_MESSAGE, messageProperties);
+        MuleMessage reply = client.send("clientEndpoint", MuleMessage.builder().payload(TEST_MESSAGE).mediaType(MediaType.parse(getSendEncoding())).build());
         assertNotNull(reply);
         assertEquals("200", reply.getInboundProperty(HttpConnector.HTTP_STATUS_PROPERTY));
         assertEquals("text/baz;charset=UTF-16BE", reply.<String>getInboundProperty(HttpConstants.HEADER_CONTENT_TYPE));
@@ -146,11 +144,11 @@ public class HttpEncodingFunctionalTestCase extends HttpFunctionalTestCase
 
     private MuleMessage runEncodingTest(Charset encoding, String payload, String httpMethod) throws Exception
     {
-        Map<String, Serializable> messageProperties = createMessageProperties(encoding, httpMethod);
+        Map<String, Serializable> messageProperties = createMessageProperties(httpMethod);
 
         MuleClient client = muleContext.getClient();
         String endpointUri = "clientEndpoint." + encoding.name();
-        MuleMessage reply = client.send(endpointUri, payload, messageProperties);
+        MuleMessage reply = client.send(endpointUri, MuleMessage.builder().payload(payload).mediaType(MediaType.parse("text/plain;charset=" + encoding.name())).build(), messageProperties);
 
         assertNotNull(reply);
         assertEquals("200", reply.getInboundProperty(HttpConnector.HTTP_STATUS_PROPERTY));
@@ -163,11 +161,9 @@ public class HttpEncodingFunctionalTestCase extends HttpFunctionalTestCase
         return reply;
     }
 
-    private Map<String, Serializable> createMessageProperties(Charset encoding, String httpMethod)
+    private Map<String, Serializable> createMessageProperties(String httpMethod)
     {
         Map<String, Serializable> messageProperties = new HashMap<>();
-        String contentType = "text/plain;charset=" + encoding.name();
-        messageProperties.put(HttpConstants.HEADER_CONTENT_TYPE, contentType);
         messageProperties.put(HttpConnector.HTTP_METHOD_PROPERTY, httpMethod);
         return messageProperties;
     }

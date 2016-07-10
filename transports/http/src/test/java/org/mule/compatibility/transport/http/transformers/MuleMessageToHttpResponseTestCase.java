@@ -15,11 +15,9 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
-import static org.mule.compatibility.transport.http.HttpConstants.HEADER_CONTENT_TYPE;
 
 import org.mule.compatibility.transport.http.HttpConstants;
 import org.mule.compatibility.transport.http.HttpResponse;
-import org.mule.runtime.api.message.NullPayload;
 import org.mule.runtime.api.metadata.DataType;
 import org.mule.runtime.core.TransformationService;
 import org.mule.runtime.core.api.MuleMessage;
@@ -28,12 +26,9 @@ import org.mule.runtime.core.message.OutputHandler;
 import org.mule.tck.junit4.AbstractMuleContextTestCase;
 import org.mule.tck.size.SmallTest;
 
-import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
 
 import org.apache.commons.httpclient.Cookie;
 import org.apache.commons.httpclient.Header;
@@ -110,40 +105,6 @@ public class MuleMessageToHttpResponseTestCase extends AbstractMuleContextTestCa
         {
         }).build()).when(transformationService).transform(any(MuleMessage.class), any(DataType.class));
         return msg;
-    }
-
-    @Test
-    public void testContentTypeOnOutbound() throws Exception
-    {
-        final String contentType = "text/xml";
-        final String wrongContentType = "text/json";
-        Map<String, Serializable> outboundProperties =  new HashMap<>();
-        outboundProperties.put(HEADER_CONTENT_TYPE, wrongContentType);
-        muleContext = spy(muleContext);
-        //Making sure that the outbound property overrides both invocation and inbound
-        MuleMessage msg = MuleMessage.builder()
-                .payload(NullPayload.getInstance())
-                .outboundProperties(outboundProperties)
-                .addOutboundProperty(HEADER_CONTENT_TYPE, wrongContentType)
-                .addInboundProperty(HEADER_CONTENT_TYPE, wrongContentType)
-                .addOutboundProperty(HEADER_CONTENT_TYPE, contentType)
-                .build();
-
-        MuleMessageToHttpResponse transformer = getMuleMessageToHttpResponse();
-
-        HttpResponse response = transformer.createResponse(null, UTF_8, msg);
-        Header[] headers = response.getHeaders();
-
-        boolean hasContentTypeHeader = false;
-        for (Header header : headers)
-        {
-            if (HEADER_CONTENT_TYPE.equals(header.getName()))
-            {
-                hasContentTypeHeader = true;
-                assertThat(header.getValue(), is(equalTo(contentType)));
-            }
-        }
-        assertThat("Missing" + HEADER_CONTENT_TYPE + " header", hasContentTypeHeader, is(true));
     }
 
     private MuleMessageToHttpResponse getMuleMessageToHttpResponse() throws Exception
