@@ -188,6 +188,7 @@ public class MuleClassPathClassifier implements ClassPathClassifier
             throw new IllegalArgumentException("Cannot create plugin/extension class loader classification due to extension class not found", e);
         }
         File extensionSourceCodeLocation = new File(extension.getProtectionDomain().getCodeSource().getLocation().getPath());
+        logger.debug("Extension: " + extensionClassName + " loaded from source path: '" + extensionSourceCodeLocation + "'");
         // Just move up from jar/classes to the artifactId/multi-module folder
         File relativeFolder = extensionSourceCodeLocation.getParentFile().getParentFile();
         final StringBuilder extensionMavenArtifactId = new StringBuilder();
