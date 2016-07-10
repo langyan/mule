@@ -7,6 +7,8 @@
 
 package org.mule.functional.junit4.runners;
 
+import org.mule.runtime.extension.api.annotation.Extension;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
@@ -37,14 +39,11 @@ public @interface ArtifactClassLoaderRunnerConfig
     String extraBootPackages() default "";
 
     /**
-     * @return {@link String[]} with the extension {@link Class} name of the extensions that would be used to create and load it using a plugin/extensio
-     * {@link ClassLoader}. If no extensions are defined the plugin/extension class loaders will not be created.
-     * <p/>
-     * Be aware that during the execution of the test that is marked with this annotation will may not have visibility of the extension class due to
-     * the extension class loader will not expose the class so, it is important to define this values explicitly by writing the class name as String and not by doing it with
-     * its class: 'MyExtension.class.getName()'
+     * @return {@link String} to define the base package to be used when discovering for extensions in order to create for each
+     * extension a plugin {@link ClassLoader}. If no extension are discovered plugin class loaders will not be created.
+     * The discovery process will look for classes in classpath annotated with {@link Extension}.
      */
-    String[] extensions() default {};
+    String extensionBasePackage() default "org.mule.extension";
 
     /**
      * @return a comma separated list of groupId:artifactId:type (it does support wildcards org.mule:*:* or *:mule-core:* but

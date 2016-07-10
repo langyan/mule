@@ -18,22 +18,22 @@ import java.util.List;
  */
 public class PluginUrlClassification
 {
-    private Class extension;
     private List<URL> urls;
+    private String name;
 
-    public PluginUrlClassification(Class extension, List<URL> urls)
+    public PluginUrlClassification(String name, List<URL> urls)
     {
-        this.extension = extension;
+        this.name = name;
         this.urls = urls;
-    }
-
-    public Class getExtension()
-    {
-        return extension;
     }
 
     public List<URL> getUrls()
     {
         return urls;
+    }
+
+    public String getName()
+    {
+        return name;
     }
 }

@@ -95,7 +95,7 @@ public class ArtifactClassloaderTestRunner extends Runner implements Filterable
             delegate = new BlockJUnit4ClassRunner(isolatedTestClass);
         }
 
-        injectPluginsClassLoaders(classLoaderTestRunner, isolatedTestClass);
+        injectExtensionPluginsClassLoaders(classLoaderTestRunner, isolatedTestClass);
     }
 
     private Class<?> getTestClass(Class<?> clazz) throws InitializationError
@@ -133,13 +133,13 @@ public class ArtifactClassloaderTestRunner extends Runner implements Filterable
     }
 
     /**
-     * Invokes the method to inject the plugin/extension classloaders for registering the extensions to the {@link org.mule.runtime.core.api.MuleContext}.
+     * Invokes the method to inject the plugin/extension class loaders for registering the extensions to the {@link org.mule.runtime.core.api.MuleContext}.
      *
      * @param classLoaderTestRunner
      * @param isolatedTestClass
      * @throws Throwable
      */
-    private static void injectPluginsClassLoaders(ClassLoaderTestRunner classLoaderTestRunner, Class<?> isolatedTestClass) throws Throwable
+    private static void injectExtensionPluginsClassLoaders(ClassLoaderTestRunner classLoaderTestRunner, Class<?> isolatedTestClass) throws Throwable
     {
         TestClass testClass = new TestClass(isolatedTestClass);
         Class<? extends Annotation> artifactContextAwareAnn = (Class<? extends Annotation>) classLoaderTestRunner.loadClassWithApplicationClassLoader(PluginClassLoadersAware.class.getName());
@@ -152,7 +152,7 @@ public class ArtifactClassloaderTestRunner extends Runner implements Filterable
             }
             try
             {
-                method.invokeExplosively(null, classLoaderTestRunner.getPluginClassLoaders());
+                method.invokeExplosively(null, classLoaderTestRunner.getExtensionPluginsClassLoaders());
             }
             catch (IllegalArgumentException e)
             {

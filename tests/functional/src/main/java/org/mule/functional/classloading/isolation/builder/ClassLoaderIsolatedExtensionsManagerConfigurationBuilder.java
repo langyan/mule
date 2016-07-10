@@ -7,7 +7,6 @@
 
 package org.mule.functional.classloading.isolation.builder;
 
-import static org.mule.runtime.core.util.Preconditions.checkArgument;
 import static org.mule.runtime.module.extension.internal.ExtensionProperties.EXTENSION_MANIFEST_FILE_NAME;
 import org.mule.runtime.core.api.MuleContext;
 import org.mule.runtime.core.api.lifecycle.InitialisationException;
@@ -18,7 +17,6 @@ import org.mule.runtime.module.extension.internal.manager.DefaultExtensionManage
 import org.mule.runtime.module.extension.internal.manager.ExtensionManagerAdapter;
 import org.mule.runtime.module.extension.internal.manager.ExtensionManagerAdapterFactory;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.List;
@@ -39,24 +37,22 @@ public class ClassLoaderIsolatedExtensionsManagerConfigurationBuilder extends Ab
     private static Logger LOGGER = LoggerFactory.getLogger(ClassLoaderIsolatedExtensionsManagerConfigurationBuilder.class);
 
     private final ExtensionManagerAdapterFactory extensionManagerAdapterFactory;
-    private final String[] extensionClasses;
-    private final List<ArtifactClassLoader> extensionClassLoaders;
+    private final List<ArtifactClassLoader> extensionPluginsClassLoaders;
 
     /**
-     * Creates an instance of the builder with the list of extensions class names to be registered using their class loaders.
-     * It will load the extension class with its corresponding extension class loader and register the extension.
+     * Creates an instance of the builder with the list of extensions plugin class loaders. Each {@link ArtifactClassLoader}
+     * was created for an extension and as name it has the class that is marked with {@link org.mule.runtime.extension.api.annotation.Extension}.
+     * The extension will be loaded and registered with its corresponding class loader in order to get access
+     * to the isolated {@link ClassLoader} defined for the extension.
      * <p/>
      * It assumes that a {@link ArtifactClassLoader} name should have the extension class name.
      *
-     * @param extensionClasses
-     * @param extensionClassLoaders
+     * @param extensionPluginsClassLoaders
      */
-    public ClassLoaderIsolatedExtensionsManagerConfigurationBuilder(String[] extensionClasses, List<ArtifactClassLoader> extensionClassLoaders)
+    public ClassLoaderIsolatedExtensionsManagerConfigurationBuilder(List<ArtifactClassLoader> extensionPluginsClassLoaders)
     {
-        checkArgument(extensionClasses.length == extensionClassLoaders.size(), "Extension classes to be registered and class loaders don't match");
-        this.extensionClasses = extensionClasses;
         this.extensionManagerAdapterFactory = new DefaultExtensionManagerAdapterFactory();
-        this.extensionClassLoaders = extensionClassLoaders;
+        this.extensionPluginsClassLoaders = extensionPluginsClassLoaders;
     }
 
     @Override
@@ -64,9 +60,9 @@ public class ClassLoaderIsolatedExtensionsManagerConfigurationBuilder extends Ab
     {
         final ExtensionManagerAdapter extensionManager = createExtensionManager(muleContext);
 
-        for (String extensionClass : extensionClasses)
+        for (Object extensionPluginClassLoader : extensionPluginsClassLoaders)
         {
-            ClassLoader extensionClassLoader = findExtensionClassLoader(extensionClass);
+            ClassLoader extensionClassLoader = (ClassLoader) extensionPluginClassLoader.getClass().getMethod("getClassLoader").invoke(extensionPluginClassLoader);
 
             // There will be more than one extension manifest file so we just filter by convention
             Method findResourceMethod = extensionClassLoader.getClass().getMethod("findResource", String.class);
@@ -74,35 +70,11 @@ public class ClassLoaderIsolatedExtensionsManagerConfigurationBuilder extends Ab
             URL manifestUrl = (URL) findResourceMethod.invoke(extensionClassLoader, "META-INF/" + EXTENSION_MANIFEST_FILE_NAME);
             if (LOGGER.isDebugEnabled())
             {
-                LOGGER.debug("Discovered extension " + extensionClass);
+                LOGGER.debug("Discovered extension " + extensionPluginClassLoader.getClass().getMethod("name").invoke(extensionPluginClassLoader));
             }
             ExtensionManifest extensionManifest = extensionManager.parseExtensionManifestXml(manifestUrl);
             extensionManager.registerExtension(extensionManifest, extensionClassLoader);
         }
-    }
-
-    /**
-     * @param extensionClass
-     * @return Finds the extension class loader for the given extension class by filtering the {@link ArtifactClassLoader} by its name.
-     * @throws IllegalAccessException
-     * @throws InvocationTargetException
-     * @throws NoSuchMethodException
-     */
-    private ClassLoader findExtensionClassLoader(String extensionClass) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException
-    {
-        ClassLoader extensionClassLoader = null;
-        for (Object artifactClassLoader : extensionClassLoaders)
-        {
-            if(artifactClassLoader.getClass().getMethod("getArtifactName").invoke(artifactClassLoader).equals(extensionClass))
-            {
-                extensionClassLoader = (ClassLoader) artifactClassLoader.getClass().getMethod("getClassLoader").invoke(artifactClassLoader);
-            }
-        }
-        if (extensionClassLoader == null)
-        {
-            throw new IllegalStateException("There is no extension class loader by name: " + extensionClass);
-        }
-        return extensionClassLoader;
     }
 
     private ExtensionManagerAdapter createExtensionManager(MuleContext muleContext) throws InitialisationException

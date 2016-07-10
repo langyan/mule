@@ -39,12 +39,12 @@ import org.junit.runner.RunWith;
 @RunWith(ArtifactClassloaderTestRunner.class)
 public abstract class ArtifactFunctionalTestCase extends FunctionalTestCase
 {
-    private static List<ArtifactClassLoader> extensionClassLoaders;
+    private static List<ArtifactClassLoader> extensionsClassLoaders;
 
     @PluginClassLoadersAware
-    public static void setExtensionClassLoaders(List<ArtifactClassLoader> pluginClassLoaders)
+    public static void setExtensionClassLoaders(List<ArtifactClassLoader> extensionPluginsArtifactClassLoaders)
     {
-        extensionClassLoaders = pluginClassLoaders;
+        extensionsClassLoaders = extensionPluginsArtifactClassLoaders;
     }
 
     @Override
@@ -58,11 +58,9 @@ public abstract class ArtifactFunctionalTestCase extends FunctionalTestCase
                                             + " so it should be annotated to only run with: " + ArtifactClassloaderTestRunner.class + ". See " + RunnerDelegateTo.class + " for defining a delegate runner to be used.");
         }
 
-        List<String[]> extensionsAnnotatedClasses = getAnnotationAttributeFromHierarchy(this.getClass(), ArtifactClassLoaderRunnerConfig.class, "extensions");
-        if (!extensionsAnnotatedClasses.isEmpty())
+        if (extensionsClassLoaders != null && !extensionsClassLoaders.isEmpty())
         {
-            Set<String> extensionsAnnotatedClassesNoDups = extensionsAnnotatedClasses.stream().flatMap(Arrays::stream).collect(Collectors.toSet());
-            builders.add(0, new ClassLoaderIsolatedExtensionsManagerConfigurationBuilder(extensionsAnnotatedClassesNoDups.toArray(new String[0]), extensionClassLoaders));
+            builders.add(0, new ClassLoaderIsolatedExtensionsManagerConfigurationBuilder(extensionsClassLoaders));
         }
     }
 

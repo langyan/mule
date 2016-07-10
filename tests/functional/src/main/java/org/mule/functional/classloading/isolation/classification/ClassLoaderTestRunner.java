@@ -20,13 +20,13 @@ public final class ClassLoaderTestRunner
 {
 
     private ArtifactClassLoader containerClassLoader;
-    private List<ArtifactClassLoader> pluginClassLoaders;
+    private List<ArtifactClassLoader> extensionPluginsArtifactClassLoaders;
     private ArtifactClassLoader applicationClassLoader;
 
-    public ClassLoaderTestRunner(ArtifactClassLoader containerClassLoader, List<ArtifactClassLoader> pluginClassLoaders, ArtifactClassLoader applicationClassLoader)
+    public ClassLoaderTestRunner(ArtifactClassLoader containerClassLoader, List<ArtifactClassLoader> extensionPluginsArtifactClassLoaders, ArtifactClassLoader applicationClassLoader)
     {
         this.containerClassLoader = containerClassLoader;
-        this.pluginClassLoaders = pluginClassLoaders;
+        this.extensionPluginsArtifactClassLoaders = extensionPluginsArtifactClassLoaders;
         this.applicationClassLoader = applicationClassLoader;
     }
 
@@ -35,9 +35,9 @@ public final class ClassLoaderTestRunner
         return containerClassLoader;
     }
 
-    public List<ArtifactClassLoader> getPluginClassLoaders()
+    public List<ArtifactClassLoader> getExtensionPluginsClassLoaders()
     {
-        return pluginClassLoaders;
+        return extensionPluginsArtifactClassLoaders;
     }
 
     public ArtifactClassLoader getApplicationClassLoader()
