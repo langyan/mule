@@ -85,10 +85,7 @@ public class ContainerClassLoaderFactory
             "org.dom4j", "org.w3c.dom",
             "com.sun", "sun",
             "org.springframework",
-            "org.mule.mvel2",
-
-            //TODO(gfernandes): need to expose every package form groovy
-            "org.codehaus.groovy"
+            "org.mule.mvel2"
     );
 
     private ModuleDiscoverer moduleDiscoverer = new ClasspathModuleDiscoverer(this.getClass().getClassLoader());

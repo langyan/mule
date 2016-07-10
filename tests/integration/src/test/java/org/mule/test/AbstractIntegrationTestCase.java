@@ -10,7 +10,12 @@ package org.mule.test;
 import org.mule.functional.junit4.ArtifactFunctionalTestCase;
 import org.mule.functional.junit4.runners.ArtifactClassLoaderRunnerConfig;
 
-@ArtifactClassLoaderRunnerConfig(extensions = "org.mule.extension.validation.api.ValidationExtension")
+@ArtifactClassLoaderRunnerConfig(extensions = "org.mule.extension.validation.api.ValidationExtension",
+extraBootPackages =
+        //TODO(gfernandes): need to expose every package form groovy
+        "org.codehaus.groovy," +
+        //TODO(gfernandes): review why this is required as it is exported on scripting mule-module.properties (fails ClassInterceptorTestCase)
+        "org.aopalliance.aop")
 public abstract class AbstractIntegrationTestCase extends ArtifactFunctionalTestCase
 {
 
