@@ -217,6 +217,8 @@ public class MuleClassPathClassifier implements ClassPathClassifier
             throw new IllegalArgumentException("Error while building resource URL for directory: " + generatedResourcesDirectory.getPath(), e);
         }
 
+        int sizeBeforeDepResolver = extensionURLs.size();
+
         new DependencyResolver(new ConfigurationBuilder()
                                        .setMavenDependencyGraph(allDependencies)
                                        .includeRootArtifact(rootArtifact -> rootArtifact.getArtifactId().equals(extensionMavenArtifactId.toString()))
@@ -230,6 +232,10 @@ public class MuleClassPathClassifier implements ClassPathClassifier
                                                        .match(transitiveDependency -> transitiveDependency.isCompileScope() && !exclusion.test(transitiveDependency))
                                        )).resolveDependencies().stream().filter(d -> !d.isPomType()).map(dependency -> artifactToClassPathURLResolver.resolveURL(dependency, classPathURLs)).forEach(extensionURLs::add);
 
+        if (extensionURLs.size() == sizeBeforeDepResolver)
+        {
+            throw new IllegalStateException("There should be at least one compile dependency found that matched to extension: " + extensionClassName);
+        }
         return new PluginUrlClassification(extension, extensionURLs);
     }
 
