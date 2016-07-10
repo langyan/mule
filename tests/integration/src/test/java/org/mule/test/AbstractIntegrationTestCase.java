@@ -10,7 +10,7 @@ package org.mule.test;
 import org.mule.functional.junit4.ArtifactFunctionalTestCase;
 import org.mule.functional.junit4.runners.ArtifactClassLoaderRunnerConfig;
 
-@ArtifactClassLoaderRunnerConfig(extensions = "org.mule.extension.validation.api.ValidationExtension",
+@ArtifactClassLoaderRunnerConfig(
 extraBootPackages =
         //TODO(gfernandes): need to expose every package form groovy
         "org.codehaus.groovy," +
