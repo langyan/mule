@@ -190,16 +190,17 @@ public class MuleClassPathClassifier implements ClassPathClassifier
         File extensionSourceCodeLocation = new File(extension.getProtectionDomain().getCodeSource().getLocation().getPath());
         logger.debug("Extension: " + extensionClassName + " loaded from source path: '" + extensionSourceCodeLocation + "'");
         // Just move up from jar/classes to the artifactId/multi-module folder
-        File relativeFolder = extensionSourceCodeLocation.getParentFile().getParentFile();
+        File relativeFolder = extensionSourceCodeLocation.getParentFile();
         final StringBuilder extensionMavenArtifactId = new StringBuilder();
-        if (extensionSourceCodeLocation.isFile())
+        // If it comes from a maven repository the parent folder shouldn't be "target"
+        if (extensionSourceCodeLocation.isFile() && !extensionSourceCodeLocation.getName().equals("target"))
         {
             // It is a jar file, therefore the extension is not being tested as multi-module maven project
-            extensionMavenArtifactId.append(relativeFolder.getName());
+            extensionMavenArtifactId.append(relativeFolder.getParentFile().getName());
         }
         else
         {
-            extensionMavenArtifactId.append(mavenMultiModuleMapping.getMavenArtifactIdFor(relativeFolder.getAbsolutePath() + File.separator));
+            extensionMavenArtifactId.append(mavenMultiModuleMapping.getMavenArtifactIdFor(relativeFolder.getParentFile().getAbsolutePath() + File.separator));
         }
 
         // First we need to add META-INF folder for generated resources due to they may be already created by another mvn install goal by the extension maven plugin
