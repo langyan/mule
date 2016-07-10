@@ -8,19 +8,15 @@
 package org.mule.functional.junit4;
 
 import static org.mule.functional.util.AnnotationUtils.getAnnotationAttributeFrom;
-import static org.mule.functional.util.AnnotationUtils.getAnnotationAttributeFromHierarchy;
-import org.mule.functional.junit4.runners.ArtifactClassLoaderRunnerConfig;
-import org.mule.functional.junit4.runners.PluginClassLoadersAware;
-import org.mule.functional.junit4.runners.ArtifactClassloaderTestRunner;
 import org.mule.functional.classloading.isolation.builder.ClassLoaderIsolatedExtensionsManagerConfigurationBuilder;
+import org.mule.functional.junit4.runners.ArtifactClassLoaderRunnerConfig;
+import org.mule.functional.junit4.runners.ArtifactClassloaderTestRunner;
+import org.mule.functional.junit4.runners.PluginClassLoadersAware;
 import org.mule.functional.junit4.runners.RunnerDelegateTo;
 import org.mule.runtime.core.api.config.ConfigurationBuilder;
 import org.mule.runtime.module.artifact.classloader.ArtifactClassLoader;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.junit.runner.RunWith;
 
@@ -40,6 +36,15 @@ import org.junit.runner.RunWith;
 public abstract class ArtifactFunctionalTestCase extends FunctionalTestCase
 {
     private static List<ArtifactClassLoader> extensionsClassLoaders;
+
+    /**
+     * @return the TCCL as it will be the application {@link ClassLoader} created by the runner.
+     */
+    @Override
+    protected ClassLoader getExecutionClassLoader()
+    {
+        return Thread.currentThread().getContextClassLoader();
+    }
 
     @PluginClassLoadersAware
     public static void setExtensionClassLoaders(List<ArtifactClassLoader> extensionPluginsArtifactClassLoaders)

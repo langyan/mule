@@ -70,7 +70,7 @@ public class ClassLoaderIsolatedExtensionsManagerConfigurationBuilder extends Ab
             URL manifestUrl = (URL) findResourceMethod.invoke(extensionClassLoader, "META-INF/" + EXTENSION_MANIFEST_FILE_NAME);
             if (LOGGER.isDebugEnabled())
             {
-                LOGGER.debug("Discovered extension " + extensionPluginClassLoader.getClass().getMethod("name").invoke(extensionPluginClassLoader));
+                LOGGER.debug("Discovered extension " + extensionPluginClassLoader.getClass().getMethod("getName").invoke(extensionPluginClassLoader));
             }
             ExtensionManifest extensionManifest = extensionManager.parseExtensionManifestXml(manifestUrl);
             extensionManager.registerExtension(extensionManifest, extensionClassLoader);
