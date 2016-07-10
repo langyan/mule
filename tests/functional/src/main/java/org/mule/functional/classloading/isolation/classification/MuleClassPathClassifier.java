@@ -256,7 +256,7 @@ public class MuleClassPathClassifier implements ClassPathClassifier
      */
     private PluginUrlClassification extensionClassPathClassification(final Class extension, final String extensionMavenArtifactId, final Predicate<MavenArtifact> exclusion, final MavenArtifactToClassPathURLResolver artifactToClassPathURLResolver, final LinkedHashMap<MavenArtifact, Set<MavenArtifact>> allDependencies, final MavenArtifact compileArtifact, final File targetTestClassesFolder, final List<URL> classPathURLs)
     {
-        logger.debug("Classifying classpath for extension class : '{}', artifactId: '{}'", extension.getName(), extensionMavenArtifactId);
+        logger.debug("Extension classification for extension class : '{}', from artifactId: '{}'", extension.getName(), extensionMavenArtifactId);
         List<URL> extensionURLs = new ArrayList<>();
 
         // First we need to add META-INF folder for generated resources due to they may be already created by another mvn install goal by the extension maven plugin
