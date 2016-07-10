@@ -13,6 +13,7 @@ import static java.util.Collections.addAll;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.mule.functional.util.AnnotationUtils.getAnnotationAttributeFromHierarchy;
 import static org.mule.runtime.core.api.config.MuleProperties.MULE_LOG_VERBOSE_CLASSLOADING;
+import static org.mule.runtime.core.util.ClassUtils.withContextClassLoader;
 import static org.mule.runtime.module.extension.internal.ExtensionProperties.EXTENSION_MANIFEST_FILE_NAME;
 import org.mule.functional.classloading.isolation.classification.ArtifactUrlClassification;
 import org.mule.functional.classloading.isolation.classification.ClassLoaderTestRunner;
@@ -157,7 +158,8 @@ public class MuleClassLoaderRunnerFactory
             }
             else
             {
-                List<MuleModule> modules = new ClasspathModuleDiscoverer(new URLClassLoader(pluginUrlClassification.getUrls().toArray(new URL[0]), null)).discover();
+                ClassLoader pluginArtifactClassLoaderToDiscoverModules = new URLClassLoader(pluginUrlClassification.getUrls().toArray(new URL[0]), null);
+                List<MuleModule> modules = withContextClassLoader(pluginArtifactClassLoaderToDiscoverModules, () -> new ClasspathModuleDiscoverer(pluginArtifactClassLoaderToDiscoverModules).discover());
                 MuleModule module = validatePluginModule(pluginUrlClassification.getName(), modules);
 
                 exportedPackages = module.getExportedPackages();

@@ -69,6 +69,7 @@ public class MuleClassPathClassifier implements ClassPathClassifier
 
     public static final String GENERATED_TEST_SOURCES = "generated-test-sources";
     private static final String TARGET_FOLDER_NAME = "target";
+    private static final String CLASSES_FOLDER_NAME = "classes";
 
     protected final transient Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -179,7 +180,7 @@ public class MuleClassPathClassifier implements ClassPathClassifier
             }
         }
 
-        if (!isRootArtifactIdAnExtensionToo)
+        if (!isRootArtifactIdAnExtensionToo && new File(targetTestClassesFolder.getParentFile(), CLASSES_FOLDER_NAME).exists())
         {
             logger.debug("Current maven artifact that holds the test class is not an extension, so a plugin class loader would be create with its compile dependencies");
             pluginClassifications.add(pluginClassPathClassification(exclusion, artifactToClassPathURLResolver, context.getMavenDependencies(), compileArtifact, targetTestClassesFolder, context.getClassPathURLs()));
