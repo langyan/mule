@@ -17,7 +17,6 @@ import static org.mule.runtime.core.util.ClassUtils.withContextClassLoader;
 import static org.mule.runtime.module.extension.internal.ExtensionProperties.EXTENSION_MANIFEST_FILE_NAME;
 import org.mule.functional.classloading.isolation.classification.ArtifactUrlClassification;
 import org.mule.functional.classloading.isolation.classification.ClassLoaderTestRunner;
-import org.mule.functional.classloading.isolation.classification.ExtensionPluginUrlClassification;
 import org.mule.functional.classloading.isolation.classification.PluginUrlClassification;
 import org.mule.functional.classloading.isolation.utils.RunnerModuleUtils;
 import org.mule.functional.junit4.runners.ArtifactClassLoaderRunnerConfig;
@@ -88,15 +87,15 @@ public class MuleClassLoaderRunnerFactory
 
         ClassLoaderLookupPolicy childClassLoaderLookupPolicy = testContainerClassLoaderFactory.getContainerClassLoaderLookupPolicy();
 
-        List<ArtifactClassLoader> extensionPluginsArtifactClassLoaders = new ArrayList<>();
+        List<ArtifactClassLoader> pluginsArtifactClassLoaders = new ArrayList<>();
         if (!artifactUrlClassification.getPluginClassificationURLs().isEmpty())
         {
-            classLoader = createPluginClassLoaders(classLoader, childClassLoaderLookupPolicy, artifactUrlClassification, extensionPluginsArtifactClassLoaders);
+            classLoader = createPluginClassLoaders(classLoader, childClassLoaderLookupPolicy, artifactUrlClassification, pluginsArtifactClassLoaders);
         }
 
         ArtifactClassLoader appClassLoader = createApplicationArtifactClassLoader(classLoader, childClassLoaderLookupPolicy, artifactUrlClassification);
 
-        return new ClassLoaderTestRunner(containerClassLoader, extensionPluginsArtifactClassLoaders, appClassLoader);
+        return new ClassLoaderTestRunner(containerClassLoader, pluginsArtifactClassLoaders, appClassLoader);
     }
 
     /**
@@ -131,10 +130,10 @@ public class MuleClassLoaderRunnerFactory
      * @param parent the parent class loader to be assigned to the new one created here
      * @param childClassLoaderLookupPolicy look policy to be used
      * @param artifactUrlClassification the url classifications to get plugins urls
-     * @param extensionPluginsArtifactClassLoaders a list where it would append each {@link ArtifactClassLoader} create for an extension plugins only in order to allow access them later
+     * @param pluginsArtifactClassLoaders a list where it would append each {@link ArtifactClassLoader} created for a plugin in order to allow access them later
      * @return a {@link CompositeClassLoader} that represents the plugin class loaders.
      */
-    private ClassLoader createPluginClassLoaders(ClassLoader parent, ClassLoaderLookupPolicy childClassLoaderLookupPolicy, ArtifactUrlClassification artifactUrlClassification, List<ArtifactClassLoader> extensionPluginsArtifactClassLoaders)
+    private ClassLoader createPluginClassLoaders(ClassLoader parent, ClassLoaderLookupPolicy childClassLoaderLookupPolicy, ArtifactUrlClassification artifactUrlClassification, List<ArtifactClassLoader> pluginsArtifactClassLoaders)
     {
         final List<ClassLoader> pluginClassLoaders = new ArrayList<>();
         pluginClassLoaders.add(new MuleArtifactClassLoader("sharedLibs", new URL[0], parent, childClassLoaderLookupPolicy));
@@ -143,21 +142,21 @@ public class MuleClassLoaderRunnerFactory
         {
             logClassLoaderUrls("PLUGIN (" + pluginUrlClassification.getName() + ")", pluginUrlClassification.getUrls());
             MuleArtifactClassLoader pluginCL = new MuleArtifactClassLoader(pluginUrlClassification.getName(), pluginUrlClassification.getUrls().toArray(new URL[0]), parent, childClassLoaderLookupPolicy);
+            pluginsArtifactClassLoaders.add(pluginCL);
 
             Collection<String> exportedPackages;
             Collection<String> exportedResources;
-            if (pluginUrlClassification instanceof ExtensionPluginUrlClassification)
+            URL manifestUrl = pluginCL.findResource("META-INF/" + EXTENSION_MANIFEST_FILE_NAME);
+            if (manifestUrl != null)
             {
-                extensionPluginsArtifactClassLoaders.add(pluginCL);
-
-                URL manifestUrl = pluginCL.findResource("META-INF/" + EXTENSION_MANIFEST_FILE_NAME);
+                logger.debug("Plugin '{}' has extension descriptor therefore it will be handled as an extension", pluginUrlClassification.getName());
                 ExtensionManifest extensionManifest = extensionManager.parseExtensionManifestXml(manifestUrl);
-
                 exportedPackages = extensionManifest.getExportedPackages();
                 exportedResources = extensionManifest.getExportedResources();
             }
             else
             {
+                logger.debug("Plugin '{}' will be handled as standard plugin, it is not an extension", pluginUrlClassification.getName());
                 ClassLoader pluginArtifactClassLoaderToDiscoverModules = new URLClassLoader(pluginUrlClassification.getUrls().toArray(new URL[0]), null);
                 List<MuleModule> modules = withContextClassLoader(pluginArtifactClassLoaderToDiscoverModules, () -> new ClasspathModuleDiscoverer(pluginArtifactClassLoaderToDiscoverModules).discover());
                 MuleModule module = validatePluginModule(pluginUrlClassification.getName(), modules);

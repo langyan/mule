@@ -31,28 +31,26 @@ import org.slf4j.LoggerFactory;
  *
  * @since 4.0
  */
-public class ClassLoaderIsolatedExtensionsManagerConfigurationBuilder extends AbstractConfigurationBuilder
+public class IsolatedClassLoaderExtensionsManagerConfigurationBuilder extends AbstractConfigurationBuilder
 {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(ClassLoaderIsolatedExtensionsManagerConfigurationBuilder.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(IsolatedClassLoaderExtensionsManagerConfigurationBuilder.class);
 
     private final ExtensionManagerAdapterFactory extensionManagerAdapterFactory;
-    private final List<ArtifactClassLoader> extensionPluginsClassLoaders;
+    private final List<ArtifactClassLoader> pluginsClassLoaders;
 
     /**
-     * Creates an instance of the builder with the list of extensions plugin class loaders. Each {@link ArtifactClassLoader}
-     * was created for an extension and as name it has the class that is marked with {@link org.mule.runtime.extension.api.annotation.Extension}.
+     * Creates an instance of the builder with the list of plugin class loaders. If an {@link ArtifactClassLoader} has
+     * a extension descriptor it will be registered as an extension if not it is assumed that it is not an extension plugin.
      * The extension will be loaded and registered with its corresponding class loader in order to get access
      * to the isolated {@link ClassLoader} defined for the extension.
-     * <p/>
-     * It assumes that a {@link ArtifactClassLoader} name should have the extension class name.
      *
-     * @param extensionPluginsClassLoaders
+     * @param pluginsClassLoaders the list of {@link ArtifactClassLoader} created for each plugin found in the dependencies (either plugin or extension plugin).
      */
-    public ClassLoaderIsolatedExtensionsManagerConfigurationBuilder(List<ArtifactClassLoader> extensionPluginsClassLoaders)
+    public IsolatedClassLoaderExtensionsManagerConfigurationBuilder(List<ArtifactClassLoader> pluginsClassLoaders)
     {
         this.extensionManagerAdapterFactory = new DefaultExtensionManagerAdapterFactory();
-        this.extensionPluginsClassLoaders = extensionPluginsClassLoaders;
+        this.pluginsClassLoaders = pluginsClassLoaders;
     }
 
     @Override
@@ -60,20 +58,27 @@ public class ClassLoaderIsolatedExtensionsManagerConfigurationBuilder extends Ab
     {
         final ExtensionManagerAdapter extensionManager = createExtensionManager(muleContext);
 
-        for (Object extensionPluginClassLoader : extensionPluginsClassLoaders)
+        for (Object pluginClassLoader : pluginsClassLoaders)
         {
-            ClassLoader extensionClassLoader = (ClassLoader) extensionPluginClassLoader.getClass().getMethod("getClassLoader").invoke(extensionPluginClassLoader);
-
-            // There will be more than one extension manifest file so we just filter by convention
-            Method findResourceMethod = extensionClassLoader.getClass().getMethod("findResource", String.class);
+            String artifactName = (String) pluginClassLoader.getClass().getMethod("getArtifactName").invoke(pluginClassLoader);
+            ClassLoader classLoader = (ClassLoader) pluginClassLoader.getClass().getMethod("getClassLoader").invoke(pluginClassLoader);
+            Method findResourceMethod = classLoader.getClass().getMethod("findResource", String.class);
             findResourceMethod.setAccessible(true);
-            URL manifestUrl = (URL) findResourceMethod.invoke(extensionClassLoader, "META-INF/" + EXTENSION_MANIFEST_FILE_NAME);
-            if (LOGGER.isDebugEnabled())
+            URL manifestUrl = (URL) findResourceMethod.invoke(classLoader, "META-INF/" + EXTENSION_MANIFEST_FILE_NAME);
+            if (manifestUrl != null)
             {
-                LOGGER.debug("Discovered extension " + extensionPluginClassLoader.getClass().getMethod("getArtifactName").invoke(extensionPluginClassLoader));
+                // There will be more than one extension manifest file so we just filter by convention
+                if (LOGGER.isDebugEnabled())
+                {
+                    LOGGER.debug("Discovered extension: {}", artifactName);
+                }
+                ExtensionManifest extensionManifest = extensionManager.parseExtensionManifestXml(manifestUrl);
+                extensionManager.registerExtension(extensionManifest, classLoader);
             }
-            ExtensionManifest extensionManifest = extensionManager.parseExtensionManifestXml(manifestUrl);
-            extensionManager.registerExtension(extensionManifest, extensionClassLoader);
+            else
+            {
+                LOGGER.debug("Discarding plugin artifact class loader with artifactName '{}' due to it doesn't have an extension descriptor", artifactName);
+            }
         }
     }
 

@@ -16,7 +16,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Specifies a configuration needed by {@link ArtifactClassloaderTestRunner} in order to
+ * Specifies a configuration needed by {@link ArtifactClassLoaderTestRunner} in order to
  * run the test.
  *
  * @since 4.0

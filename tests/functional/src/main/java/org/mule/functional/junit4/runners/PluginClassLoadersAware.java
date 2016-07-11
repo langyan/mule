@@ -14,12 +14,13 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Defines that when test is going to be run with an {@link ArtifactClassloaderTestRunner} it would need to get
+ * Defines that when test is going to be run with an {@link ArtifactClassLoaderTestRunner} it would need to get
  * access to the plugin class loaders in order to load classes using those class loaders.
  * <p/>
  * A public static method should be defined and annotated with this annotation in order to be called by the runner
- * so the test later could get access to the plugins/extensions {@link ClassLoader}.
- * See {@link org.mule.functional.junit4.ArtifactFunctionalTestCase} where this is used.
+ * so the test later could get access to the plugins {@link ClassLoader}.
+ * <p/>
+ * For more information, see {@link org.mule.functional.junit4.ArtifactFunctionalTestCase} where this is used.
  *
  * @since 4.0
  */

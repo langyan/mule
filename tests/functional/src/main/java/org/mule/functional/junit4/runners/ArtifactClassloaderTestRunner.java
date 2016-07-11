@@ -10,7 +10,7 @@ import static org.mule.runtime.core.util.ClassUtils.withContextClassLoader;
 import org.mule.functional.classloading.isolation.classification.ArtifactUrlClassification;
 import org.mule.functional.classloading.isolation.classification.ClassLoaderTestRunner;
 import org.mule.functional.classloading.isolation.classification.ClassPathClassifier;
-import org.mule.functional.classloading.isolation.classification.DefaultClassPathClassifierContext;
+import org.mule.functional.classloading.isolation.classification.ClassPathClassifierContext;
 import org.mule.functional.classloading.isolation.classification.MuleClassPathClassifier;
 import org.mule.functional.classloading.isolation.classloader.MuleClassLoaderRunnerFactory;
 import org.mule.functional.classloading.isolation.classpath.ClassPathURLsProvider;
@@ -61,10 +61,13 @@ import org.junit.runners.model.TestClass;
  * describe the classification is by saying that all the provided dependencies (including its transitives) will go to the container
  * class loader, for each extension defined it will create a plugin class loader including its compile dependencies (including transitives)
  * and the rest of the test dependencies (including transitives) will go to the application class loader.
+ * If the current artifact being tested is not an extension it will handle it as a plugin, therefore a plugin class loader would
+ * be created with its target/classes plus compile dependencies (including transitives) and the mule-module.properties take into account for
+ * defining the filter to be applied to the class loader.
  *
  * @since 4.0
  */
-public class ArtifactClassloaderTestRunner extends Runner implements Filterable
+public class ArtifactClassLoaderTestRunner extends Runner implements Filterable
 {
     private final Runner delegate;
     private final ClassLoaderTestRunner classLoaderTestRunner;
@@ -76,7 +79,7 @@ public class ArtifactClassloaderTestRunner extends Runner implements Filterable
      * @param builder
      * @throws Throwable if there was an error while initializing the runner.
      */
-    public ArtifactClassloaderTestRunner(Class<?> clazz, RunnerBuilder builder) throws Throwable
+    public ArtifactClassLoaderTestRunner(Class<?> clazz, RunnerBuilder builder) throws Throwable
     {
         classLoaderTestRunner = createClassLoaderTestRunner(clazz);
 
@@ -95,7 +98,7 @@ public class ArtifactClassloaderTestRunner extends Runner implements Filterable
             delegate = new BlockJUnit4ClassRunner(isolatedTestClass);
         }
 
-        injectExtensionPluginsClassLoaders(classLoaderTestRunner, isolatedTestClass);
+        injectPluginsClassLoaders(classLoaderTestRunner, isolatedTestClass);
     }
 
     private Class<?> getTestClass(Class<?> clazz) throws InitializationError
@@ -127,19 +130,19 @@ public class ArtifactClassloaderTestRunner extends Runner implements Filterable
         ClassPathClassifier classPathClassifier = new MuleClassPathClassifier();
 
         // Does the classification and creation of the isolated ClassLoader
-        ArtifactUrlClassification artifactUrlClassification = classPathClassifier.classify(new DefaultClassPathClassifierContext(klass, classPathURLsProvider.getURLs(),
+        ArtifactUrlClassification artifactUrlClassification = classPathClassifier.classify(new ClassPathClassifierContext(klass, classPathURLsProvider.getURLs(),
                                                                                            mavenDependenciesResolver.buildDependencies(), mavenMultiModuleArtifactMapping));
         return classLoaderRunnerFactory.createClassLoader(klass, artifactUrlClassification);
     }
 
     /**
-     * Invokes the method to inject the plugin/extension class loaders for registering the extensions to the {@link org.mule.runtime.core.api.MuleContext}.
+     * Invokes the method to inject the plugin class loaders as the test is annotated with {@link PluginClassLoadersAware}.
      *
      * @param classLoaderTestRunner
      * @param isolatedTestClass
      * @throws Throwable
      */
-    private static void injectExtensionPluginsClassLoaders(ClassLoaderTestRunner classLoaderTestRunner, Class<?> isolatedTestClass) throws Throwable
+    private static void injectPluginsClassLoaders(ClassLoaderTestRunner classLoaderTestRunner, Class<?> isolatedTestClass) throws Throwable
     {
         TestClass testClass = new TestClass(isolatedTestClass);
         Class<? extends Annotation> artifactContextAwareAnn = (Class<? extends Annotation>) classLoaderTestRunner.loadClassWithApplicationClassLoader(PluginClassLoadersAware.class.getName());
@@ -152,7 +155,7 @@ public class ArtifactClassloaderTestRunner extends Runner implements Filterable
             }
             try
             {
-                method.invokeExplosively(null, classLoaderTestRunner.getExtensionPluginsClassLoaders());
+                method.invokeExplosively(null, classLoaderTestRunner.getPluginsClassLoaders());
             }
             catch (IllegalArgumentException e)
             {

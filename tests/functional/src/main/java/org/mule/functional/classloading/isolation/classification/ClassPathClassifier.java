@@ -10,7 +10,7 @@ package org.mule.functional.classloading.isolation.classification;
 import java.net.URL;
 
 /**
- * A {@link ClassPathClassifier} is responsible for building the {@link ArtifactUrlClassification} that would be used for creating
+ * A {@link ClassPathClassifier} builds the {@link ArtifactUrlClassification} that would be used for creating
  * the {@link ClassLoader} to run the test.
  *
  * @since 4.0

@@ -8,9 +8,9 @@
 package org.mule.functional.junit4;
 
 import static org.mule.functional.util.AnnotationUtils.getAnnotationAttributeFrom;
-import org.mule.functional.classloading.isolation.builder.ClassLoaderIsolatedExtensionsManagerConfigurationBuilder;
+import org.mule.functional.classloading.isolation.builder.IsolatedClassLoaderExtensionsManagerConfigurationBuilder;
 import org.mule.functional.junit4.runners.ArtifactClassLoaderRunnerConfig;
-import org.mule.functional.junit4.runners.ArtifactClassloaderTestRunner;
+import org.mule.functional.junit4.runners.ArtifactClassLoaderTestRunner;
 import org.mule.functional.junit4.runners.PluginClassLoadersAware;
 import org.mule.functional.junit4.runners.RunnerDelegateTo;
 import org.mule.runtime.core.api.config.ConfigurationBuilder;
@@ -32,10 +32,10 @@ import org.junit.runner.RunWith;
  *
  * @since 4.0
  */
-@RunWith(ArtifactClassloaderTestRunner.class)
+@RunWith(ArtifactClassLoaderTestRunner.class)
 public abstract class ArtifactFunctionalTestCase extends FunctionalTestCase
 {
-    private static List<ArtifactClassLoader> extensionsClassLoaders;
+    private static List<ArtifactClassLoader> pluginClassLoaders;
 
     /**
      * @return the TCCL as it will be the application {@link ClassLoader} created by the runner.
@@ -47,9 +47,9 @@ public abstract class ArtifactFunctionalTestCase extends FunctionalTestCase
     }
 
     @PluginClassLoadersAware
-    public static void setExtensionClassLoaders(List<ArtifactClassLoader> extensionPluginsArtifactClassLoaders)
+    public static void setPluginClassLoaders(List<ArtifactClassLoader> artifactClassLoaders)
     {
-        extensionsClassLoaders = extensionPluginsArtifactClassLoaders;
+        pluginClassLoaders = artifactClassLoaders;
     }
 
     @Override
@@ -57,15 +57,15 @@ public abstract class ArtifactFunctionalTestCase extends FunctionalTestCase
     {
         super.addBuilders(builders);
         Class<?> runner = getAnnotationAttributeFrom(this.getClass(), RunWith.class, "value");
-        if (runner == null || !runner.equals(ArtifactClassloaderTestRunner.class))
+        if (runner == null || !runner.equals(ArtifactClassLoaderTestRunner.class))
         {
             throw new IllegalStateException(this.getClass().getName() + " extends " + ArtifactFunctionalTestCase.class.getName()
-                                            + " so it should be annotated to only run with: " + ArtifactClassloaderTestRunner.class + ". See " + RunnerDelegateTo.class + " for defining a delegate runner to be used.");
+                                            + " so it should be annotated to only run with: " + ArtifactClassLoaderTestRunner.class + ". See " + RunnerDelegateTo.class + " for defining a delegate runner to be used.");
         }
 
-        if (extensionsClassLoaders != null && !extensionsClassLoaders.isEmpty())
+        if (pluginClassLoaders != null && !pluginClassLoaders.isEmpty())
         {
-            builders.add(0, new ClassLoaderIsolatedExtensionsManagerConfigurationBuilder(extensionsClassLoaders));
+            builders.add(0, new IsolatedClassLoaderExtensionsManagerConfigurationBuilder(pluginClassLoaders));
         }
     }
 
