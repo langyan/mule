@@ -8,7 +8,6 @@
 package org.mule.functional.classloading.isolation.maven.dependencies;
 
 import org.mule.functional.classloading.isolation.maven.MavenArtifact;
-import org.mule.functional.util.TruePredicate;
 
 import java.util.LinkedHashMap;
 import java.util.Set;
@@ -25,7 +24,7 @@ public final class Configuration
     private LinkedHashMap<MavenArtifact, Set<MavenArtifact>> allDependencies;
     private boolean rootArtifactIncluded = false;
     private DependenciesFilter dependenciesFilter = new DependenciesFilter();
-    private TransitiveDependenciesFilter transitiveDependencyFilter = new TransitiveDependenciesFilter(new TruePredicate<MavenArtifact>().negate());
+    private TransitiveDependenciesFilter transitiveDependencyFilter = new TransitiveDependenciesFilter(x -> false);
     private Predicate<MavenArtifact> rootArtifactPredicate = null;
 
     /**

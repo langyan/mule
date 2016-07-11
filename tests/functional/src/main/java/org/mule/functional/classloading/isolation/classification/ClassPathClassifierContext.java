@@ -15,7 +15,6 @@ import org.mule.functional.classloading.isolation.maven.MavenArtifact;
 import org.mule.functional.classloading.isolation.maven.MavenArtifactMatcherPredicate;
 import org.mule.functional.classloading.isolation.maven.MavenMultiModuleArtifactMapping;
 import org.mule.functional.junit4.runners.ArtifactClassLoaderRunnerConfig;
-import org.mule.functional.util.TruePredicate;
 
 import com.google.common.collect.Sets;
 
@@ -160,7 +159,7 @@ public class ClassPathClassifierContext
         }
 
         // If no exclusion is defined the predicate should always return false to any artifact due to none is excluded
-        return exclusionPredicate == null ? new TruePredicate<MavenArtifact>().negate() : exclusionPredicate;
+        return exclusionPredicate == null ? x -> false : exclusionPredicate;
     }
 
     /**

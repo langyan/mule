@@ -8,7 +8,6 @@
 package org.mule.functional.classloading.isolation.maven.dependencies;
 
 import org.mule.functional.classloading.isolation.maven.MavenArtifact;
-import org.mule.functional.util.TruePredicate;
 
 import java.util.function.Predicate;
 
@@ -19,7 +18,7 @@ import java.util.function.Predicate;
  */
 public final class DependenciesFilter
 {
-    private Predicate<MavenArtifact> predicate = new TruePredicate<>();
+    private Predicate<MavenArtifact> predicate = x -> true;
     private boolean onlyCollectTransitiveDependencies = false;
 
     /**

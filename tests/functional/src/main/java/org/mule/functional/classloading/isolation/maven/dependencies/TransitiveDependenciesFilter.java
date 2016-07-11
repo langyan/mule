@@ -8,7 +8,6 @@
 package org.mule.functional.classloading.isolation.maven.dependencies;
 
 import org.mule.functional.classloading.isolation.maven.MavenArtifact;
-import org.mule.functional.util.TruePredicate;
 
 import java.util.function.Predicate;
 
@@ -19,7 +18,7 @@ import java.util.function.Predicate;
  */
 public final class TransitiveDependenciesFilter
 {
-    private Predicate<MavenArtifact> predicate = new TruePredicate<>();
+    private Predicate<MavenArtifact> predicate = x -> true;
     private boolean traverseWhenNoMatch = false;
 
     /**
@@ -54,15 +53,17 @@ public final class TransitiveDependenciesFilter
     }
 
     /**
-     * Defines that if a transitive dependency does not match the predicate, it should not be included but
-     * its dependencies should be considered to be evaluated by the predicate in order to know if they should be included
-     * or not. In other words, it means that the dependency tree should continue with the next child dependencies of the
-     * current being evaluated instead of stop at this point. By default, if the transitive dependency does not match
-     * their dependencies will not be evaluated, therefore they process will not go deeper on this path.
+     * When a transitive dependency does not match the predicate it is not collected as part of the result, but at the same
+     * time its transitive dependencies will not be evaluated. It will stop traversing the tree at this point and continue with
+     * others , it should not be included but it will continue with other leafs.
+     * <p/>
+     * By setting this that behaviour will change and instead of stopping traversing to its transitive dependencies, the resolution
+     * process will not include the not matching transitive dependency but it will continue evaluating its transitive dependencies, if
+     * any of them match the criteria they will be included and if not it wll continue with its transitive dependencies and so on.
      *
      * @return this
      */
-    public TransitiveDependenciesFilter traverseWhenNoMatch()
+    public TransitiveDependenciesFilter evaluateTransitiveDependenciesWhenPredicateFails()
     {
         this.traverseWhenNoMatch = true;
         return this;

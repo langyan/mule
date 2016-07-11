@@ -59,7 +59,7 @@ public class DependencyResolverTest
                                              .collectTransitiveDependencies(
                                                      new TransitiveDependenciesFilter()
                                                              .match(dependency -> dependency.isTestScope())
-                                                             .traverseWhenNoMatch()
+                                                             .evaluateTransitiveDependenciesWhenPredicateFails()
                                              )
         );
 
@@ -137,7 +137,7 @@ public class DependencyResolverTest
                                                      .collectTransitiveDependencies(
                                                              new TransitiveDependenciesFilter()
                                                                      .match(dependency -> dependency.isProvidedScope())
-                                                                     .traverseWhenNoMatch()
+                                                                     .evaluateTransitiveDependenciesWhenPredicateFails()
                                                      )
         );
 
@@ -181,7 +181,7 @@ public class DependencyResolverTest
                                                      .collectTransitiveDependencies(
                                                              new TransitiveDependenciesFilter()
                                                                      .match(dependency -> dependency.isCompileScope())
-                                                                     .traverseWhenNoMatch()
+                                                                     .evaluateTransitiveDependenciesWhenPredicateFails()
                                                      )
         );
 
@@ -206,7 +206,7 @@ public class DependencyResolverTest
                                                      .collectTransitiveDependencies(
                                                              new TransitiveDependenciesFilter()
                                                                      .match(dependency -> dependency.isCompileScope())
-                                                                     .traverseWhenNoMatch()
+                                                                     .evaluateTransitiveDependenciesWhenPredicateFails()
                                                      )
         );
 
@@ -245,7 +245,7 @@ public class DependencyResolverTest
                                                      .collectTransitiveDependencies(
                                                              new TransitiveDependenciesFilter()
                                                                      .match(dependency -> dependency.isCompileScope())
-                                                                     .traverseWhenNoMatch()
+                                                                     .evaluateTransitiveDependenciesWhenPredicateFails()
                                                      )
         );
 

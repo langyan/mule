@@ -68,7 +68,6 @@ public class MuleClassPathClassifier implements ClassPathClassifier
     public static final String GENERATED_TEST_SOURCES = "generated-test-sources";
     private static final String TARGET_FOLDER_NAME = "target";
     private static final String CLASSES_FOLDER_NAME = "classes";
-    private static final int GROUP_ID_ARTIFACT_ID_TYPE_PATTERN_CHUNKS = 3;
 
     protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -126,7 +125,7 @@ public class MuleClassPathClassifier implements ClassPathClassifier
               .collectTransitiveDependencies(
                       new TransitiveDependenciesFilter()
                               .match(transitiveDependency -> transitiveDependency.isTestScope() && !extendedContext.getClassificationContext().getExclusions().test(transitiveDependency))
-                              .traverseWhenNoMatch()
+                              .evaluateTransitiveDependenciesWhenPredicateFails()
               )).resolveDependencies().stream().filter(d -> !d.isPomType()).map(dependency -> extendedContext.getArtifactToClassPathURLResolver().resolveURL(dependency, extendedContext.getClassificationContext().getClassPathURLs())).collect(Collectors.toCollection(() -> appURLs));
         return appURLs;
     }
@@ -205,7 +204,7 @@ public class MuleClassPathClassifier implements ClassPathClassifier
                                        .collectTransitiveDependencies(
                                                new TransitiveDependenciesFilter()
                                                        .match(transitiveDependency -> transitiveDependency.isProvidedScope() || transitiveDependency.isCompileScope())
-                                                       .traverseWhenNoMatch()
+                                                       .evaluateTransitiveDependenciesWhenPredicateFails()
                                        )).resolveDependencies().stream().filter(d -> !d.isPomType()).map(dependency -> extendedContext.getArtifactToClassPathURLResolver().resolveURL(dependency, extendedContext.getClassificationContext().getClassPathURLs())).forEach(containerURLs::add);
 
         return newArrayList(containerURLs);
