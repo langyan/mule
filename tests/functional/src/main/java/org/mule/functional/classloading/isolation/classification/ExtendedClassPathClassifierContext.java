@@ -7,8 +7,8 @@
 
 package org.mule.functional.classloading.isolation.classification;
 
+import org.mule.functional.classloading.isolation.classpath.MavenArtifactToClassPathURLResolver;
 import org.mule.functional.classloading.isolation.maven.MavenArtifact;
-import org.mule.functional.classloading.isolation.maven.MavenArtifactToClassPathURLResolver;
 import org.mule.functional.junit4.runners.ArtifactClassLoaderRunner;
 
 import java.io.File;

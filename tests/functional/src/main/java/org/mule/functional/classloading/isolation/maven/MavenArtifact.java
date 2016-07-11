@@ -159,7 +159,7 @@ public class MavenArtifact
     /**
      * Builder for {@link MavenArtifact}
      */
-    public static class MavenArtifactBuilder
+    public static final class MavenArtifactBuilder
     {
 
         private String groupId;

@@ -59,11 +59,11 @@ public class MavenArtifactToClassPathURLResolverTest
         mapping = mock(MavenMultiModuleArtifactMapping.class);
         urlResolver = new MavenArtifactToClassPathURLResolver(mapping);
 
-        commonCliArtifact = new MavenArtifact("commons-cli", "commons-cli", "jar", "1.2", "provided");
-        coreArtifact = new MavenArtifact("org.my.company", "core-artifact", "jar", "1.0.0", "compile");
+        commonCliArtifact = MavenArtifact.builder().withGroupId("commons-cli").withArtifactId("commons-cli").withType("jar").withVersion("1.2").withScope("provided").build();
+        coreArtifact = MavenArtifact.builder().withGroupId("org.my.company").withArtifactId("core-artifact").withType("jar").withVersion("1.0.0").withScope("compile").build();
         coreArtifactMavenRepoURL = buildArtifactURLMock(coreArtifact);
 
-        utilsCoreArtifact = new MavenArtifact("org.my.company", "utils", "jar", "1.0.0", "compile");
+        utilsCoreArtifact = MavenArtifact.builder().withGroupId("org.my.company").withArtifactId("utils").withType("jar").withVersion("1.0.0").withScope("compile").build();
         utilsCoreArtifactMultiModuleURL = buildMultiModuleURLMock(UTILS_CORE_MODULE_FOLDER);
     }
 

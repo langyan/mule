@@ -12,7 +12,6 @@ import static java.lang.Class.forName;
 import static org.mule.functional.util.AnnotationUtils.getAnnotationAttributeFrom;
 import org.mule.functional.classloading.isolation.classpath.MavenArtifactToClassPathURLResolver;
 import org.mule.functional.classloading.isolation.maven.MavenArtifact;
-import org.mule.functional.classloading.isolation.maven.MavenArtifactToClassPathURLResolver;
 import org.mule.functional.classloading.isolation.maven.MavenMultiModuleArtifactMapping;
 import org.mule.functional.classloading.isolation.maven.dependencies.ConfigurationBuilder;
 import org.mule.functional.classloading.isolation.maven.dependencies.DependenciesFilterBuilder;

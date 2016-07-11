@@ -157,7 +157,7 @@ public class DependencyGraphMavenDependenciesResolver implements MavenDependenci
         String type = tokens[2];
         String version = tokens[3];
         String scope = tokens[4];
-        return new MavenArtifact(groupId, artifactId, type, version, scope);
+        return MavenArtifact.builder().withGroupId(groupId).withArtifactId(artifactId).withType(type).withVersion(version).withScope(scope).build();
     }
 
 }

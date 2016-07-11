@@ -9,12 +9,7 @@ package org.mule.functional.classloading.isolation.maven.dependencies;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertTrue;
-
 import org.mule.functional.classloading.isolation.maven.MavenArtifact;
-import org.mule.functional.classloading.isolation.maven.dependencies.ConfigurationBuilder;
-import org.mule.functional.classloading.isolation.maven.dependencies.DependenciesFilterBuilder;
-import org.mule.functional.classloading.isolation.maven.dependencies.DependencyResolver;
-import org.mule.functional.classloading.isolation.maven.dependencies.TransitiveDependenciesFilterBuilder;
 import org.mule.runtime.core.util.ValueHolder;
 import org.mule.tck.size.SmallTest;
 
@@ -267,7 +262,7 @@ public class DependencyResolverTest
 
     private MavenArtifact buildMavenArtifact(String groupId, String artifactId, String type, String version, String scope)
     {
-        return new MavenArtifact(groupId, artifactId, type, version, scope);
+        return MavenArtifact.builder().withGroupId(groupId).withArtifactId(artifactId).withType(type).withVersion(version).withScope(scope).build();
     }
 
     private void buildDefaultArtifacts()
