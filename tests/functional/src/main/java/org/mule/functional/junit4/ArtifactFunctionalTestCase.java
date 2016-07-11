@@ -10,7 +10,7 @@ package org.mule.functional.junit4;
 import static org.mule.functional.util.AnnotationUtils.getAnnotationAttributeFrom;
 import org.mule.functional.classloading.isolation.builder.IsolatedClassLoaderExtensionsManagerConfigurationBuilder;
 import org.mule.functional.junit4.runners.ArtifactClassLoaderRunnerConfig;
-import org.mule.functional.junit4.runners.ArtifactClassLoaderTestRunner;
+import org.mule.functional.junit4.runners.ArtifactClassLoaderRunner;
 import org.mule.functional.junit4.runners.PluginClassLoadersAware;
 import org.mule.functional.junit4.runners.RunnerDelegateTo;
 import org.mule.runtime.core.api.config.ConfigurationBuilder;
@@ -32,7 +32,7 @@ import org.junit.runner.RunWith;
  *
  * @since 4.0
  */
-@RunWith(ArtifactClassLoaderTestRunner.class)
+@RunWith(ArtifactClassLoaderRunner.class)
 public abstract class ArtifactFunctionalTestCase extends FunctionalTestCase
 {
     private static List<ArtifactClassLoader> pluginClassLoaders;
@@ -57,10 +57,10 @@ public abstract class ArtifactFunctionalTestCase extends FunctionalTestCase
     {
         super.addBuilders(builders);
         Class<?> runner = getAnnotationAttributeFrom(this.getClass(), RunWith.class, "value");
-        if (runner == null || !runner.equals(ArtifactClassLoaderTestRunner.class))
+        if (runner == null || !runner.equals(ArtifactClassLoaderRunner.class))
         {
             throw new IllegalStateException(this.getClass().getName() + " extends " + ArtifactFunctionalTestCase.class.getName()
-                                            + " so it should be annotated to only run with: " + ArtifactClassLoaderTestRunner.class + ". See " + RunnerDelegateTo.class + " for defining a delegate runner to be used.");
+                                            + " so it should be annotated to only run with: " + ArtifactClassLoaderRunner.class + ". See " + RunnerDelegateTo.class + " for defining a delegate runner to be used.");
         }
 
         if (pluginClassLoaders != null && !pluginClassLoaders.isEmpty())

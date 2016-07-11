@@ -9,6 +9,7 @@ package org.mule.functional.classloading.isolation.classification;
 
 import org.mule.functional.classloading.isolation.maven.MavenArtifact;
 import org.mule.functional.classloading.isolation.maven.MavenArtifactToClassPathURLResolver;
+import org.mule.functional.junit4.runners.ArtifactClassLoaderRunner;
 
 import java.io.File;
 import java.util.function.Predicate;
@@ -29,7 +30,7 @@ public class ExtendedClassPathClassifierContext
     /**
      * Creates a {@link ExtendedClassPathClassifierContext} used internally in {@link MuleClassPathClassifier} to do the classification.
      *
-     * @param context the initial {@link ClassPathClassifierContext} context passed by {@link org.mule.functional.junit4.runners.ArtifactClassLoaderTestRunner}
+     * @param context the initial {@link ClassPathClassifierContext} context passed by {@link ArtifactClassLoaderRunner}
      * @param exclusion the {@link Predicate<MavenArtifact>} built based on the exclusion patterns defined
      * @param compileArtifact the artifactId for the current maven artifact where the test belongs to
      * @param artifactToClassPathURLResolver resolves the {@link java.net.URL} from the class path for a given artifactId

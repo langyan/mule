@@ -17,7 +17,7 @@ import org.junit.runner.Runner;
 import org.junit.runners.BlockJUnit4ClassRunner;
 
 /**
- * Specifies the {@link Runner} that {@link ArtifactClassLoaderTestRunner} delegates to.
+ * Specifies the {@link Runner} that {@link ArtifactClassLoaderRunner} delegates to.
  *
  * @since 4.0
  */

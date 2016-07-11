@@ -68,7 +68,7 @@ import org.junit.runners.model.TestClass;
  *
  * @since 4.0
  */
-public class ArtifactClassLoaderTestRunner extends Runner implements Filterable
+public class ArtifactClassLoaderRunner extends Runner implements Filterable
 {
     private final Runner delegate;
     private final ClassLoaderTestRunner classLoaderTestRunner;
@@ -80,7 +80,7 @@ public class ArtifactClassLoaderTestRunner extends Runner implements Filterable
      * @param builder
      * @throws Throwable if there was an error while initializing the runner.
      */
-    public ArtifactClassLoaderTestRunner(Class<?> clazz, RunnerBuilder builder) throws Throwable
+    public ArtifactClassLoaderRunner(Class<?> clazz, RunnerBuilder builder) throws Throwable
     {
         classLoaderTestRunner = createClassLoaderTestRunner(clazz);
 
