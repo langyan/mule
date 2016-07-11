@@ -65,13 +65,20 @@ import org.junit.runners.model.TestClass;
  * If the current artifact being tested is not an extension it will handle it as a plugin, therefore a plugin class loader would
  * be created with its target/classes plus compile dependencies (including transitives) and the mule-module.properties take into account for
  * defining the filter to be applied to the class loader.
+ * <p/>
+ * Only one instance of the {@link ClassLoader} is created and used for running all the tests classes that are marked to run with this {@link Runner}
+ * due to creating the {@link ClassLoader} requires time and has impact when running tests.
+ * <p/>
+ * A best practice is to a base abstract class for your module tests that extends {@link org.mule.functional.junit4.ArtifactFunctionalTestCase}
+ * and defines if needed anything related to the configuration with this annotation that will be applied to all the tests that
+ * are being executed for the same VM.
  *
  * @since 4.0
  */
 public class ArtifactClassLoaderRunner extends Runner implements Filterable
 {
     private final Runner delegate;
-    private final ClassLoaderTestRunner classLoaderTestRunner;
+    private static ClassLoaderTestRunner classLoaderTestRunner;
 
     /**
      * Creates a Runner to run {@code klass}
@@ -82,7 +89,10 @@ public class ArtifactClassLoaderRunner extends Runner implements Filterable
      */
     public ArtifactClassLoaderRunner(Class<?> clazz, RunnerBuilder builder) throws Throwable
     {
-        classLoaderTestRunner = createClassLoaderTestRunner(clazz);
+        if (classLoaderTestRunner == null)
+        {
+            classLoaderTestRunner = createClassLoaderTestRunner(clazz);
+        }
 
         final Class<?> isolatedTestClass = getTestClass(clazz);
 

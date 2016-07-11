@@ -18,6 +18,14 @@ import java.lang.annotation.Target;
 /**
  * Specifies a configuration needed by {@link ArtifactClassLoaderRunner} in order to
  * run the test.
+ * <p/>
+ * Be aware that this annotation will be loaded for the whole module being tested, it is not supported
+ * to have different annotated values for different test classes due to in order to improve the performance for
+ * building the {@link ClassLoader} it is created the first time only and used to run several tests.
+ * <p/>
+ * A best practice is to a base abstract class for your module tests that extends {@link org.mule.functional.junit4.ArtifactFunctionalTestCase}
+ * and defines if needed anything related to the configuration with this annotation that will be applied to all the tests that
+ * are being executed for the same VM.
  *
  * @since 4.0
  */
