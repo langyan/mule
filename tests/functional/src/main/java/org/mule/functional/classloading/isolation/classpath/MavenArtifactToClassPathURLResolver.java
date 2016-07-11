@@ -67,7 +67,7 @@ public class MavenArtifactToClassPathURLResolver
      */
     private URL getModuleURL(final MavenArtifact artifact, final List<URL> urls)
     {
-        final StringBuilder moduleFolder = new StringBuilder(mavenMultiModuleArtifactMapping.mapModuleFolderNameFor(artifact.getArtifactId())).append("target/");
+        final StringBuilder moduleFolder = new StringBuilder(mavenMultiModuleArtifactMapping.getFolderName(artifact.getArtifactId())).append("target/");
 
         // Fix to handle when running test during an install phase due to maven builds the classpath pointing out to packaged files instead of classes folders.
         final StringBuilder explodedUrlSuffix = new StringBuilder();

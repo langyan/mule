@@ -31,13 +31,15 @@ public final class RunnerModuleUtils
      */
     public static final Properties getExcludedProperties() throws IllegalStateException, IOException
     {
-        InputStream excludedPropertiesURL = RunnerModuleUtils.class.getClassLoader().getResourceAsStream(EXCLUDED_PROPERTIES_FILE);
-        if (excludedPropertiesURL == null)
+        try (InputStream excludedPropertiesURL = RunnerModuleUtils.class.getClassLoader().getResourceAsStream(EXCLUDED_PROPERTIES_FILE))
         {
-            throw new IllegalStateException("Couldn't find file: " + EXCLUDED_PROPERTIES_FILE + " in classpath, at least one should be defined");
+            if (excludedPropertiesURL == null)
+            {
+                throw new IllegalStateException("Couldn't find file: " + EXCLUDED_PROPERTIES_FILE + " in classpath, at least one should be defined");
+            }
+            Properties excludedProperties = new Properties();
+            excludedProperties.load(excludedPropertiesURL);
+            return excludedProperties;
         }
-        Properties excludedProperties = new Properties();
-        excludedProperties.load(excludedPropertiesURL);
-        return excludedProperties;
     }
 }

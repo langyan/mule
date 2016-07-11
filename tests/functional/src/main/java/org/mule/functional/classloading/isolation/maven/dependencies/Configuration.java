@@ -15,17 +15,17 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 /**
- * Builder for setting the resolution strategy for {@link DependencyResolver}
+ * Defines the settings the resolution strategy for {@link DependencyResolver}
  *
  * @since 4.0
  */
-public final class ConfigurationBuilder
+public final class Configuration
 {
 
     private LinkedHashMap<MavenArtifact, Set<MavenArtifact>> allDependencies;
     private boolean rootArtifactIncluded = false;
-    private DependenciesFilterBuilder dependenciesFilterBuilder = new DependenciesFilterBuilder();
-    private TransitiveDependenciesFilterBuilder transitiveDependencyFilterBuilder = new TransitiveDependenciesFilterBuilder(new TruePredicate<MavenArtifact>().negate());
+    private DependenciesFilter dependenciesFilter = new DependenciesFilter();
+    private TransitiveDependenciesFilter transitiveDependencyFilter = new TransitiveDependenciesFilter(new TruePredicate<MavenArtifact>().negate());
     private Predicate<MavenArtifact> rootArtifactPredicate = null;
 
     /**
@@ -36,7 +36,7 @@ public final class ConfigurationBuilder
      * @param allDependencies
      * @return this
      */
-    public ConfigurationBuilder setMavenDependencyGraph(LinkedHashMap<MavenArtifact, Set<MavenArtifact>> allDependencies)
+    public Configuration setMavenDependencyGraph(LinkedHashMap<MavenArtifact, Set<MavenArtifact>> allDependencies)
     {
         this.allDependencies = allDependencies;
         return this;
@@ -49,7 +49,7 @@ public final class ConfigurationBuilder
      *
      * @return this
      */
-    public ConfigurationBuilder includeRootArtifact()
+    public Configuration includeRootArtifact()
     {
         this.rootArtifactIncluded = true;
         return this;
@@ -62,37 +62,37 @@ public final class ConfigurationBuilder
      * @param rootArtifactPredicate
      * @return this
      */
-    public ConfigurationBuilder includeRootArtifact(Predicate<MavenArtifact> rootArtifactPredicate)
+    public Configuration includeRootArtifact(Predicate<MavenArtifact> rootArtifactPredicate)
     {
         this.rootArtifactPredicate = rootArtifactPredicate;
         return this;
     }
 
     /**
-     * Sets a {@link DependenciesFilterBuilder} that defines the strategy for selecting the dependencies.
+     * Sets a {@link DependenciesFilter} that defines the strategy for selecting the dependencies.
      * If this is not defined, by default, the resolver will take all the dependencies of the root artifact
      * without their transitive dependencies.
      *
-     * @param dependenciesFilterBuilder
+     * @param dependenciesFilter
      * @return this
      */
-    public ConfigurationBuilder selectDependencies(DependenciesFilterBuilder dependenciesFilterBuilder)
+    public Configuration selectDependencies(DependenciesFilter dependenciesFilter)
     {
-        this.dependenciesFilterBuilder = dependenciesFilterBuilder;
+        this.dependenciesFilter = dependenciesFilter;
         return this;
     }
 
     /**
-     * Sets a {@link TransitiveDependenciesFilterBuilder} that defines the strategy for selecting the transitive
+     * Sets a {@link TransitiveDependenciesFilter} that defines the strategy for selecting the transitive
      * dependencies for the dependencies of the root artifact that matched the criteria defined.
      * By default (if this is not set) no transitive dependencies will be collected during the dependencies resolution.
      *
-     * @param transitiveDependenciesFilterBuilder
+     * @param transitiveDependenciesFilter
      * @return this
      */
-    public ConfigurationBuilder collectTransitiveDependencies(TransitiveDependenciesFilterBuilder transitiveDependenciesFilterBuilder)
+    public Configuration collectTransitiveDependencies(TransitiveDependenciesFilter transitiveDependenciesFilter)
     {
-        this.transitiveDependencyFilterBuilder = transitiveDependenciesFilterBuilder;
+        this.transitiveDependencyFilter = transitiveDependenciesFilter;
         return this;
     }
 
@@ -101,14 +101,14 @@ public final class ConfigurationBuilder
         return allDependencies;
     }
 
-    DependenciesFilterBuilder getDependenciesFilterBuilder()
+    DependenciesFilter getDependenciesFilter()
     {
-        return dependenciesFilterBuilder;
+        return dependenciesFilter;
     }
 
-    TransitiveDependenciesFilterBuilder getTransitiveDependencyFilterBuilder()
+    TransitiveDependenciesFilter getTransitiveDependencyFilter()
     {
-        return transitiveDependencyFilterBuilder;
+        return transitiveDependencyFilter;
     }
 
     boolean isRootArtifactIncluded()

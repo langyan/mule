@@ -24,6 +24,11 @@ public class MuleMavenMultiModuleArtifactMapping implements MavenMultiModuleArti
     public static final String MAVEN_MODULE_MAPPING_PROPERTIES = "maven-module-mapping.properties";
     private Properties mappings;
 
+    /**
+     * Creates a {@link MuleMavenMultiModuleArtifactMapping} and loads the mappings from {@link MuleMavenMultiModuleArtifactMapping#MAVEN_MODULE_MAPPING_PROPERTIES}
+     *
+     * @throws RuntimeException if an error ocurred while reading the resource file
+     */
     public MuleMavenMultiModuleArtifactMapping()
     {
         try
@@ -37,7 +42,7 @@ public class MuleMavenMultiModuleArtifactMapping implements MavenMultiModuleArti
     }
 
     @Override
-    public String mapModuleFolderNameFor(String artifactId)
+    public String getFolderName(String artifactId) throws IllegalArgumentException
     {
         String folder = mappings.getProperty(artifactId);
         if(isEmpty(folder))
@@ -48,7 +53,7 @@ public class MuleMavenMultiModuleArtifactMapping implements MavenMultiModuleArti
     }
 
     @Override
-    public String getMavenArtifactIdFor(String path)
+    public String getMavenArtifactIdFor(String path) throws IllegalArgumentException
     {
         for(Object propertyName : mappings.keySet())
         {

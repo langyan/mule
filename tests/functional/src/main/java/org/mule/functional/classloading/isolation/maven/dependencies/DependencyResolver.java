@@ -30,46 +30,47 @@ public class DependencyResolver
 
     protected final transient Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    private ConfigurationBuilder configurationBuilder;
+    private Configuration configuration;
 
     /**
-     * Creates a dependency resolver with the given configuration builder that defines the resolution strategy.
+     * Creates a dependency resolver with the given configuration that defines the resolution strategy.
      *
-     * @param configurationBuilder
+     * @param configuration
      */
-    public DependencyResolver(ConfigurationBuilder configurationBuilder)
+    public DependencyResolver(Configuration configuration)
     {
-        this.configurationBuilder = configurationBuilder;
+        this.configuration = configuration;
     }
 
     /**
-     * Resolves the dependencies by applying the strategy configured in the {@link ConfigurationBuilder}
+     * Resolves the dependencies by applying the strategy configured in the {@link Configuration}
+     *
      * @return a non-null {@link Set} of {@link MavenArtifact} representing the resolved dependencies
      */
     public Set<MavenArtifact> resolveDependencies()
     {
         // Filter dependencies (first entry set in LinkedHashMap is root artifact from the dependency tree)
-        MavenArtifact rootMavenArtifact = configurationBuilder.getAllDependencies().keySet().stream().findFirst().get();
+        MavenArtifact rootMavenArtifact = configuration.getAllDependencies().keySet().stream().findFirst().get();
         if (rootMavenArtifact == null)
         {
             return emptySet();
         }
-        Set<MavenArtifact> dependencies = configurationBuilder.getAllDependencies().get(rootMavenArtifact)
-                .stream().filter(key -> configurationBuilder.getDependenciesFilterBuilder().getPredicate().test(key)).collect(Collectors.toSet());
+        Set<MavenArtifact> dependencies = configuration.getAllDependencies().get(rootMavenArtifact)
+                .stream().filter(key -> configuration.getDependenciesFilter().getPredicate().test(key)).collect(Collectors.toSet());
 
         Set<MavenArtifact> resolvedDependencies = new HashSet<>();
-        if (!configurationBuilder.getDependenciesFilterBuilder().isOnlyCollectTransitiveDependencies())
+        if (!configuration.getDependenciesFilter().isOnlyCollectTransitiveDependencies())
         {
             resolvedDependencies.addAll(dependencies);
         }
 
-        dependencies.stream().map(artifact -> collectTransitiveDependencies(artifact, configurationBuilder.getTransitiveDependencyFilterBuilder().getPredicate(),
-                                                                            configurationBuilder.getTransitiveDependencyFilterBuilder().isTraverseWhenNoMatch()))
+        dependencies.stream().map(artifact -> collectTransitiveDependencies(artifact, configuration.getTransitiveDependencyFilter().getPredicate(),
+                                                                            configuration.getTransitiveDependencyFilter().isTraverseWhenNoMatch()))
                 .forEach(resolvedDependencies::addAll);
 
-        Predicate<MavenArtifact> includeRootArtifactPredicate = configurationBuilder.getIncludeRootArtifactPredicate();
+        Predicate<MavenArtifact> includeRootArtifactPredicate = configuration.getIncludeRootArtifactPredicate();
         if ((includeRootArtifactPredicate != null && includeRootArtifactPredicate.test(rootMavenArtifact)) ||
-            configurationBuilder.isRootArtifactIncluded())
+            configuration.isRootArtifactIncluded())
         {
             resolvedDependencies.add(rootMavenArtifact);
         }
@@ -78,20 +79,20 @@ public class DependencyResolver
     }
 
     /**
-     * It builds a list of MavenArtifact representing the transitive dependencies of the provided dependency {@link MavenArtifact}.
+     * Builds a list of {@link MavenArtifact} representing the transitive dependencies of the provided dependency {@link MavenArtifact}.
      *
      * @param dependency a {@link MavenArtifact} for which we want to know its dependencies.
      * @param predicate a filter to be applied for each transitive dependency, if the filter passes the dependency is added and recursively collected its dependencies using the same filter.
-     * @param traverseWhenNoMatch if true does not stop when a dependency does not match the filter and moves on with its dependencies.
+     * @param traverseWhenNoMatch traverse to transitive dependencies no matter if the current one doesn't match
      * @return recursively gets the dependencies for the given artifact.
      */
     private Set<MavenArtifact> collectTransitiveDependencies(final MavenArtifact dependency, final Predicate<MavenArtifact> predicate, final boolean traverseWhenNoMatch)
     {
         Set<MavenArtifact> transitiveDependencies = new HashSet<>();
 
-        if (configurationBuilder.getAllDependencies().containsKey(dependency))
+        if (configuration.getAllDependencies().containsKey(dependency))
         {
-            configurationBuilder.getAllDependencies().get(dependency).stream().forEach(transitiveDependency -> {
+            configuration.getAllDependencies().get(dependency).stream().forEach(transitiveDependency -> {
                 if (predicate.test(transitiveDependency))
                 {
                     transitiveDependencies.add(transitiveDependency);

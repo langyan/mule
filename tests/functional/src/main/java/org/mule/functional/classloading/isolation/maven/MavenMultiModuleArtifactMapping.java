@@ -10,6 +10,11 @@ package org.mule.functional.classloading.isolation.maven;
 /**
  * Defines the multi-module folder name for an artifactId. It is useful when the convention of using the same artifactId
  * as folder name for the module. This will allow to have different names.
+ * <p/>
+ * Whenever the test class that is being executed with {@link org.mule.functional.junit4.runners.ArtifactClassLoaderRunner}
+ * belongs to an artifact that is part of a multi-module maven project and the test is executed from IDE with the other modules
+ * opened either from maven when the test goal is executed from the parent pom this mapper would be used due to those artifacts
+ * are not going to be packaged as jars in the maven repository yet.
  *
  * @since 4.0
  */
@@ -17,15 +22,22 @@ public interface MavenMultiModuleArtifactMapping
 {
 
     /**
-     * @param artifactId
+     * Gets a relative folder mapping defined for the artifact id
+     *
+     * @param artifactId to use for getting the folder in a multi-module mapping
+     * @throws IllegalArgumentException if there is no folder mapped for the artifactId
      * @return the relative folder path for the given artifactId.
      */
-    String mapModuleFolderNameFor(String artifactId);
+    String getFolderName(String artifactId) throws IllegalArgumentException;
 
     /**
+     * Gets the maven artifact Id by checking if the path ends with any of the mappings relative paths defined
+     * for each artifacId->relativeFolder
+     *
      * @param path the folder path where the classes of the artifact were found. Without the target/classes/.
+     * @throws IllegalArgumentException if there is no folder mapped for the artifactId
      * @return the maven artifactId for a artifact path.
      */
-    String getMavenArtifactIdFor(String path);
+    String getMavenArtifactIdFor(String path) throws IllegalArgumentException;
 
 }

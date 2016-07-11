@@ -25,11 +25,15 @@ public class AnnotationUtils
     }
 
     /**
-     * @param klass
-     * @param annotationClass
-     * @param methodName
-     * @param <T>
-     * @return the attribute from the annotation for the given class.
+     * Looks for the {@link Annotation} in the {@link Class} and invokes the {@link Method}. It will return the result of the invocation.
+     * If there {@link Class} is not annotated it will return the default value from the {@link Annotation}.
+     *
+     * @param klass the {@link Class} where to look for the annotation
+     * @param annotationClass the {@link Annotation} class to look for
+     * @param methodName the method name of the annotation to be called
+     * @param <T> the result of the invocation
+     * @throws IllegalStateException if the method is not defined in the annotation
+     * @return the attribute from the annotation for the given class
      */
     public static <T> T getAnnotationAttributeFrom(Class<?> klass, Class<? extends Annotation> annotationClass, String methodName)
     {
@@ -59,10 +63,15 @@ public class AnnotationUtils
     }
 
     /**
-     * @param klass
-     * @param annotationClass
-     * @param methodName
-     * @param <T>
+     * Looks for the {@link Annotation} in the {@link Class} and invokes the {@link Method} in the whole hierarhcy until it
+     * reaches {@link Object}. It will return a {@link List<T>} with the results of each invocation.
+     * If there {@link Class} is not annotated it will return the default value from the {@link Annotation}.
+     *
+     * @param klass the {@link Class} where to look for the annotation
+     * @param annotationClass the {@link Annotation} class to look for
+     * @param methodName the method name of the annotation to be called
+     * @param <T> the result of the invocation
+     * @throws IllegalStateException if the method is not defined in the annotation
      * @return a (@link List} of T for the attributes annotated in all the object hierarchy until it reaches {@link Object} class.
      */
     public static <T> List<T> getAnnotationAttributeFromHierarchy(Class<?> klass, Class<? extends Annotation> annotationClass, String methodName)

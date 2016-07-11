@@ -17,18 +17,18 @@ import java.util.function.Predicate;
  *
  * @since 4.0
  */
-public final class TransitiveDependenciesFilterBuilder
+public final class TransitiveDependenciesFilter
 {
     private Predicate<MavenArtifact> predicate = new TruePredicate<>();
     private boolean traverseWhenNoMatch = false;
 
     /**
-     * Creates a new instance, only visible to package scope so the {@link ConfigurationBuilder} is the only one
+     * Creates a new instance, only visible to package scope so the {@link Configuration} is the only one
      * that should call this constructor.
      *
      * @param predicate
      */
-    TransitiveDependenciesFilterBuilder(Predicate<MavenArtifact> predicate)
+    TransitiveDependenciesFilter(Predicate<MavenArtifact> predicate)
     {
         this.predicate = predicate;
     }
@@ -36,7 +36,7 @@ public final class TransitiveDependenciesFilterBuilder
     /**
      * Public constructor, accessible by clients of this API.
      */
-    public TransitiveDependenciesFilterBuilder()
+    public TransitiveDependenciesFilter()
     {
     }
 
@@ -46,7 +46,7 @@ public final class TransitiveDependenciesFilterBuilder
      * @param predicate
      * @return this
      */
-    public TransitiveDependenciesFilterBuilder match(Predicate<MavenArtifact> predicate)
+    public TransitiveDependenciesFilter match(Predicate<MavenArtifact> predicate)
     {
         this.predicate = predicate;
         return this;
@@ -62,7 +62,7 @@ public final class TransitiveDependenciesFilterBuilder
      *
      * @return this
      */
-    public TransitiveDependenciesFilterBuilder traverseWhenNoMatch()
+    public TransitiveDependenciesFilter traverseWhenNoMatch()
     {
         this.traverseWhenNoMatch = true;
         return this;

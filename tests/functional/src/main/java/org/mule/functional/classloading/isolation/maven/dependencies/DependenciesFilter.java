@@ -17,7 +17,7 @@ import java.util.function.Predicate;
  *
  * @since 4.0
  */
-public final class DependenciesFilterBuilder
+public final class DependenciesFilter
 {
     private Predicate<MavenArtifact> predicate = new TruePredicate<>();
     private boolean onlyCollectTransitiveDependencies = false;
@@ -29,7 +29,7 @@ public final class DependenciesFilterBuilder
      * @param predicate
      * @return this
      */
-    public DependenciesFilterBuilder match(Predicate<MavenArtifact> predicate)
+    public DependenciesFilter match(Predicate<MavenArtifact> predicate)
     {
         this.predicate = predicate;
         return this;
@@ -44,7 +44,7 @@ public final class DependenciesFilterBuilder
      *
      * @return
      */
-    public DependenciesFilterBuilder onlyCollectTransitiveDependencies()
+    public DependenciesFilter onlyCollectTransitiveDependencies()
     {
         this.onlyCollectTransitiveDependencies = true;
         return this;

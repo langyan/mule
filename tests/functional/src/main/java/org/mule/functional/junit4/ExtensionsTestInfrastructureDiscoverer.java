@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 
 /**
- * It registers the extensions to a {@link org.mule.runtime.extension.api.ExtensionManager}.
+ * It discovers and registers the extensions to a {@link org.mule.runtime.extension.api.ExtensionManager}.
  * <p/>
  * Once extensions are registered, a {@link ResourcesGenerator} is used to automatically
  * generate any backing resources needed (XSD schemas, spring bundles, etc).
@@ -130,8 +130,8 @@ public class ExtensionsTestInfrastructureDiscoverer
     private class ExtensionsTestInfrastructureResourcesGenerator extends AbstractResourcesGenerator
     {
 
-        private File targetDirectory;
-        private Map<String, StringBuilder> contents = new HashMap<>();
+        private final File targetDirectory;
+        private final Map<String, StringBuilder> contents = new HashMap<>();
 
         private ExtensionsTestInfrastructureResourcesGenerator(Collection<GeneratedResourceFactory> resourceFactories, File targetDirectory)
         {

@@ -9,6 +9,7 @@ package org.mule.functional.classloading.isolation.maven;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.mule.functional.classloading.isolation.maven.MavenArtifactMatcherPredicate.ANY_WILDCARD;
 import org.mule.tck.size.SmallTest;
 
 import java.util.function.Predicate;
@@ -22,56 +23,62 @@ import org.junit.Test;
 public class MavenArtifactMatcherPredicateTest
 {
 
+    private final MavenArtifact muleCoreArtifact = MavenArtifact.builder().withGroupId("org.mule").withArtifactId("mule-core").withType("jar").build();
+    private final MavenArtifact muleCoreArtifactTest = MavenArtifact.builder().withGroupId("org.mule").withArtifactId("mule-core").withType("test-jar").build();
+    private final MavenArtifact muleValidationArtifact = MavenArtifact.builder().withGroupId("org.mule").withArtifactId("mule-validations").withType("jar").build();
+    private final MavenArtifact muleValidationTransportArtifact = MavenArtifact.builder().withGroupId("org.mule.transports").withArtifactId("mule-validations").withType("jar").build();
+    private final MavenArtifact commonsCollections = MavenArtifact.builder().withGroupId("commons-collections").withArtifactId("commons-collections").withType("jar").build();
+
     @Test
     public void matchByGroupId()
     {
-        Predicate<MavenArtifact> predicate = new MavenArtifactMatcherPredicate("org.mule", "*", "*");
+        Predicate<MavenArtifact> predicate = new MavenArtifactMatcherPredicate("org.mule", ANY_WILDCARD, ANY_WILDCARD);
 
-        assertThat(predicate.test(MavenArtifact.builder().withGroupId("org.mule").withArtifactId("mule-core").withType("jar").build()), equalTo(true));
-        assertThat(predicate.test(MavenArtifact.builder().withGroupId("org.mule").withArtifactId("mule-core").withType("test-jar").build()), equalTo(true));
-        assertThat(predicate.test(MavenArtifact.builder().withGroupId("org.mule").withArtifactId("mule-validations").withType("jar").build()), equalTo(true));
+        assertThat(predicate.test(muleCoreArtifact), equalTo(true));
+        assertThat(predicate.test(muleCoreArtifactTest), equalTo(true));
+        assertThat(predicate.test(muleValidationArtifact), equalTo(true));
 
-        assertThat(predicate.test(MavenArtifact.builder().withGroupId("org.mule.transports").withArtifactId("mule-validations").withType("jar").build()), equalTo(false));
-        assertThat(predicate.test(MavenArtifact.builder().withGroupId("commons-collections").withArtifactId("commons-collections").withType("jar").build()), equalTo(false));
+        assertThat(predicate.test(muleValidationTransportArtifact), equalTo(false));
+        assertThat(predicate.test(commonsCollections), equalTo(false));
     }
 
     @Test
     public void matchByGroupIdStartsWith()
     {
-        Predicate<MavenArtifact> predicate = new MavenArtifactMatcherPredicate("org.mule*", "*", "*");
+        Predicate<MavenArtifact> predicate = new MavenArtifactMatcherPredicate("org.mule*", ANY_WILDCARD, ANY_WILDCARD);
 
-        assertThat(predicate.test(MavenArtifact.builder().withGroupId("org.mule").withArtifactId("mule-core").withType("jar").build()), equalTo(true));
-        assertThat(predicate.test(MavenArtifact.builder().withGroupId("org.mule").withArtifactId("mule-core").withType("test-jar").build()), equalTo(true));
-        assertThat(predicate.test(MavenArtifact.builder().withGroupId("org.mule").withArtifactId("mule-validations").withType("jar").build()), equalTo(true));
-        assertThat(predicate.test(MavenArtifact.builder().withGroupId("org.mule.transports").withArtifactId("mule-validations").withType("jar").build()), equalTo(true));
+        assertThat(predicate.test(muleCoreArtifact), equalTo(true));
+        assertThat(predicate.test(muleCoreArtifactTest), equalTo(true));
+        assertThat(predicate.test(muleValidationArtifact), equalTo(true));
+        assertThat(predicate.test(muleValidationTransportArtifact), equalTo(true));
 
-        assertThat(predicate.test(MavenArtifact.builder().withGroupId("commons-collections").withArtifactId("commons-collections").withType("jar").build()), equalTo(false));
+        assertThat(predicate.test(commonsCollections), equalTo(false));
     }
 
     @Test
     public void matchByArtifactId()
     {
-        Predicate<MavenArtifact> predicate = new MavenArtifactMatcherPredicate("org.mule", "mule-core", "*");
+        Predicate<MavenArtifact> predicate = new MavenArtifactMatcherPredicate("org.mule", "mule-core", ANY_WILDCARD);
 
-        assertThat(predicate.test(MavenArtifact.builder().withGroupId("org.mule").withArtifactId("mule-core").withType("jar").build()), equalTo(true));
-        assertThat(predicate.test(MavenArtifact.builder().withGroupId("org.mule").withArtifactId("mule-core").withType("test-jar").build()), equalTo(true));
+        assertThat(predicate.test(muleCoreArtifact), equalTo(true));
+        assertThat(predicate.test(muleCoreArtifactTest), equalTo(true));
 
-        assertThat(predicate.test(MavenArtifact.builder().withGroupId("org.mule").withArtifactId("mule-validations").withType("jar").build()), equalTo(false));
-        assertThat(predicate.test(MavenArtifact.builder().withGroupId("org.mule.transports").withArtifactId("mule-validations").withType("jar").build()), equalTo(false));
-        assertThat(predicate.test(MavenArtifact.builder().withGroupId("commons-collections").withArtifactId("commons-collections").withType("jar").build()), equalTo(false));
+        assertThat(predicate.test(muleValidationArtifact), equalTo(false));
+        assertThat(predicate.test(muleValidationTransportArtifact), equalTo(false));
+        assertThat(predicate.test(commonsCollections), equalTo(false));
     }
 
     @Test
     public void matchByArtifactIdStartsWith()
     {
-        Predicate<MavenArtifact> predicate = new MavenArtifactMatcherPredicate("org.mule", "mule-*", "*");
+        Predicate<MavenArtifact> predicate = new MavenArtifactMatcherPredicate("org.mule", "mule-" + ANY_WILDCARD, ANY_WILDCARD);
 
-        assertThat(predicate.test(MavenArtifact.builder().withGroupId("org.mule").withArtifactId("mule-core").withType("jar").build()), equalTo(true));
-        assertThat(predicate.test(MavenArtifact.builder().withGroupId("org.mule").withArtifactId("mule-core").withType("test-jar").build()), equalTo(true));
-        assertThat(predicate.test(MavenArtifact.builder().withGroupId("org.mule").withArtifactId("mule-validations").withType("jar").build()), equalTo(true));
+        assertThat(predicate.test(muleCoreArtifact), equalTo(true));
+        assertThat(predicate.test(muleCoreArtifactTest), equalTo(true));
+        assertThat(predicate.test(muleValidationArtifact), equalTo(true));
 
-        assertThat(predicate.test(MavenArtifact.builder().withGroupId("org.mule.transports").withArtifactId("mule-validations").withType("jar").build()), equalTo(false));
-        assertThat(predicate.test(MavenArtifact.builder().withGroupId("commons-collections").withArtifactId("commons-collections").withType("jar").build()), equalTo(false));
+        assertThat(predicate.test(muleValidationTransportArtifact), equalTo(false));
+        assertThat(predicate.test(commonsCollections), equalTo(false));
     }
 
     @Test
@@ -79,27 +86,27 @@ public class MavenArtifactMatcherPredicateTest
     {
         Predicate<MavenArtifact> predicate = new MavenArtifactMatcherPredicate("org.mule", "mule-core", "jar");
 
-        assertThat(predicate.test(MavenArtifact.builder().withGroupId("org.mule").withArtifactId("mule-core").withType("jar").build()), equalTo(true));
+        assertThat(predicate.test(muleCoreArtifact), equalTo(true));
 
-        assertThat(predicate.test(MavenArtifact.builder().withGroupId("org.mule").withArtifactId("mule-core").withType("test-jar").build()), equalTo(false));
-        assertThat(predicate.test(MavenArtifact.builder().withGroupId("org.mule").withArtifactId("mule-validations").withType("jar").build()), equalTo(false));
-        assertThat(predicate.test(MavenArtifact.builder().withGroupId("org.mule.transports").withArtifactId("mule-validations").withType("jar").build()), equalTo(false));
-        assertThat(predicate.test(MavenArtifact.builder().withGroupId("commons-collections").withArtifactId("commons-collections").withType("jar").build()), equalTo(false));
+        assertThat(predicate.test(muleCoreArtifactTest), equalTo(false));
+        assertThat(predicate.test(muleValidationArtifact), equalTo(false));
+        assertThat(predicate.test(muleValidationTransportArtifact), equalTo(false));
+        assertThat(predicate.test(commonsCollections), equalTo(false));
     }
 
     @Test
     public void orMatching()
     {
-        Predicate<MavenArtifact> predicate = new MavenArtifactMatcherPredicate("org.mule", "mule-core", "jar").or(new MavenArtifactMatcherPredicate("org.mule.transports", "*", "*"));
+        Predicate<MavenArtifact> predicate = new MavenArtifactMatcherPredicate("org.mule", "mule-core", "jar").or(new MavenArtifactMatcherPredicate("org.mule.transports", ANY_WILDCARD, ANY_WILDCARD));
 
-        assertThat(predicate.test(MavenArtifact.builder().withGroupId("org.mule").withArtifactId("mule-core").withType("jar").build()), equalTo(true));
+        assertThat(predicate.test(muleCoreArtifact), equalTo(true));
 
-        assertThat(predicate.test(MavenArtifact.builder().withGroupId("org.mule").withArtifactId("mule-core").withType("test-jar").build()), equalTo(false));
-        assertThat(predicate.test(MavenArtifact.builder().withGroupId("org.mule").withArtifactId("mule-validations").withType("jar").build()), equalTo(false));
+        assertThat(predicate.test(muleCoreArtifactTest), equalTo(false));
+        assertThat(predicate.test(muleValidationArtifact), equalTo(false));
 
-        assertThat(predicate.test(MavenArtifact.builder().withGroupId("org.mule.transports").withArtifactId("mule-validations").withType("jar").build()), equalTo(true));
+        assertThat(predicate.test(muleValidationTransportArtifact), equalTo(true));
 
-        assertThat(predicate.test(MavenArtifact.builder().withGroupId("commons-collections").withArtifactId("commons-collections").withType("jar").build()), equalTo(false));
+        assertThat(predicate.test(commonsCollections), equalTo(false));
     }
 
 }

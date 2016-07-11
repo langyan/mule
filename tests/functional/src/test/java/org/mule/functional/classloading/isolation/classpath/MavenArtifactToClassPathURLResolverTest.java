@@ -77,7 +77,7 @@ public class MavenArtifactToClassPathURLResolverTest
     @Test
     public void resolveUrlMultiModuleMapping() throws Exception
     {
-        when(mapping.mapModuleFolderNameFor(utilsCoreArtifact.getArtifactId())).thenReturn(UTILS_CORE_MODULE_FOLDER);
+        when(mapping.getFolderName(utilsCoreArtifact.getArtifactId())).thenReturn(UTILS_CORE_MODULE_FOLDER);
         assertURL(utilsCoreArtifact, Lists.newArrayList(buildArtifactURLMock(commonCliArtifact), coreArtifactMavenRepoURL, utilsCoreArtifactMultiModuleURL), utilsCoreArtifactMultiModuleURL);
         verify(mapping);
     }
@@ -85,7 +85,7 @@ public class MavenArtifactToClassPathURLResolverTest
     @Test
     public void urlNotFoundForArtifact() throws Exception
     {
-        when(mapping.mapModuleFolderNameFor(coreArtifact.getArtifactId())).thenReturn("doesnotexist-folder");
+        when(mapping.getFolderName(coreArtifact.getArtifactId())).thenReturn("doesnotexist-folder");
         expectedException.expect(IllegalArgumentException.class);
         assertURL(coreArtifact, Lists.newArrayList(buildArtifactURLMock(commonCliArtifact)), coreArtifactMavenRepoURL);
     }
