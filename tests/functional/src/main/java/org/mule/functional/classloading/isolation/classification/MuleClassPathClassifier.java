@@ -9,12 +9,9 @@ package org.mule.functional.classloading.isolation.classification;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static java.lang.Class.forName;
-import static org.mule.functional.classloading.isolation.utils.RunnerModuleUtils.getExcludedProperties;
 import static org.mule.functional.util.AnnotationUtils.getAnnotationAttributeFrom;
-import static org.mule.functional.util.AnnotationUtils.getAnnotationAttributeFromHierarchy;
-import org.mule.functional.classloading.isolation.classpath.DefaultMavenArtifactToClassPathURLResolver;
+import org.mule.functional.classloading.isolation.classpath.MavenArtifactToClassPathURLResolver;
 import org.mule.functional.classloading.isolation.maven.MavenArtifact;
-import org.mule.functional.classloading.isolation.maven.MavenArtifactMatcherPredicate;
 import org.mule.functional.classloading.isolation.maven.MavenArtifactToClassPathURLResolver;
 import org.mule.functional.classloading.isolation.maven.MavenMultiModuleArtifactMapping;
 import org.mule.functional.classloading.isolation.maven.dependencies.ConfigurationBuilder;
@@ -23,7 +20,6 @@ import org.mule.functional.classloading.isolation.maven.dependencies.DependencyR
 import org.mule.functional.classloading.isolation.maven.dependencies.TransitiveDependenciesFilterBuilder;
 import org.mule.functional.junit4.ExtensionsTestInfrastructureDiscoverer;
 import org.mule.functional.junit4.runners.ArtifactClassLoaderRunnerConfig;
-import org.mule.functional.util.TruePredicate;
 import org.mule.runtime.core.DefaultMuleContext;
 import org.mule.runtime.core.api.lifecycle.InitialisationException;
 import org.mule.runtime.core.api.registry.MuleRegistry;
@@ -44,9 +40,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -60,12 +54,12 @@ import org.springframework.core.type.filter.AnnotationTypeFilter;
  * Runtime does by taking into account the Maven dependencies of the given tested artifact.
  * <p/>
  * Basically it creates a {@link ArtifactUrlClassification} hierarchy with:
- * <p><ul>
+ * <ul>
  * <li>Provided Scope (plus JDK stuff)</li>
  * <li>Composite ClassLoader(that includes a class loader for each extension (if discovered) and/or plugin if the current artifact has
  * target/classes folder, for any case its compile scope dependencies are also added (plus its target/classes)</li>
  * <li>Test Scope (plus target/test-classes and all the test scope dependencies including transitives)</li>
- * </ul></p>
+ * </ul>
  *
  * @since 4.0
  */
@@ -75,22 +69,21 @@ public class MuleClassPathClassifier implements ClassPathClassifier
     public static final String GENERATED_TEST_SOURCES = "generated-test-sources";
     private static final String TARGET_FOLDER_NAME = "target";
     private static final String CLASSES_FOLDER_NAME = "classes";
+    private static final int GROUP_ID_ARTIFACT_ID_TYPE_PATTERN_CHUNKS = 3;
 
-    protected final transient Logger logger = LoggerFactory.getLogger(this.getClass());
+    protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Override
     public ArtifactUrlClassification classify(ClassPathClassifierContext context)
     {
         final File targetTestClassesFolder = new File(context.getTestClass().getProtectionDomain().getCodeSource().getLocation().getPath());
 
-        Predicate<MavenArtifact> exclusion = getExclusionsPredicate(context.getTestClass());
-
         MavenArtifact compileArtifact = getCompileArtifact(context.getMavenDependencies());
         logger.debug("Classification based on '{}'", compileArtifact);
 
-        MavenArtifactToClassPathURLResolver artifactToClassPathURLResolver = new DefaultMavenArtifactToClassPathURLResolver(context.getMavenMultiModuleArtifactMapping());
+        MavenArtifactToClassPathURLResolver artifactToClassPathURLResolver = new MavenArtifactToClassPathURLResolver(context.getMavenMultiModuleArtifactMapping());
 
-        ExtendedClassPathClassifierContext extendedClassPathClassifierContext = new ExtendedClassPathClassifierContext(context, exclusion, compileArtifact, artifactToClassPathURLResolver, targetTestClassesFolder);
+        ExtendedClassPathClassifierContext extendedClassPathClassifierContext = new ExtendedClassPathClassifierContext(context, compileArtifact, artifactToClassPathURLResolver, targetTestClassesFolder);
 
         List<URL> appURLs = buildAppUrls(extendedClassPathClassifierContext);
         List<PluginUrlClassification> pluginUrlClassifications = buildPluginsClassification(extendedClassPathClassifierContext);
@@ -124,18 +117,18 @@ public class MuleClassPathClassifier implements ClassPathClassifier
     private List<URL> buildAppUrls(final ExtendedClassPathClassifierContext extendedContext)
     {
         // target/test-classes is not present in the dependency graph, so here is the only place were we must add it manually breaking the original order that came from class path
-        List<URL> appURLs = extendedContext.getContext().getClassPathURLs().stream().filter(url -> url.getFile().equals(extendedContext.getTargetTestClassesFolder().getAbsolutePath() + File.separator)).collect(Collectors.toList());
+        List<URL> appURLs = extendedContext.getClassificationContext().getClassPathURLs().stream().filter(url -> url.getFile().equals(extendedContext.getTargetTestClassesFolder().getAbsolutePath() + File.separator)).collect(Collectors.toList());
         new DependencyResolver(new ConfigurationBuilder()
-              .setMavenDependencyGraph(extendedContext.getContext().getMavenDependencies())
+              .setMavenDependencyGraph(extendedContext.getClassificationContext().getMavenDependencies())
               .selectDependencies(
                       new DependenciesFilterBuilder()
-                              .match(dependency -> dependency.isTestScope() && !extendedContext.getExclusion().test(dependency))
+                              .match(dependency -> dependency.isTestScope() && !extendedContext.getClassificationContext().getExclusions().test(dependency))
               )
               .collectTransitiveDependencies(
                       new TransitiveDependenciesFilterBuilder()
-                              .match(transitiveDependency -> transitiveDependency.isTestScope() && !extendedContext.getExclusion().test(transitiveDependency))
+                              .match(transitiveDependency -> transitiveDependency.isTestScope() && !extendedContext.getClassificationContext().getExclusions().test(transitiveDependency))
                               .traverseWhenNoMatch()
-              )).resolveDependencies().stream().filter(d -> !d.isPomType()).map(dependency -> extendedContext.getArtifactToClassPathURLResolver().resolveURL(dependency, extendedContext.getContext().getClassPathURLs())).collect(Collectors.toCollection(() -> appURLs));
+              )).resolveDependencies().stream().filter(d -> !d.isPomType()).map(dependency -> extendedContext.getArtifactToClassPathURLResolver().resolveURL(dependency, extendedContext.getClassificationContext().getClassPathURLs())).collect(Collectors.toCollection(() -> appURLs));
         return appURLs;
     }
 
@@ -150,7 +143,7 @@ public class MuleClassPathClassifier implements ClassPathClassifier
         List<PluginUrlClassification> pluginClassifications = new ArrayList<>();
         ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(true);
         scanner.addIncludeFilter(new AnnotationTypeFilter(Extension.class));
-        String extensionsBasePackage = getAnnotationAttributeFrom(extendedContext.getContext().getTestClass(), ArtifactClassLoaderRunnerConfig.class, "extensionBasePackage");
+        String extensionsBasePackage = getAnnotationAttributeFrom(extendedContext.getClassificationContext().getTestClass(), ArtifactClassLoaderRunnerConfig.class, "extensionBasePackage");
         if (extensionsBasePackage != null && extensionsBasePackage.isEmpty())
         {
             throw new IllegalArgumentException("Base package for discovering extensions should be empty, it will take too much time to discover all the classes, please set a reasonable package for your extension annotate your tests with its base package");
@@ -175,7 +168,7 @@ public class MuleClassPathClassifier implements ClassPathClassifier
                     throw new IllegalArgumentException("Cannot create plugin/extension class loader classification due to extension class not found", e);
                 }
 
-                String extensionMavenArtifactId = getExtensionMavenArtifactId(extensionClass, extendedContext.getContext().getMavenMultiModuleArtifactMapping());
+                String extensionMavenArtifactId = getExtensionMavenArtifactId(extensionClass, extendedContext.getClassificationContext().getMavenMultiModuleArtifactMapping());
                 isRootArtifactIdAnExtension |= extendedContext.getCompileArtifact().getArtifactId().equals(extensionMavenArtifactId);
 
                 pluginClassifications.add(extensionClassPathClassification(extensionClass, extensionMavenArtifactId, extendedContext));
@@ -200,13 +193,13 @@ public class MuleClassPathClassifier implements ClassPathClassifier
     {
         // The container contains anything that is not application either extension class loader urls
         Set<URL> containerURLs = new LinkedHashSet<>();
-        containerURLs.addAll(extendedContext.getContext().getClassPathURLs());
+        containerURLs.addAll(extendedContext.getClassificationContext().getClassPathURLs());
         containerURLs.removeAll(appURLs);
         pluginUrlClassifications.stream().forEach(pluginUrlClassification -> containerURLs.removeAll(pluginUrlClassification.getUrls()));
 
         // If a provided dependency was removed due to there is only one URL in class path for the same dependency, doesn't have the cardinality that maven has
         new DependencyResolver(new ConfigurationBuilder()
-                                       .setMavenDependencyGraph(extendedContext.getContext().getMavenDependencies())
+                                       .setMavenDependencyGraph(extendedContext.getClassificationContext().getMavenDependencies())
                                        .selectDependencies(new DependenciesFilterBuilder()
                                                                    .match(dependency -> dependency.isProvidedScope())
                                        )
@@ -214,7 +207,7 @@ public class MuleClassPathClassifier implements ClassPathClassifier
                                                new TransitiveDependenciesFilterBuilder()
                                                        .match(transitiveDependency -> transitiveDependency.isProvidedScope() || transitiveDependency.isCompileScope())
                                                        .traverseWhenNoMatch()
-                                       )).resolveDependencies().stream().filter(d -> !d.isPomType()).map(dependency -> extendedContext.getArtifactToClassPathURLResolver().resolveURL(dependency, extendedContext.getContext().getClassPathURLs())).forEach(containerURLs::add);
+                                       )).resolveDependencies().stream().filter(d -> !d.isPomType()).map(dependency -> extendedContext.getArtifactToClassPathURLResolver().resolveURL(dependency, extendedContext.getClassificationContext().getClassPathURLs())).forEach(containerURLs::add);
 
         return newArrayList(containerURLs);
     }
@@ -305,17 +298,17 @@ public class MuleClassPathClassifier implements ClassPathClassifier
         int sizeBeforeDepResolver = extensionURLs.size();
 
         new DependencyResolver(new ConfigurationBuilder()
-                                       .setMavenDependencyGraph(extendedContext.getContext().getMavenDependencies())
+                                       .setMavenDependencyGraph(extendedContext.getClassificationContext().getMavenDependencies())
                                        .includeRootArtifact(rootArtifact -> rootArtifact.getArtifactId().equals(extensionMavenArtifactId.toString()))
                                        .selectDependencies(
                                                new DependenciesFilterBuilder()
                                                        .match(dependency -> dependency.getArtifactId().equals(extensionMavenArtifactId.toString())
-                                                                            || (extendedContext.getCompileArtifact().getArtifactId().equals(extensionMavenArtifactId.toString()) && dependency.isCompileScope() && !extendedContext.getExclusion().test(dependency)))
+                                                                            || (extendedContext.getCompileArtifact().getArtifactId().equals(extensionMavenArtifactId.toString()) && dependency.isCompileScope() && !extendedContext.getClassificationContext().getExclusions().test(dependency)))
                                        )
                                        .collectTransitiveDependencies(
                                                new TransitiveDependenciesFilterBuilder()
-                                                       .match(transitiveDependency -> transitiveDependency.isCompileScope() && !extendedContext.getExclusion().test(transitiveDependency))
-                                       )).resolveDependencies().stream().filter(d -> !d.isPomType()).map(dependency -> extendedContext.getArtifactToClassPathURLResolver().resolveURL(dependency, extendedContext.getContext().getClassPathURLs())).forEach(extensionURLs::add);
+                                                       .match(transitiveDependency -> transitiveDependency.isCompileScope() && !extendedContext.getClassificationContext().getExclusions().test(transitiveDependency))
+                                       )).resolveDependencies().stream().filter(d -> !d.isPomType()).map(dependency -> extendedContext.getArtifactToClassPathURLResolver().resolveURL(dependency, extendedContext.getClassificationContext().getClassPathURLs())).forEach(extensionURLs::add);
 
         if (extensionURLs.size() == sizeBeforeDepResolver)
         {
@@ -335,89 +328,17 @@ public class MuleClassPathClassifier implements ClassPathClassifier
     private PluginUrlClassification pluginClassPathClassification(final ExtendedClassPathClassifierContext extendedContext)
     {
         Set<URL> urls = new DependencyResolver(new ConfigurationBuilder()
-                                       .setMavenDependencyGraph(extendedContext.getContext().getMavenDependencies())
+                                       .setMavenDependencyGraph(extendedContext.getClassificationContext().getMavenDependencies())
                                        .includeRootArtifact()
                                        .selectDependencies(
                                                new DependenciesFilterBuilder()
-                                                       .match(dependency -> dependency.isCompileScope() && !extendedContext.getExclusion().test(dependency))
+                                                       .match(dependency -> dependency.isCompileScope() && !extendedContext.getClassificationContext().getExclusions().test(dependency))
                                        )
                                        .collectTransitiveDependencies(
                                                new TransitiveDependenciesFilterBuilder()
-                                                       .match(transitiveDependency -> transitiveDependency.isCompileScope() && !extendedContext.getExclusion().test(transitiveDependency))
-                                       )).resolveDependencies().stream().filter(d -> !d.isPomType()).map(dependency -> extendedContext.getArtifactToClassPathURLResolver().resolveURL(dependency, extendedContext.getContext().getClassPathURLs())).collect(Collectors.toSet());
+                                                       .match(transitiveDependency -> transitiveDependency.isCompileScope() && !extendedContext.getClassificationContext().getExclusions().test(transitiveDependency))
+                                       )).resolveDependencies().stream().filter(d -> !d.isPomType()).map(dependency -> extendedContext.getArtifactToClassPathURLResolver().resolveURL(dependency, extendedContext.getClassificationContext().getClassPathURLs())).collect(Collectors.toSet());
         return new PluginUrlClassification(extendedContext.getCompileArtifact().getArtifactId(), Lists.newArrayList(urls));
     }
 
-    /**
-     * The list of exclusion GAT to be excluded from application/plugin class loaders due to these are supposed to
-     * be exposed by the container.
-     * <p/>
-     * It defined by the file {@code excluded.properties} and can be changed by having this file in the module that is tested or
-     * appended to the default excluded GAT by marking the test with the annotation {@link ArtifactClassLoaderRunnerConfig}.
-     *
-     * @param klass the test class being tested
-     * @return a {@link Predicate} to be used in order to excluded maven artifacts from application/plugin class loaders.
-     */
-    private Predicate<MavenArtifact> getExclusionsPredicate(final Class<?> klass)
-    {
-        Predicate<MavenArtifact> exclusionPredicate = null;
-        try
-        {
-            Properties excludedProperties = getExcludedProperties();
-            String excludedModules = excludedProperties.getProperty("excluded.modules");
-            if (excludedModules != null)
-            {
-                exclusionPredicate = createPredicate(exclusionPredicate, excludedModules);
-            }
-            else
-            {
-                logger.warn("excluded.properties found but there is no list of modules defined to be excluded, this could be the reason why the test may fail later due to JUnit classes are not found");
-            }
-        }
-        catch (Exception e)
-        {
-            throw new RuntimeException("Error while loading excluded.properties file", e);
-        }
-        List<String> exclusionsAnnotated = getAnnotationAttributeFromHierarchy(klass, ArtifactClassLoaderRunnerConfig.class, "exclusions");
-        for (String exclusionsToBeAppended : exclusionsAnnotated)
-        {
-            if (exclusionsToBeAppended != null && exclusionsToBeAppended.length() > 0)
-            {
-                exclusionPredicate = createPredicate(exclusionPredicate, exclusionsToBeAppended);
-            }
-        }
-
-        // If no exclusion is defined the predicate should always return false to any artifact due to none is excluded
-        return exclusionPredicate == null ? new TruePredicate<MavenArtifact>().negate() : exclusionPredicate;
-    }
-
-    /**
-     * Creates the predicate or adds a new one to the given one by splitting the exclusions patterns.
-     *
-     * @param exclusionPredicate the current exclusion predicate to compose with an OR operation (if not null).
-     * @param exclusions the coma separated list of patterns to parse and generate exclusions for.
-     * @return a new {@link Predicate<MavenArtifact>} with the exclusions.
-     */
-    private Predicate<MavenArtifact> createPredicate(final Predicate<MavenArtifact> exclusionPredicate, final String exclusions)
-    {
-        Predicate<MavenArtifact> predicate = exclusionPredicate;
-        for (String exclusion : exclusions.split(","))
-        {
-            String[] exclusionSplit = exclusion.split(":");
-            if (exclusionSplit.length != 3)
-            {
-                throw new IllegalArgumentException("Exclusion pattern should be a GAT format, groupId:artifactId:type");
-            }
-            Predicate<MavenArtifact> artifactExclusion = new MavenArtifactMatcherPredicate(exclusionSplit[0], exclusionSplit[1], exclusionSplit[2]);
-            if (predicate == null)
-            {
-                predicate = artifactExclusion;
-            }
-            else
-            {
-                predicate = predicate.or(artifactExclusion);
-            }
-        }
-        return predicate;
-    }
 }

@@ -15,7 +15,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import org.mule.functional.classloading.isolation.maven.MavenArtifact;
-import org.mule.functional.classloading.isolation.maven.MavenArtifactToClassPathURLResolver;
 import org.mule.functional.classloading.isolation.maven.MavenMultiModuleArtifactMapping;
 import org.mule.tck.size.SmallTest;
 
@@ -35,13 +34,13 @@ import org.junit.rules.ExpectedException;
  * Test for {@link MavenArtifactToClassPathURLResolver}
  */
 @SmallTest
-public class DefaultMavenArtifactToClassPathURLResolverTest
+public class MavenArtifactToClassPathURLResolverTest
 {
 
     public static final String PARENT_PROJECT_FOLDER = "/parent-project/";
     public static final String UTILS_CORE_MODULE_FOLDER = PARENT_PROJECT_FOLDER + "utils/";
 
-    private DefaultMavenArtifactToClassPathURLResolver urlResolver;
+    private MavenArtifactToClassPathURLResolver urlResolver;
     private MavenMultiModuleArtifactMapping mapping;
 
     private MavenArtifact coreArtifact;
@@ -58,7 +57,7 @@ public class DefaultMavenArtifactToClassPathURLResolverTest
     public void before() throws Exception
     {
         mapping = mock(MavenMultiModuleArtifactMapping.class);
-        urlResolver = new DefaultMavenArtifactToClassPathURLResolver(mapping);
+        urlResolver = new MavenArtifactToClassPathURLResolver(mapping);
 
         commonCliArtifact = new MavenArtifact("commons-cli", "commons-cli", "jar", "1.2", "provided");
         coreArtifact = new MavenArtifact("org.my.company", "core-artifact", "jar", "1.0.0", "compile");

@@ -19,8 +19,12 @@ public interface MavenDependenciesResolver
 {
 
     /**
-     * @return it would generate the dependencies for the maven artifact where the resolver is being called.
-     * It will return a {@link LinkedHashMap} with each dependency as key and for each key a {@link Set} of its dependencies.
+     * Creates a dependency graph where the key represents a {@link MavenArtifact} and value defines its dependencies.
+     * For each dependency if there is a transtive dependency a key would be present in {@link LinkedHashMap<MavenArtifact, Set<MavenArtifact>>}.
+     * The first key in the {@link LinkedHashMap<MavenArtifact, Set<MavenArtifact>>}.
+     *
+     * @return it generates the dependencies for the maven artifact where the resolver is being called.
+     * It returns a {@link LinkedHashMap} with each dependency as key and for each key a {@link Set} of its dependencies.
      * First entry of the map should be the current artifact being tested by the runner.
      */
     LinkedHashMap<MavenArtifact, Set<MavenArtifact>> buildDependencies();

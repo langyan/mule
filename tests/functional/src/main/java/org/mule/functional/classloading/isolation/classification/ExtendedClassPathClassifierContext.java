@@ -12,7 +12,6 @@ import org.mule.functional.classloading.isolation.maven.MavenArtifactToClassPath
 import org.mule.functional.junit4.runners.ArtifactClassLoaderRunner;
 
 import java.io.File;
-import java.util.function.Predicate;
 
 /**
  * Just extends {@link ClassPathClassifierContext} to append specific data needed to classify the context internally in {@link MuleClassPathClassifier}.
@@ -21,8 +20,7 @@ import java.util.function.Predicate;
  */
 public class ExtendedClassPathClassifierContext
 {
-    private final ClassPathClassifierContext context;
-    private final Predicate<MavenArtifact> exclusion;
+    private final ClassPathClassifierContext classificationContext;
     private final MavenArtifact compileArtifact;
     private final MavenArtifactToClassPathURLResolver artifactToClassPathURLResolver;
     private final File targetTestClassesFolder;
@@ -30,16 +28,14 @@ public class ExtendedClassPathClassifierContext
     /**
      * Creates a {@link ExtendedClassPathClassifierContext} used internally in {@link MuleClassPathClassifier} to do the classification.
      *
-     * @param context the initial {@link ClassPathClassifierContext} context passed by {@link ArtifactClassLoaderRunner}
-     * @param exclusion the {@link Predicate<MavenArtifact>} built based on the exclusion patterns defined
+     * @param classificationContext the initial {@link ClassPathClassifierContext} context passed by {@link ArtifactClassLoaderRunner}
      * @param compileArtifact the artifactId for the current maven artifact where the test belongs to
      * @param artifactToClassPathURLResolver resolves the {@link java.net.URL} from the class path for a given artifactId
      * @param targetTestClassesFolder the target/test-classes folder of the current artifact being tested
      */
-    public ExtendedClassPathClassifierContext(final ClassPathClassifierContext context, final Predicate<MavenArtifact> exclusion, final MavenArtifact compileArtifact, final MavenArtifactToClassPathURLResolver artifactToClassPathURLResolver, final File targetTestClassesFolder)
+    public ExtendedClassPathClassifierContext(final ClassPathClassifierContext classificationContext, final MavenArtifact compileArtifact, final MavenArtifactToClassPathURLResolver artifactToClassPathURLResolver, final File targetTestClassesFolder)
     {
-        this.context = context;
-        this.exclusion = exclusion;
+        this.classificationContext = classificationContext;
         this.compileArtifact = compileArtifact;
         this.artifactToClassPathURLResolver = artifactToClassPathURLResolver;
         this.targetTestClassesFolder = targetTestClassesFolder;
@@ -55,14 +51,9 @@ public class ExtendedClassPathClassifierContext
         return compileArtifact;
     }
 
-    public ClassPathClassifierContext getContext()
+    public ClassPathClassifierContext getClassificationContext()
     {
-        return context;
-    }
-
-    public Predicate<MavenArtifact> getExclusion()
-    {
-        return exclusion;
+        return classificationContext;
     }
 
     public File getTargetTestClassesFolder()

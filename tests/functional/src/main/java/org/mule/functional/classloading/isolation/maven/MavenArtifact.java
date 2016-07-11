@@ -25,13 +25,23 @@ public class MavenArtifact
 
     public static final String POM_TYPE = "pom";
 
-    private String groupId;
-    private String artifactId;
-    private String type;
-    private String version;
-    private String scope;
+    private final String groupId;
+    private final String artifactId;
+    private final String type;
+    private final String version;
+    private final String scope;
 
-    public MavenArtifact(String groupId, String artifactId, String type, String version, String scope)
+    /**
+     * Creates a maven representation of an artifact. The identity of a {@link MavenArtifact} is based on
+     * its not null attributes, version and scope don't define the identity.
+     *
+     * @param groupId not null
+     * @param artifactId not null
+     * @param type not null
+     * @param version can be null
+     * @param scope can be null
+     */
+    private MavenArtifact(final String groupId, final String artifactId, final String type, final String version, String scope)
     {
         this.groupId = groupId;
         this.artifactId = artifactId;

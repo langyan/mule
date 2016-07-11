@@ -11,8 +11,8 @@ import java.net.URL;
 import java.util.List;
 
 /**
- * Defines the list of URLS for the plugin class loader that would be created in order to run the test and
- * also has the reference to the extension class.
+ * Defines the result of the classification process for a plugin.
+ * It contains the list of URLS that should have the plugin class loader in order to run the test and a name for it.
  *
  * @since 4.0
  */
@@ -21,6 +21,12 @@ public class PluginUrlClassification
     private List<URL> urls;
     private String name;
 
+    /**
+     * Creates an instance of the classification.
+     *
+     * @param name a {@link String} representing the name of the plugin
+     * @param urls list of {@link URL}s that would be used to create the {@link java.net.URLClassLoader}
+     */
     public PluginUrlClassification(String name, List<URL> urls)
     {
         this.name = name;

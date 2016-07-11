@@ -9,17 +9,12 @@ package org.mule.functional.classloading.isolation.classloader;
 
 import static java.lang.Boolean.valueOf;
 import static java.lang.System.getProperty;
-import static java.util.Collections.addAll;
-import static org.apache.commons.lang3.StringUtils.isEmpty;
-import static org.mule.functional.util.AnnotationUtils.getAnnotationAttributeFromHierarchy;
 import static org.mule.runtime.core.api.config.MuleProperties.MULE_LOG_VERBOSE_CLASSLOADING;
 import static org.mule.runtime.core.util.ClassUtils.withContextClassLoader;
 import static org.mule.runtime.module.extension.internal.ExtensionProperties.EXTENSION_MANIFEST_FILE_NAME;
 import org.mule.functional.classloading.isolation.classification.ArtifactUrlClassification;
 import org.mule.functional.classloading.isolation.classification.ClassLoaderTestRunner;
 import org.mule.functional.classloading.isolation.classification.PluginUrlClassification;
-import org.mule.functional.classloading.isolation.utils.RunnerModuleUtils;
-import org.mule.functional.junit4.runners.ArtifactClassLoaderRunnerConfig;
 import org.mule.runtime.container.internal.ClasspathModuleDiscoverer;
 import org.mule.runtime.container.internal.ContainerClassLoaderFilterFactory;
 import org.mule.runtime.container.internal.MuleModule;
@@ -36,15 +31,12 @@ import org.mule.runtime.module.artifact.classloader.MuleArtifactClassLoader;
 import org.mule.runtime.module.artifact.classloader.MuleClassLoaderLookupPolicy;
 import org.mule.runtime.module.extension.internal.manager.DefaultExtensionManager;
 
-import com.google.common.collect.Sets;
-
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -52,15 +44,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Factory that creates that mimics the class loading hierarchy used in a standalone container.
+ * Factory that creates a class loader hierarchy that mimics the one used in a mule standalone container.
  * <p/>
  * The class loaders created have the following hierarchy:
- * <p/>
  * <ul>
  * <li>Container: all the provided scope dependencies plus their dependencies (if they are not test) and java</li>
- * <li>Plugins (optional): for each plugin a class loader will be created with all the compile scope dependencies and their dependencies (only the ones with scope compile)</li>
- * <li>Application: all the test scope dependencies and their dependencies if they are not defined to be excluded, plus the test dependencies
- * from the compile scope dependencies (again if they are not excluded).</li>
+ * <li>Plugins (optional): for each plugin a class loader will be created with all the compile scope dependencies and their transitive dependencies (only the ones with scope compile)</li>
+ * <li>Application: all the test scope dependencies and their dependencies if they are not defined to be excluded, plus their transitive dependencies (again if they are not excluded).</li>
  * </ul>
  *
  * @since 4.0
@@ -68,19 +58,20 @@ import org.slf4j.LoggerFactory;
 public class MuleClassLoaderRunnerFactory
 {
 
-    protected final transient Logger logger = LoggerFactory.getLogger(this.getClass());
+    protected final Logger logger = LoggerFactory.getLogger(this.getClass());
     private ArtifactClassLoaderFilterFactory artifactClassLoaderFilterFactory = new DefaultArtifactClassLoaderFilterFactory();
     private DefaultExtensionManager extensionManager = new DefaultExtensionManager();
 
     /**
      * Creates a {@link ClassLoaderTestRunner} containing the container, plugins and application {@link ArtifactClassLoader}s
-     * @param klass
-     * @param artifactUrlClassification
-     * @return a {@link ClassLoaderTestRunner}
+     *
+     * @param extraBootPackages {@link Set<String>} of extra boot packages to be appended to the container {@link ClassLoader}
+     * @param artifactUrlClassification the {@link ArtifactUrlClassification} that defines the different {@link URL}s for each {@link ClassLoader}
+     * @return a {@link ClassLoaderTestRunner} that would be used to run the test
      */
-    public ClassLoaderTestRunner createClassLoader(Class<?> klass, ArtifactUrlClassification artifactUrlClassification)
+    public ClassLoaderTestRunner createClassLoader(Set<String> extraBootPackages, ArtifactUrlClassification artifactUrlClassification)
     {
-        final TestContainerClassLoaderFactory testContainerClassLoaderFactory = new TestContainerClassLoaderFactory(getExtraBootPackages(klass), artifactUrlClassification.getContainerURLs().toArray(new URL[0]));
+        final TestContainerClassLoaderFactory testContainerClassLoaderFactory = new TestContainerClassLoaderFactory(extraBootPackages, artifactUrlClassification.getContainerURLs().toArray(new URL[0]));
 
         ArtifactClassLoader containerClassLoader = createContainerArtifactClassLoader(testContainerClassLoaderFactory, artifactUrlClassification);
         ClassLoader classLoader = containerClassLoader.getClassLoader();
@@ -101,12 +92,12 @@ public class MuleClassLoaderRunnerFactory
     /**
      * Creates an {@link ArtifactClassLoader} for the container. As difference from a mule container this one has to be aware that the parent class loader
      * has all the URLs loaded in launcher app class loader so it has to create a particular look policy to resolve classes as CHILD_FIRST.
-     * In order to do that a {@link FilteringArtifactClassLoader} is created to similates the launcher class loader to resolve only classes from the URLs defined
+     * In order to do that a {@link FilteringArtifactClassLoader} is created that emulates the launcher class loader to resolve only classes from the {@link URL}s defined
      * to be in the container.
      *
      * @param testContainerClassLoaderFactory {@link TestContainerClassLoaderFactory} that has the logic to create a container class loader
-     * @param artifactUrlClassification the url classifications to get plugins urls
-     * @return an {@link ArtifactClassLoader} for the container.
+     * @param artifactUrlClassification the classifications to get plugins {@link URL}s
+     * @return an {@link ArtifactClassLoader} for the container
      */
     private ArtifactClassLoader createContainerArtifactClassLoader(TestContainerClassLoaderFactory testContainerClassLoaderFactory, ArtifactUrlClassification artifactUrlClassification)
     {
@@ -123,13 +114,14 @@ public class MuleClassLoaderRunnerFactory
      * For extension plugins it will also create the filter based on the extension manifest file. For a plain plugin it will collect the exported
      * packages and resources for creating the filter from its mule-module.properties file.
      * <pr/>
-     * It also creates a sharedLibs plugin without any library so far, in order to be a similar representation as mule's container has.
+     * It also creates a sharedLibs plugin without any library so far, in order to be a similar representation as mule's container has and also to allow
+     * the hierarchy process to look for classes from its parent (see {@link CompositeClassLoader} that doesn't delegate to its parent).
      * <pr/>
      * With the given list of created class loader plugins it will finally create a {@link CompositeClassLoader} and return it.
      *
      * @param parent the parent class loader to be assigned to the new one created here
      * @param childClassLoaderLookupPolicy look policy to be used
-     * @param artifactUrlClassification the url classifications to get plugins urls
+     * @param artifactUrlClassification the url classifications to get plugins {@link URL}s
      * @param pluginsArtifactClassLoaders a list where it would append each {@link ArtifactClassLoader} created for a plugin in order to allow access them later
      * @return a {@link CompositeClassLoader} that represents the plugin class loaders.
      */
@@ -172,10 +164,10 @@ public class MuleClassLoaderRunnerFactory
     }
 
     /**
-     * Validates that only one module should be discovered.
+     * Validates that only one module should be discovered. A plugin cannot have inside another plugin that holds a {@code mule-module.properties} for the time being.
      *
-     * @param pluginName
-     * @param discoveredModules
+     * @param pluginName the plugin name
+     * @param discoveredModules {@link MuleModule} discovered
      * @return the first Module from the list due to there should be only one module.
      */
     private MuleModule validatePluginModule(String pluginName, List<MuleModule> discoveredModules)
@@ -197,7 +189,7 @@ public class MuleClassLoaderRunnerFactory
      * @param parent the parent class loader to be assigned to the new one created here
      * @param childClassLoaderLookupPolicy look policy to be used
      * @param artifactUrlClassification the url classifications to get plugins urls
-     * @return the {@link ArtifactClassLoader} to be used for test runner as in TCCL.
+     * @return the {@link ArtifactClassLoader} to be used for running the test
      */
     private ArtifactClassLoader createApplicationArtifactClassLoader(ClassLoader parent, ClassLoaderLookupPolicy childClassLoaderLookupPolicy, ArtifactUrlClassification artifactUrlClassification)
     {
@@ -228,37 +220,6 @@ public class MuleClassLoaderRunnerFactory
     private Boolean isVerboseClassLoading()
     {
         return valueOf(getProperty(MULE_LOG_VERBOSE_CLASSLOADING));
-    }
-
-    private Set<String> getExtraBootPackages(Class<?> klass)
-    {
-        Set<String> packages = Sets.newHashSet();
-
-        List<String> extraBootPackagesList = getAnnotationAttributeFromHierarchy(klass, ArtifactClassLoaderRunnerConfig.class, "extraBootPackages");
-        extraBootPackagesList.stream().filter(extraBootPackages -> !isEmpty(extraBootPackages)).forEach(extraBootPackages -> addAll(packages, extraBootPackages.split(",")));
-
-        // Add default boot package always, they are defined in excluded.properties file!
-        try
-        {
-            Properties excludedProperties = RunnerModuleUtils.getExcludedProperties();
-            String excludedExtraBootPackages = excludedProperties.getProperty("extraBoot.packages");
-            if (excludedExtraBootPackages != null)
-            {
-                for (String extraBootPackage : excludedExtraBootPackages.split(","))
-                {
-                    packages.add(extraBootPackage);
-                }
-            }
-            else
-            {
-                logger.warn("excluded.properties found but there is no list of extra boot packages defined to be added to container, this could be the reason why the test may fail later due to JUnit classes are not found");
-            }
-        }
-        catch (Exception e)
-        {
-            throw new RuntimeException("Error while loading excluded.properties file", e);
-        }
-        return packages;
     }
 
 }

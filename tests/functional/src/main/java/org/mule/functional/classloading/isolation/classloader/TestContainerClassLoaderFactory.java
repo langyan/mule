@@ -37,12 +37,30 @@ public class TestContainerClassLoaderFactory extends ContainerClassLoaderFactory
     private Set<String> extraBootPackages;
     private URL[] urls;
 
+    /**
+     * Factory class that extends the default way to create a container {@link ArtifactClassLoader} in order to support
+     * the differences when running applications in standalone container vs junit.
+     *
+     * @param extraBootPackages {@link Set<String>} extra boot packages that need to be appended to the container (junit for instance)
+     * @param urls {@link URL}s that were classified to be added to the container {@link ClassLoader}
+     */
     public TestContainerClassLoaderFactory(Set<String> extraBootPackages, URL[] urls)
     {
         this.extraBootPackages = extraBootPackages;
         this.urls = urls;
     }
 
+    /**
+     * Overrides the method in order to create a {@link ArtifactClassLoader} that will have a CHILD_FIRST {@link ClassLoaderLookupPolicy}, it is needed due to as difference
+     * from a mule standalone container where the parent {@link ClassLoader} for the container only has bootstrap jars plugins mule modules and third-party libraries when the runner
+     * runs this tests using has a full class path with all the artifacts declared as dependencies for the artifact so we have to change that and change the look strategy to be CHILD_FIRST for
+     * the container.
+     *
+     * @param parentClassLoader the parent {@link ClassLoader} to delegate PARENT look ups
+     * @param muleModules {@link MuleModule} discovered from the launcher {@link ClassLoader} but will be not considered here due to it has all the class path
+     * @param containerLookupPolicy the default {@link ClassLoaderLookupPolicy} defined for a container but will be ignored due to it has to be different when running with a full class path as parent {@link ClassLoader}
+     * @return the {@link ArtifactClassLoader} to be used for the container
+     */
     @Override
     protected ArtifactClassLoader createArtifactClassLoader(ClassLoader parentClassLoader, List<MuleModule> muleModules, ClassLoaderLookupPolicy containerLookupPolicy)
     {
@@ -50,17 +68,27 @@ public class TestContainerClassLoaderFactory extends ContainerClassLoaderFactory
         return createContainerFilteringClassLoader(discoverModules(), containerClassLoader);
     }
 
+    /**
+     * @return the original list of boot packages defined in {@link ContainerClassLoaderFactory} plus extra packages needed to be added in order to allow tests to run with isolation.
+     * For instance, junit is an extra package that has to be handled as boot package.
+     */
     @Override
     public Set<String> getBootPackages()
     {
         return ImmutableSet.<String>builder().addAll(super.getBootPackages()).addAll(extraBootPackages).build();
     }
 
+    /**
+     * @return uses only the set of {@link URL}s defined for the container to create the {@link ClassLoaderLookupPolicy}
+     */
     public ClassLoaderLookupPolicy getContainerClassLoaderLookupPolicy()
     {
         return withContextClassLoader(new URLClassLoader(urls, null), () -> super.getContainerClassLoaderLookupPolicy(discoverModules()));
     }
 
+    /**
+     * @return discovers modules using TCCL
+     */
     private List<MuleModule> discoverModules()
     {
         return new ClasspathModuleDiscoverer(Thread.currentThread().getContextClassLoader()).discover();

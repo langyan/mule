@@ -14,13 +14,13 @@ import org.mule.functional.classloading.isolation.classification.ClassPathClassi
 import org.mule.functional.classloading.isolation.classification.MuleClassPathClassifier;
 import org.mule.functional.classloading.isolation.classloader.MuleClassLoaderRunnerFactory;
 import org.mule.functional.classloading.isolation.classpath.ClassPathURLsProvider;
-import org.mule.functional.classloading.isolation.classpath.DefaultClassPathURLsProvider;
 import org.mule.functional.classloading.isolation.maven.DependencyGraphMavenDependenciesResolver;
 import org.mule.functional.classloading.isolation.maven.MavenDependenciesResolver;
 import org.mule.functional.classloading.isolation.maven.MavenMultiModuleArtifactMapping;
 import org.mule.functional.classloading.isolation.maven.MuleMavenMultiModuleArtifactMapping;
 import org.mule.runtime.module.artifact.classloader.ArtifactClassLoader;
 
+import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.List;
@@ -118,22 +118,24 @@ public class ArtifactClassLoaderRunner extends Runner implements Filterable
      * Creates the {@link ClassLoaderTestRunner} with the isolated class loaders.
      *
      * @param klass
+     * @throws IOException if an error happened while reading files needed by configuration
      * @return creates a {@link ClassLoaderTestRunner} that would be used to run the test. This way the test will be isolated and it will behave
      * similar as an application running in a Mule standalone container.
      */
-    private static ClassLoaderTestRunner createClassLoaderTestRunner(Class<?> klass)
+    private static ClassLoaderTestRunner createClassLoaderTestRunner(Class<?> klass) throws IOException
     {
         // Initializes utility classes
-        ClassPathURLsProvider classPathURLsProvider = new DefaultClassPathURLsProvider();
+        ClassPathURLsProvider classPathURLsProvider = new ClassPathURLsProvider();
         MavenDependenciesResolver mavenDependenciesResolver = new DependencyGraphMavenDependenciesResolver();
         MavenMultiModuleArtifactMapping mavenMultiModuleArtifactMapping = new MuleMavenMultiModuleArtifactMapping();
         MuleClassLoaderRunnerFactory classLoaderRunnerFactory = new MuleClassLoaderRunnerFactory();
         ClassPathClassifier classPathClassifier = new MuleClassPathClassifier();
 
         // Does the classification and creation of the isolated ClassLoader
-        ArtifactUrlClassification artifactUrlClassification = classPathClassifier.classify(new ClassPathClassifierContext(klass, classPathURLsProvider.getURLs(),
-                                                                                           mavenDependenciesResolver.buildDependencies(), mavenMultiModuleArtifactMapping));
-        return classLoaderRunnerFactory.createClassLoader(klass, artifactUrlClassification);
+        ClassPathClassifierContext context = new ClassPathClassifierContext(klass, classPathURLsProvider.getURLs(),
+                                                                            mavenDependenciesResolver.buildDependencies(), mavenMultiModuleArtifactMapping);
+        ArtifactUrlClassification artifactUrlClassification = classPathClassifier.classify(context);
+        return classLoaderRunnerFactory.createClassLoader(context.getExtraBootPackages(), artifactUrlClassification);
     }
 
     /**
