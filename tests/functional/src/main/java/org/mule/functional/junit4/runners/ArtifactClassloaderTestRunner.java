@@ -57,6 +57,7 @@ import org.junit.runners.model.TestClass;
  * The classification bases its logic by reading the dependency tree graph generated with depgraph-maven-plugin.
  * It goes over the tree to select the dependencies and getting the URLs from the Launcher class loader to create the
  * {@link ArtifactClassLoader}s and filters for each one of them.
+ * <p/>
  * See {@link ClassPathClassifier} for details about the classification logic. Just for understanding the simple way to
  * describe the classification is by saying that all the provided dependencies (including its transitives) will go to the container
  * class loader, for each extension defined it will create a plugin class loader including its compile dependencies (including transitives)
