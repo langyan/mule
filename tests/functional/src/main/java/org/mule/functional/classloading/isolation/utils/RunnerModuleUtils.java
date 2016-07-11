@@ -23,7 +23,7 @@ public final class RunnerModuleUtils
     }
 
     /**
-     * Loads the excluded.properties file.
+     * Loads the {@code excluded.properties} file.
      *
      * @return a {@link Properties} loaded with excluded.properties file.
      * @throws IOException if the properties couldn't load the file.

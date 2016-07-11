@@ -349,12 +349,13 @@ public class MuleClassPathClassifier implements ClassPathClassifier
     }
 
     /**
-     * The list of exclusion GAT to be excluded from application/plugin classloaders due to these are supposed to
+     * The list of exclusion GAT to be excluded from application/plugin class loaders due to these are supposed to
      * be exposed by the container.
-     * It defined by the file excluded.properties and can be changed by having this file in the module that is tested or
+     * <p/>
+     * It defined by the file {@code excluded.properties} and can be changed by having this file in the module that is tested or
      * appended to the default excluded GAT by marking the test with the annotation {@link ArtifactClassLoaderRunnerConfig}.
      *
-     * @param klass
+     * @param klass the test class being tested
      * @return a {@link Predicate} to be used in order to excluded maven artifacts from application/plugin class loaders.
      */
     private Predicate<MavenArtifact> getExclusionsPredicate(final Class<?> klass)
@@ -393,9 +394,9 @@ public class MuleClassPathClassifier implements ClassPathClassifier
     /**
      * Creates the predicate or adds a new one to the given one by splitting the exclusions patterns.
      *
-     * @param exclusionPredicate
-     * @param exclusions
-     * @return a new {@link Predicate<MavenArtifact>} with the exclusions
+     * @param exclusionPredicate the current exclusion predicate to compose with an OR operation (if not null).
+     * @param exclusions the coma separated list of patterns to parse and generate exclusions for.
+     * @return a new {@link Predicate<MavenArtifact>} with the exclusions.
      */
     private Predicate<MavenArtifact> createPredicate(final Predicate<MavenArtifact> exclusionPredicate, final String exclusions)
     {

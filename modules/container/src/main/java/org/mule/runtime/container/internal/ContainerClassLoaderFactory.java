@@ -177,6 +177,13 @@ public class ContainerClassLoaderFactory
         return result;
     }
 
+    /**
+     * Creates a {@link FilteringArtifactClassLoader} to filter the {@link ArtifactClassLoader} containerClassLoader given based on {@link List<MuleModule>} of muleModules.
+     *
+     * @param muleModules
+     * @param containerClassLoader
+     * @return a {@link FilteringContainerClassLoader} that would be the one used as the parent of plugins and applications {@link ArtifactClassLoader}
+     */
     protected FilteringArtifactClassLoader createContainerFilteringClassLoader(List<MuleModule> muleModules, ArtifactClassLoader containerClassLoader)
     {
         return new FilteringContainerClassLoader(containerClassLoader, new ContainerClassLoaderFilterFactory().create(getBootPackages(), muleModules));
