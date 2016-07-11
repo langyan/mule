@@ -10,9 +10,6 @@ package org.mule.runtime.module.ws.functional;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.nullValue;
 
-import org.mule.runtime.core.api.MuleEventContext;
-import org.mule.functional.functional.EventCallback;
-
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -60,19 +57,15 @@ public class SoapActionFunctionalTestCase extends AbstractWSConsumerFunctionalTe
     private void assertSoapAction(String flowName, final String expectedSoapActionHeader,
                                   final String expectedActionInContentType) throws Exception
     {
-        getFunctionalTestComponent("server").setEventCallback(new EventCallback()
+        getFunctionalTestComponent("server").setEventCallback((context, component) ->
         {
-            @Override
-            public void eventReceived(MuleEventContext context, Object component) throws Exception
-            {
-                String soapAction = context.getMessage().getInboundProperty("SOAPAction");
-                String contentType = context.getMessage().getInboundProperty("Content-Type");
+            String soapAction = context.getMessage().getInboundProperty("SOAPAction");
+            String contentType = context.getMessage().getDataType().getMediaType().toRfcString();
 
-                String actionInContentType = extractAction(contentType);
+            String actionInContentType = extractAction(contentType);
 
-                assertMatchesQuoted(expectedSoapActionHeader, soapAction);
-                assertMatchesQuoted(expectedActionInContentType, actionInContentType);
-            }
+            assertMatchesQuoted(expectedSoapActionHeader, soapAction);
+            assertMatchesQuoted(expectedActionInContentType, actionInContentType);
         });
 
         flowRunner(flowName).withPayload("<test/>").run();
