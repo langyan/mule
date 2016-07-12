@@ -6,8 +6,6 @@
  */
 package org.mule.functional.classloading.isolation.maven.dependencies;
 
-import static java.util.Collections.emptySet;
-
 import org.mule.functional.classloading.isolation.maven.MavenArtifact;
 
 import java.util.HashSet;
@@ -49,13 +47,8 @@ public class DependencyResolver
      */
     public Set<MavenArtifact> resolveDependencies()
     {
-        // Filter dependencies (first entry set in LinkedHashMap is root artifact from the dependency tree)
-        MavenArtifact rootMavenArtifact = configuration.getAllDependencies().keySet().stream().findFirst().get();
-        if (rootMavenArtifact == null)
-        {
-            return emptySet();
-        }
-        Set<MavenArtifact> dependencies = configuration.getAllDependencies().get(rootMavenArtifact)
+        MavenArtifact rootMavenArtifact = configuration.getDependencyGraph().getRootArtifact();
+        Set<MavenArtifact> dependencies = configuration.getDependencyGraph().getDependencies()
                 .stream().filter(key -> configuration.getDependenciesFilter().getPredicate().test(key)).collect(Collectors.toSet());
 
         Set<MavenArtifact> resolvedDependencies = new HashSet<>();
@@ -90,24 +83,21 @@ public class DependencyResolver
     {
         Set<MavenArtifact> transitiveDependencies = new HashSet<>();
 
-        if (configuration.getAllDependencies().containsKey(dependency))
-        {
-            configuration.getAllDependencies().get(dependency).stream().forEach(transitiveDependency -> {
-                if (predicate.test(transitiveDependency))
+        configuration.getDependencyGraph().getTransitiveDependencies(dependency).stream().forEach(transitiveDependency -> {
+            if (predicate.test(transitiveDependency))
+            {
+                transitiveDependencies.add(transitiveDependency);
+                transitiveDependencies.addAll(collectTransitiveDependencies(transitiveDependency, predicate, traverseWhenNoMatch));
+            }
+            else
+            {
+                // Just the case for getting all their dependencies from an excluded dependencies (case of org.mule:core for instance, we also need their transitive dependencies)
+                if (traverseWhenNoMatch)
                 {
-                    transitiveDependencies.add(transitiveDependency);
                     transitiveDependencies.addAll(collectTransitiveDependencies(transitiveDependency, predicate, traverseWhenNoMatch));
                 }
-                else
-                {
-                    // Just the case for getting all their dependencies from an excluded dependencies (case of org.mule:core for instance, we also need their transitive dependencies)
-                    if (traverseWhenNoMatch)
-                    {
-                        transitiveDependencies.addAll(collectTransitiveDependencies(transitiveDependency, predicate, traverseWhenNoMatch));
-                    }
-                }
-            });
-        }
+            }
+        });
         return transitiveDependencies;
     }
 

@@ -11,6 +11,7 @@ import static java.util.Collections.addAll;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.mule.functional.classloading.isolation.utils.RunnerModuleUtils.getExcludedProperties;
 import static org.mule.functional.util.AnnotationUtils.getAnnotationAttributeFromHierarchy;
+import org.mule.functional.classloading.isolation.maven.DependenciesGraph;
 import org.mule.functional.classloading.isolation.maven.MavenArtifact;
 import org.mule.functional.classloading.isolation.maven.MavenArtifactMatcherPredicate;
 import org.mule.functional.classloading.isolation.maven.MavenMultiModuleArtifactMapping;
@@ -20,7 +21,6 @@ import com.google.common.collect.Sets;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
@@ -41,7 +41,7 @@ public class ClassPathClassifierContext
 
     private final Class<?> testClass;
     private final List<URL> classPathURLs;
-    private final LinkedHashMap<MavenArtifact, Set<MavenArtifact>> mavenDependencies;
+    private final DependenciesGraph dependenciesGraph;
     private final MavenMultiModuleArtifactMapping mavenMultiModuleArtifactMapping;
     private final Predicate<MavenArtifact> exclusions;
     private final Set<String> extraBootPackages;
@@ -53,14 +53,14 @@ public class ClassPathClassifierContext
      *
      * @param testClass the test {@link Class} being tested
      * @param classPathURLs the whole set of {@link URL}s that were loaded by IDE/Maven Surefire plugin when running the test
-     * @param mavenDependencies the tree of maven dependencies for the artifact that the test belongs to
+     * @param dependenciesGraph the maven dependencies graph for the artifact that the test belongs to
      * @param mavenMultiModuleArtifactMapping a mapper to get multi-module folder for artifactIds
      */
-    public ClassPathClassifierContext(final Class<?> testClass, final List<URL> classPathURLs, final LinkedHashMap<MavenArtifact, Set<MavenArtifact>> mavenDependencies, final MavenMultiModuleArtifactMapping mavenMultiModuleArtifactMapping) throws IOException
+    public ClassPathClassifierContext(final Class<?> testClass, final List<URL> classPathURLs, final DependenciesGraph dependenciesGraph, final MavenMultiModuleArtifactMapping mavenMultiModuleArtifactMapping) throws IOException
     {
         this.testClass = testClass;
         this.classPathURLs = classPathURLs;
-        this.mavenDependencies = mavenDependencies;
+        this.dependenciesGraph = dependenciesGraph;
         this.mavenMultiModuleArtifactMapping = mavenMultiModuleArtifactMapping;
 
         Properties excludedProperties = getExcludedProperties();
@@ -85,13 +85,11 @@ public class ClassPathClassifierContext
     }
 
     /**
-     * @return a {@link LinkedHashMap< MavenArtifact , Set<MavenArtifact>>} Maven dependencies for the given artifact
-     * tested (with its duplications). The map has as key an artifact and values are its dependencies. The first key in
-     * the map represents the root of the dependencies tree.
+     * @return a {@link DependenciesGraph} for the given artifact tested.
      */
-    public LinkedHashMap<MavenArtifact, Set<MavenArtifact>> getMavenDependencies()
+    public DependenciesGraph getDependencyGraph()
     {
-        return mavenDependencies;
+        return dependenciesGraph;
     }
 
     /**

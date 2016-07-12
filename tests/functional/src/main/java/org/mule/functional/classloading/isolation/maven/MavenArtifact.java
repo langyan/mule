@@ -32,14 +32,13 @@ public class MavenArtifact
     private final String scope;
 
     /**
-     * Creates a maven representation of an artifact. The identity of a {@link MavenArtifact} is based on
-     * its not null attributes, version and scope don't define the identity.
+     * Creates a maven representation of an artifact
      *
      * @param groupId not null
      * @param artifactId not null
      * @param type not null
      * @param version can be null
-     * @param scope can be null
+     * @param scope not null
      */
     private MavenArtifact(final String groupId, final String artifactId, final String type, final String version, String scope)
     {
@@ -103,7 +102,7 @@ public class MavenArtifact
     @Override
     public String toString()
     {
-        return groupId + MAVEN_DEPENDENCIES_DELIMITER + artifactId + MAVEN_DEPENDENCIES_DELIMITER + type + MAVEN_DEPENDENCIES_DELIMITER + (version != null ? version : "") + MAVEN_DEPENDENCIES_DELIMITER + (scope != null ? scope : "");
+        return groupId + MAVEN_DEPENDENCIES_DELIMITER + artifactId + MAVEN_DEPENDENCIES_DELIMITER + type + MAVEN_DEPENDENCIES_DELIMITER + (version != null ? version : "") + MAVEN_DEPENDENCIES_DELIMITER + scope;
     }
 
     @Override

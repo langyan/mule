@@ -7,10 +7,9 @@
 
 package org.mule.functional.classloading.isolation.maven.dependencies;
 
+import org.mule.functional.classloading.isolation.maven.DependenciesGraph;
 import org.mule.functional.classloading.isolation.maven.MavenArtifact;
 
-import java.util.LinkedHashMap;
-import java.util.Set;
 import java.util.function.Predicate;
 
 /**
@@ -21,23 +20,21 @@ import java.util.function.Predicate;
 public final class Configuration
 {
 
-    private LinkedHashMap<MavenArtifact, Set<MavenArtifact>> allDependencies;
+    private DependenciesGraph dependencyGraph;
     private boolean rootArtifactIncluded = false;
     private DependenciesFilter dependenciesFilter = new DependenciesFilter();
     private TransitiveDependenciesFilter transitiveDependencyFilter = new TransitiveDependenciesFilter(x -> false);
     private Predicate<MavenArtifact> rootArtifactPredicate = null;
 
     /**
-     * Sets the dependency tree, it is structure as links in a {@link LinkedHashMap<MavenArtifact>, Set<MavenArtifact>>} where
-     * the first entry has as key the root of the tree and as value the list of dependencies, for each one of those (if there is the case)
-     * there will be another entry with value as their dependencies so the whole tree is represented in this way.
+     * Sets the {@link DependenciesGraph} used for resolving and collecting dependencies.
      *
-     * @param allDependencies
+     * @param dependencyGraph
      * @return this
      */
-    public Configuration setMavenDependencyGraph(LinkedHashMap<MavenArtifact, Set<MavenArtifact>> allDependencies)
+    public Configuration setMavenDependencyGraph(DependenciesGraph dependencyGraph)
     {
-        this.allDependencies = allDependencies;
+        this.dependencyGraph = dependencyGraph;
         return this;
     }
 
@@ -95,9 +92,9 @@ public final class Configuration
         return this;
     }
 
-    LinkedHashMap<MavenArtifact, Set<MavenArtifact>> getAllDependencies()
+    DependenciesGraph getDependencyGraph()
     {
-        return allDependencies;
+        return dependencyGraph;
     }
 
     DependenciesFilter getDependenciesFilter()

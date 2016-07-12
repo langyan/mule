@@ -21,7 +21,6 @@ import java.io.File;
 public class ExtendedClassPathClassifierContext
 {
     private final ClassPathClassifierContext classificationContext;
-    private final MavenArtifact compileArtifact;
     private final MavenArtifactToClassPathURLResolver artifactToClassPathURLResolver;
     private final File targetTestClassesFolder;
 
@@ -29,14 +28,12 @@ public class ExtendedClassPathClassifierContext
      * Creates a {@link ExtendedClassPathClassifierContext} used internally in {@link MuleClassPathClassifier} to do the classification.
      *
      * @param classificationContext the initial {@link ClassPathClassifierContext} context passed by {@link ArtifactClassLoaderRunner}
-     * @param compileArtifact the artifactId for the current maven artifact where the test belongs to
      * @param artifactToClassPathURLResolver resolves the {@link java.net.URL} from the class path for a given artifactId
      * @param targetTestClassesFolder the target/test-classes folder of the current artifact being tested
      */
-    public ExtendedClassPathClassifierContext(final ClassPathClassifierContext classificationContext, final MavenArtifact compileArtifact, final MavenArtifactToClassPathURLResolver artifactToClassPathURLResolver, final File targetTestClassesFolder)
+    public ExtendedClassPathClassifierContext(final ClassPathClassifierContext classificationContext, final MavenArtifactToClassPathURLResolver artifactToClassPathURLResolver, final File targetTestClassesFolder)
     {
         this.classificationContext = classificationContext;
-        this.compileArtifact = compileArtifact;
         this.artifactToClassPathURLResolver = artifactToClassPathURLResolver;
         this.targetTestClassesFolder = targetTestClassesFolder;
     }
@@ -46,9 +43,9 @@ public class ExtendedClassPathClassifierContext
         return artifactToClassPathURLResolver;
     }
 
-    public MavenArtifact getCompileArtifact()
+    public MavenArtifact getRootArtifact()
     {
-        return compileArtifact;
+        return classificationContext.getDependencyGraph().getRootArtifact();
     }
 
     public ClassPathClassifierContext getClassificationContext()

@@ -9,10 +9,13 @@ package org.mule.functional.classloading.isolation.maven.dependencies;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertTrue;
+import org.mule.functional.classloading.isolation.maven.DependenciesGraph;
 import org.mule.functional.classloading.isolation.maven.MavenArtifact;
 import org.mule.runtime.core.util.ValueHolder;
 import org.mule.tck.junit4.AbstractMuleTestCase;
 import org.mule.tck.size.SmallTest;
+
+import com.google.common.collect.Sets;
 
 import java.net.MalformedURLException;
 import java.util.HashSet;
@@ -220,22 +223,16 @@ public class DependencyResolverTestCase extends AbstractMuleTestCase
     @Test
     public void excludeRootOnlyProvidedAndTransitiveDependencies()
     {
-        LinkedHashMap<MavenArtifact, Set<MavenArtifact>> dependencies = new LinkedHashMap<>();
-
         dom4JArtifact = buildMavenArtifact(dom4JArtifact.getGroupId(), dom4JArtifact.getArtifactId(), dom4JArtifact.getType(), dom4JArtifact.getVersion(), "compile");
-
-        // Dependencies
-        Set<MavenArtifact> rootDependencies = new HashSet<>();
-        rootDependencies.add(commonsCliArtifact);
 
         Set<MavenArtifact> commonsCliDependencies = new HashSet<>();
         commonsCliDependencies.add(dom4JArtifact);
 
-        dependencies.put(rootArtifact, rootDependencies);
-        dependencies.put(commonsCliArtifact, commonsCliDependencies);
+        LinkedHashMap<MavenArtifact, Set<MavenArtifact>> transitiveDependencies = new LinkedHashMap<>();
+        transitiveDependencies.put(commonsCliArtifact, commonsCliDependencies);
 
         builder = new DependencyResolver(new Configuration()
-                                                     .setMavenDependencyGraph(dependencies)
+                                                     .setMavenDependencyGraph(new DependenciesGraph(rootArtifact, Sets.newHashSet(commonsCliArtifact), transitiveDependencies))
                                                      .selectDependencies(
                                                              new DependenciesFilter()
                                                                      .onlyCollectTransitiveDependencies()
@@ -274,15 +271,13 @@ public class DependencyResolverTestCase extends AbstractMuleTestCase
         junitArtifact = buildMavenArtifact("junit", "junit", "jar", "4.12", "test");
     }
 
-    private LinkedHashMap<MavenArtifact, Set<MavenArtifact>> buildDefaultDependencies()
+    private DependenciesGraph buildDefaultDependencies()
     {
-        LinkedHashMap<MavenArtifact, Set<MavenArtifact>> dependencies = new LinkedHashMap<>();
-
         // Dependencies
-        Set<MavenArtifact> rootDependencies = new HashSet<>();
-        rootDependencies.add(commonsLangArtifact);
-        rootDependencies.add(gsonArtifact);
-        rootDependencies.add(commonsCliArtifact);
+        Set<MavenArtifact> dependencies = new HashSet<>();
+        dependencies.add(commonsLangArtifact);
+        dependencies.add(gsonArtifact);
+        dependencies.add(commonsCliArtifact);
 
         Set<MavenArtifact> commonsCliDependencies = new HashSet<>();
         commonsCliDependencies.add(dom4JArtifact);
@@ -293,11 +288,11 @@ public class DependencyResolverTestCase extends AbstractMuleTestCase
         Set<MavenArtifact> commonsLangDependencies = new HashSet<>();
         commonsLangDependencies.add(junitArtifact);
 
-        dependencies.put(rootArtifact, rootDependencies);
-        dependencies.put(commonsCliArtifact, commonsCliDependencies);
-        dependencies.put(gsonArtifact, gsonDependencies);
-        dependencies.put(commonsLangArtifact, commonsLangDependencies);
+        LinkedHashMap<MavenArtifact, Set<MavenArtifact>> transitiveDependencies = new LinkedHashMap<>();
+        transitiveDependencies.put(commonsCliArtifact, commonsCliDependencies);
+        transitiveDependencies.put(gsonArtifact, gsonDependencies);
+        transitiveDependencies.put(commonsLangArtifact, commonsLangDependencies);
 
-        return dependencies;
+        return new DependenciesGraph(rootArtifact, dependencies, transitiveDependencies);
     }
 } 

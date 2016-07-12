@@ -67,16 +67,18 @@ public class DependencyGraphMavenDependenciesResolver implements MavenDependenci
     protected final transient Logger logger = LoggerFactory.getLogger(this.getClass());
 
     /**
-     * Uses the dependency graph from depgraph-maven-plugin and reads the links from the dot graph file to
-     * create a {@link LinkedHashMap<MavenArtifact, Set<MavenArtifact>>} where for each key the value has the dependencies, just
-     * as it is described in dot file.
+     * Creates a dependency graph where with all the transitive dependencies, including duplicates. By duplicates it means that it
+     * is not the dependency tree resolved by maven where it takes the approach of resolving the duplicates dependencies by nearest algorithm.
+     * This case the whole graph of dependencies and duplicates, two artifacts depend on the same third artifact, those dependencies would
+     * appear in graph too.
      *
+     * @throws IllegalStateException if the dependencies are empty
      * @return it generates the dependencies for the maven artifact where the resolver is being called.
-     * It returns a {@link LinkedHashMap} with each dependency as key and for each key a {@link Set} of its dependencies.
-     * First entry of the map should be the current artifact being tested by the runner.
+     * It returns a {@link DependenciesGraph} that holds the rootArtifact, dependencies and transitive dependencies for each dependency.
+     * The rootArtifact represents the current maven artifact that the test belongs to.
      */
     @Override
-    public LinkedHashMap<MavenArtifact, Set<MavenArtifact>> buildDependencies()
+    public DependenciesGraph buildDependencies() throws IllegalStateException
     {
         try
         {
@@ -101,7 +103,14 @@ public class DependencyGraphMavenDependenciesResolver implements MavenDependenci
                                                                                          mavenArtifactsDependencies.get(from).add(to);
                                                                                      }
             );
-            return mavenArtifactsDependencies;
+            if (mavenArtifactsDependencies.isEmpty())
+            {
+                throw new IllegalStateException("depgraph-maven-plugin output file read but no dependencies found, something may be wrong please check the dot file");
+            }
+            MavenArtifact rootArtifact = mavenArtifactsDependencies.keySet().stream().findFirst().get();
+            Set<MavenArtifact> dependencies = mavenArtifactsDependencies.get(rootArtifact);
+            mavenArtifactsDependencies.remove(rootArtifact);
+            return new DependenciesGraph(rootArtifact, dependencies, mavenArtifactsDependencies);
         }
         catch (IOException e)
         {
