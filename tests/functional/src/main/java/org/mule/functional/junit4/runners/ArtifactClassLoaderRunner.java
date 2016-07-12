@@ -127,7 +127,7 @@ public class ArtifactClassLoaderRunner extends Runner implements Filterable
     /**
      * Creates the {@link ClassLoaderTestRunner} with the isolated class loaders.
      *
-     * @param klass
+     * @param klass the test class being executed
      * @throws IOException if an error happened while reading files needed by configuration
      * @return creates a {@link ClassLoaderTestRunner} that would be used to run the test. This way the test will be isolated and it will behave
      * similar as an application running in a Mule standalone container.
@@ -145,15 +145,15 @@ public class ArtifactClassLoaderRunner extends Runner implements Filterable
         ClassPathClassifierContext context = new ClassPathClassifierContext(klass, classPathURLsProvider.getURLs(),
                                                                             mavenDependenciesResolver.buildDependencies(), mavenMultiModuleArtifactMapping);
         ArtifactUrlClassification artifactUrlClassification = classPathClassifier.classify(context);
-        return classLoaderRunnerFactory.createClassLoader(context.getExtraBootPackages(), artifactUrlClassification);
+        return classLoaderRunnerFactory.createClassLoaderTestRunner(context.getExtraBootPackages(), artifactUrlClassification);
     }
 
     /**
      * Invokes the method to inject the plugin class loaders as the test is annotated with {@link PluginClassLoadersAware}.
      *
-     * @param classLoaderTestRunner
-     * @param isolatedTestClass
-     * @throws Throwable
+     * @param classLoaderTestRunner the result {@link ArtifactClassLoader}s defined for container, plugins and application
+     * @param isolatedTestClass the test {@link Class} loaded with the isolated {@link ClassLoader}
+     * @throws Throwable if an error ocurrs while setting the list of {@link ArtifactClassLoader}s for plugins.
      */
     private static void injectPluginsClassLoaders(ClassLoaderTestRunner classLoaderTestRunner, Class<?> isolatedTestClass) throws Throwable
     {
@@ -190,7 +190,7 @@ public class ArtifactClassLoaderRunner extends Runner implements Filterable
      * When the test is about to be executed the ThreadContextClassLoader is changed to use the application class loader that
      * was created so the execution of the test will be done using an isolated class loader that mimics the standalone container.
      *
-     * @param notifier
+     * @param notifier the {@link RunNotifier} from JUnit that will be notified about the results of the test methods invoked.
      */
     @Override
     public void run(RunNotifier notifier)
@@ -201,7 +201,7 @@ public class ArtifactClassLoaderRunner extends Runner implements Filterable
     /**
      * Delegates to the inner runner to filter.
      *
-     * @param filter
+     * @param filter the {@link Filter} from JUnit to select a single test.
      * @throws NoTestsRemainException
      */
     @Override

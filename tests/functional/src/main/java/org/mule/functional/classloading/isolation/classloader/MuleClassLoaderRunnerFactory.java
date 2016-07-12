@@ -69,7 +69,7 @@ public class MuleClassLoaderRunnerFactory
      * @param artifactUrlClassification the {@link ArtifactUrlClassification} that defines the different {@link URL}s for each {@link ClassLoader}
      * @return a {@link ClassLoaderTestRunner} that would be used to run the test
      */
-    public ClassLoaderTestRunner createClassLoader(Set<String> extraBootPackages, ArtifactUrlClassification artifactUrlClassification)
+    public ClassLoaderTestRunner createClassLoaderTestRunner(Set<String> extraBootPackages, ArtifactUrlClassification artifactUrlClassification)
     {
         final TestContainerClassLoaderFactory testContainerClassLoaderFactory = new TestContainerClassLoaderFactory(extraBootPackages, artifactUrlClassification.getContainerURLs().toArray(new URL[0]));
 

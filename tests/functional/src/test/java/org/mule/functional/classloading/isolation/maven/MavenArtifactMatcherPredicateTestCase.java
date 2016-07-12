@@ -10,17 +10,15 @@ package org.mule.functional.classloading.isolation.maven;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mule.functional.classloading.isolation.maven.MavenArtifactMatcherPredicate.ANY_WILDCARD;
+import org.mule.tck.junit4.AbstractMuleTestCase;
 import org.mule.tck.size.SmallTest;
 
 import java.util.function.Predicate;
 
 import org.junit.Test;
 
-/**
- * Tests the {@link java.util.function.Predicate} for {@link MavenArtifact}
- */
 @SmallTest
-public class MavenArtifactMatcherPredicateTest
+public class MavenArtifactMatcherPredicateTestCase extends AbstractMuleTestCase
 {
 
     private final MavenArtifact muleCoreArtifact = MavenArtifact.builder().withGroupId("org.mule").withArtifactId("mule-core").withType("jar").build();

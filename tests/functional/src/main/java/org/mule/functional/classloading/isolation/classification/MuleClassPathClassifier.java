@@ -311,7 +311,7 @@ public class MuleClassPathClassifier implements ClassPathClassifier
         if (extensionURLs.size() == sizeBeforeDepResolver)
         {
             throw new IllegalStateException("There should be at least one compile dependency found that matched to extension: '" + extension.getName() +
-                                            "'. Be aware that compile scope is what the classification uses for selecting the urls to be added to plugin class loader");
+                                            "'. Be aware that compile scope is what the classification uses for selecting the URLs to be added to plugin class loader");
         }
         return new PluginUrlClassification(extension.getName(), extensionURLs);
     }

@@ -123,9 +123,9 @@ public class ContainerClassLoaderFactory
     /**
      * Creates an {@link ArtifactClassLoader} that always resolves resources by delegating to the parentClassLoader.
      *
-     * @param parentClassLoader
-     * @param muleModules
-     * @param containerLookupPolicy
+     * @param parentClassLoader the parent {@link ClassLoader} for the container
+     * @param muleModules the list of {@link MuleModule}s to be used for defining the filter
+     * @param containerLookupPolicy the {@link ClassLoaderLookupPolicy} to be used by the container
      * @return a {@link ArtifactClassLoader} to be used in a {@link FilteringContainerClassLoader}
      */
     protected ArtifactClassLoader createArtifactClassLoader(final ClassLoader parentClassLoader, List<MuleModule> muleModules, final ClassLoaderLookupPolicy containerLookupPolicy)
@@ -180,8 +180,8 @@ public class ContainerClassLoaderFactory
     /**
      * Creates a {@link FilteringArtifactClassLoader} to filter the {@link ArtifactClassLoader} containerClassLoader given based on {@link List<MuleModule>} of muleModules.
      *
-     * @param muleModules
-     * @param containerClassLoader
+     * @param muleModules the list of {@link MuleModule}s to be used for defining the filter
+     * @param containerClassLoader the {@link ArtifactClassLoader} for the container that will be used to delegate by the {@link FilteringContainerClassLoader}
      * @return a {@link FilteringContainerClassLoader} that would be the one used as the parent of plugins and applications {@link ArtifactClassLoader}
      */
     protected FilteringArtifactClassLoader createContainerFilteringClassLoader(List<MuleModule> muleModules, ArtifactClassLoader containerClassLoader)

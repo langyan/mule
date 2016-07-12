@@ -11,6 +11,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertTrue;
 import org.mule.functional.classloading.isolation.maven.MavenArtifact;
 import org.mule.runtime.core.util.ValueHolder;
+import org.mule.tck.junit4.AbstractMuleTestCase;
 import org.mule.tck.size.SmallTest;
 
 import java.net.MalformedURLException;
@@ -23,11 +24,8 @@ import java.util.stream.Collectors;
 import org.junit.Before;
 import org.junit.Test;
 
-/**
- * Test for {@link DependencyResolver}
- */
 @SmallTest
-public class DependencyResolverTest
+public class DependencyResolverTestCase extends AbstractMuleTestCase
 {
 
     private DependencyResolver builder;

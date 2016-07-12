@@ -93,16 +93,12 @@ public class ExtensionsTestInfrastructureDiscoverer
         if (isEmpty(describers) && !isEmpty(annotatedClasses))
         {
             describers = stream(annotatedClasses).map(annotatedClass -> new AnnotationsBasedDescriber(annotatedClass, new StaticVersionResolver(getProductVersion()))).collect(Collectors.toList()).toArray(new Describer[annotatedClasses.length]);
+            if (isEmpty(describers))
+            {
+                throw new IllegalStateException("No extension referenced from test");
+            }
         }
-
-        if (isEmpty(describers))
-        {
-            throw new IllegalStateException("No extension referenced from test");
-        }
-        else
-        {
-            loadExtensionsFromDescribers(extensionManager, describers);
-        }
+        loadExtensionsFromDescribers(extensionManager, describers);
 
         ExtensionsTestInfrastructureResourcesGenerator generator = new ExtensionsTestInfrastructureResourcesGenerator(getResourceFactories(), generatedResourcesDirectory);
         extensionManager.getExtensions().forEach(generator::generateFor);
@@ -127,7 +123,7 @@ public class ExtensionsTestInfrastructureDiscoverer
      * Implementation of an {@link AbstractResourcesGenerator} that writes the generated resources to the specified
      * target directory but also exposes the content to be shared for testing purposes.
      */
-    private class ExtensionsTestInfrastructureResourcesGenerator extends AbstractResourcesGenerator
+    private static class ExtensionsTestInfrastructureResourcesGenerator extends AbstractResourcesGenerator
     {
 
         private final File targetDirectory;

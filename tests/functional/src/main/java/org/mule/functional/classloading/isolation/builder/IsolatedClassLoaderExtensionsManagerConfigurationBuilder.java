@@ -17,6 +17,7 @@ import org.mule.runtime.module.extension.internal.manager.DefaultExtensionManage
 import org.mule.runtime.module.extension.internal.manager.ExtensionManagerAdapter;
 import org.mule.runtime.module.extension.internal.manager.ExtensionManagerAdapterFactory;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.List;
@@ -47,14 +48,25 @@ public class IsolatedClassLoaderExtensionsManagerConfigurationBuilder extends Ab
      *
      * @param pluginsClassLoaders the list of {@link ArtifactClassLoader} created for each plugin found in the dependencies (either plugin or extension plugin).
      */
-    public IsolatedClassLoaderExtensionsManagerConfigurationBuilder(List<ArtifactClassLoader> pluginsClassLoaders)
+    public IsolatedClassLoaderExtensionsManagerConfigurationBuilder(final List<ArtifactClassLoader> pluginsClassLoaders)
     {
         this.extensionManagerAdapterFactory = new DefaultExtensionManagerAdapterFactory();
         this.pluginsClassLoaders = pluginsClassLoaders;
     }
 
+    /**
+     * Goes through the list of plugins {@link ArtifactClassLoader}s to check if they have an extension descriptor and
+     * if they do it will parse it and register the extension into the {@link org.mule.runtime.extension.api.ExtensionManager}
+     * <p/>
+     * It has to use reflection to access these classes due to the current execution of this method would be with the
+     * applciation {@link ArtifactClassLoader} and the list of plugin {@link ArtifactClassLoader} was instantiated with the
+     * Launcher {@link ClassLoader} so casting won't work here.
+     *
+     * @param muleContext The current {@link org.mule.runtime.core.api.MuleContext}
+     * @throws Exception if an error occurs while registering an extension of calling methods using reflection.
+     */
     @Override
-    protected void doConfigure(MuleContext muleContext) throws Exception
+    protected void doConfigure(final MuleContext muleContext) throws Exception
     {
         final ExtensionManagerAdapter extensionManager = createExtensionManager(muleContext);
 
@@ -62,9 +74,7 @@ public class IsolatedClassLoaderExtensionsManagerConfigurationBuilder extends Ab
         {
             String artifactName = (String) pluginClassLoader.getClass().getMethod("getArtifactName").invoke(pluginClassLoader);
             ClassLoader classLoader = (ClassLoader) pluginClassLoader.getClass().getMethod("getClassLoader").invoke(pluginClassLoader);
-            Method findResourceMethod = classLoader.getClass().getMethod("findResource", String.class);
-            findResourceMethod.setAccessible(true);
-            URL manifestUrl = (URL) findResourceMethod.invoke(classLoader, "META-INF/" + EXTENSION_MANIFEST_FILE_NAME);
+            URL manifestUrl = getManifestURL(classLoader);
             if (manifestUrl != null)
             {
                 // There will be more than one extension manifest file so we just filter by convention
@@ -82,7 +92,30 @@ public class IsolatedClassLoaderExtensionsManagerConfigurationBuilder extends Ab
         }
     }
 
-    private ExtensionManagerAdapter createExtensionManager(MuleContext muleContext) throws InitialisationException
+    /**
+     * Gets the extension manifest {@link URL}
+     *
+     * @param classLoader the plugin {@link ClassLoader} to look for the resource
+     * @return a {@link URL} or null if it is not present
+     * @throws NoSuchMethodException
+     * @throws IllegalAccessException
+     * @throws InvocationTargetException
+     */
+    private URL getManifestURL(final ClassLoader classLoader) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException
+    {
+        Method findResourceMethod = classLoader.getClass().getMethod("findResource", String.class);
+        findResourceMethod.setAccessible(true);
+        return (URL) findResourceMethod.invoke(classLoader, "META-INF/" + EXTENSION_MANIFEST_FILE_NAME);
+    }
+
+    /**
+     * Creates an {@link ExtensionManagerAdapter} to be used for registering the extensions.
+     *
+     * @param muleContext a {@link MuleContext} needed for creating the manager
+     * @return an {@link ExtensionManagerAdapter}
+     * @throws InitialisationException if an error occurrs while initializing the manager.
+     */
+    private ExtensionManagerAdapter createExtensionManager(final MuleContext muleContext) throws InitialisationException
     {
         try
         {
